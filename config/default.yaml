@@ -1,0 +1,123 @@
+engine:
+  probability_model_version: "CN-A-T1-ESE v1.1"
+  policy_model_version: "CP-TPS v1.1"
+  probability_precision: 1
+
+output:
+  top_n: 4
+
+base_probabilities:
+  height_1_to_2: 17.0
+  height_2_to_3: 35.0
+  height_3_to_4: 42.0
+  height_4_to_5: 49.0
+  n_high_continuation: 30.0
+
+height_routes:
+  "1": "height_1_to_2"
+  "2": "height_2_to_3"
+  "3": "height_3_to_4"
+  "4": "height_4_to_5"
+  default: "n_high_continuation"
+  n_high_min_height: 5
+
+list_sources:
+  top10: "Top 10"
+  top_decision: "Top-Decision"
+  premium: "Premium"
+
+parsing:
+  list_section_aliases:
+    top10: ["Top 10", "TOP10", "Top10"]
+    top_decision: ["Top-Decision", "Top Decision", "TOP-Decision"]
+    premium: ["Premium", "PREMIUM"]
+  sensitive_event_aliases:
+    unusual_announcement: ["异动公告"]
+    share_reduction: ["减持"]
+    loss: ["亏损"]
+    regulatory_warning: ["监管警示"]
+    concept_clarification: ["概念澄清"]
+    earnings_forecast: ["业绩预告"]
+    order: ["订单"]
+    restructuring: ["重组"]
+    control_change: ["控制权变更"]
+
+brs:
+  weights:
+    net_flow_amount: 0.45
+    limit_up_count: 0.35
+    heat_token: 0.20
+  normalization:
+    net_flow_amount_cap_yi: 30.0
+    limit_up_count_cap: 12.0
+  heat_tokens:
+    极强: 100.0
+    强: 82.0
+    活跃: 68.0
+    中性: 50.0
+    分歧: 38.0
+    弱: 25.0
+    退潮: 10.0
+
+tss:
+  unmatched_default: 50.0
+  aggregation: "max"
+  delimiters: ["+", "/", "、", ",", "，", ";", "；", " "]
+
+iqs:
+  weights:
+    board_quality: 0.35
+    order_to_turnover: 0.20
+    max_seal_order: 0.15
+    limit_up_amount: 0.15
+    turnover_rate: 0.15
+  normalization:
+    order_to_turnover_cap_pct: 30.0
+    max_seal_order_cap_yi: 10.0
+    limit_up_amount_cap_yi: 30.0
+    turnover_rate_ideal_pct: 12.0
+    turnover_rate_max_pct: 45.0
+  board_quality_scores:
+    一字: 100.0
+    强: 88.0
+    高: 82.0
+    中: 62.0
+    分歧: 46.0
+    弱: 28.0
+    炸板: 12.0
+    未知: 50.0
+
+events:
+  score_adjustments:
+    unusual_announcement: -2.0
+    share_reduction: -4.5
+    loss: -5.0
+    regulatory_warning: -6.0
+    concept_clarification: -3.5
+    earnings_forecast: 2.0
+    order: 3.0
+    restructuring: 4.0
+    control_change: 2.5
+
+probability_adjustments:
+  iqs_center: 50.0
+  tss_center: 50.0
+  iqs_weight: 0.06
+  tss_weight: 0.05
+  event_weight: 1.0
+  min_probability: 1.0
+  max_probability: 95.0
+
+ecs:
+  weights:
+    probability: 0.45
+    iqs: 0.25
+    tss: 0.20
+    event_score: 0.10
+  grade_thresholds:
+    A+: 80.0
+    A: 70.0
+    B: 58.0
+    C: 45.0
+    D: 0.0
+  grade_order: ["A+", "A", "B", "C", "D"]
