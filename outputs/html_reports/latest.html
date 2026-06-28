@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>T+1 Maya v1.0 - A股T+1三系统报告包</title>
+  <style>
+    :root {
+      --bg: #f5f5f7;
+      --panel: #fff;
+      --panel-alt: #fbfbfd;
+      --text: #1d1d1f;
+      --muted: #6e6e73;
+      --line: #e8e8ed;
+      --blue: #0071e3;
+      --soft: #f5f9ff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    .topnav {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      background: rgba(251,251,253,.82);
+      backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,.04);
+    }
+    .topnav a { color: var(--text); text-decoration: none; font-size: 13px; opacity: .78; white-space: nowrap; padding: 4px 2px; }
+    .topnav a:hover { opacity: 1; }
+    .topnav a.active { opacity: 1; font-weight: 600; }
+    body > header { background: var(--panel); padding: 42px 24px 34px; text-align: center; margin-bottom: 10px; }
+    body > header h1 { margin: 0; font-size: 56px; line-height: 1.03; letter-spacing: 0; font-weight: 700; }
+    .brand-muted { color: rgba(29,29,31,.30); }
+    .system-dates { margin-top: 14px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; color: var(--muted); font-size: 14px; }
+    .system-date-pill { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 12px; border-radius: 999px; background: var(--soft); color: var(--text); }
+    main h1 { margin: 0 0 10px; font-size: 30px; line-height: 1.12; letter-spacing: 0; text-align: center; }
+    h2 { margin: 0 0 18px; font-size: 24px; text-align: center; line-height: 1.16; letter-spacing: 0; }
+    h3 { margin: 26px 0 12px; font-size: 19px; line-height: 1.22; letter-spacing: 0; }
+    main { max-width: 1380px; margin: 0 auto 42px; padding: 0 18px; }
+    .system-root { background: var(--panel); margin: 10px 0; padding: 26px 28px; }
+    .system-root > h2 { font-size: 24px; margin-bottom: 22px; }
+    .system-root > h3:first-child { margin-top: 0; }
+    .system-root > section,
+    .system-section { background: var(--panel); margin: 0 0 12px; padding: 28px 24px; }
+    .system-root > section:first-child,
+    .system-section:first-child { padding-top: 20px; }
+    .system-root > section:last-child,
+    .system-section:last-child { margin-bottom: 0; }
+    .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 18px auto 0; align-items: stretch; width: 100%; }
+    .cards.two-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card { background: var(--panel-alt); padding: 22px; min-height: 0; height: 100%; display: flex; flex-direction: column; gap: 14px; }
+    a.card { color: inherit; text-decoration: none; }
+    .home-card:hover { background: #f5f9ff; }
+    .home-title { margin: 0; color: var(--text); font-size: 18px; line-height: 1.25; font-weight: 700; }
+    .home-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+    .home-nav-card { min-height: 172px; background: var(--panel-alt); color: inherit; text-decoration: none; padding: 24px 22px; display: flex; flex-direction: column; justify-content: space-between; }
+    .home-nav-card:hover { background: #f5f9ff; }
+    .home-nav-index { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #e8f2ff; color: #06c; font-size: 13px; font-weight: 700; }
+    .home-nav-title { margin-top: 18px; font-size: 20px; line-height: 1.2; font-weight: 700; }
+    .home-nav-desc { margin: 8px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .home-nav-action { margin-top: 20px; color: var(--blue); font-size: 13px; font-weight: 600; }
+    .core-cards { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .core-title { text-align: center; }
+    .card-title { font-size: 15px; color: var(--muted); font-weight: 600; }
+    .stock-list { display: grid; gap: 8px; align-content: start; flex: 1; }
+    .stock-chip {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-height: 44px;
+      padding: 10px 0;
+      border-top: 1px solid rgba(210,210,215,.36);
+    }
+    .stock-chip:first-child { border-top: 0; padding-top: 0; }
+    .stock-rank { width: 28px; height: 28px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #e8f2ff; color: #06c; font-size: 13px; font-weight: 700; }
+    .stock-main { min-width: 0; }
+    .stock-title, .stock-code { font-size: 16px; line-height: 1.18; font-weight: 700; overflow-wrap: anywhere; }
+    .stock-title { color: var(--text); }
+    .stock-code { color: rgba(29, 29, 31, .3); }
+    .stock-code { margin-left: 2px; font-variant-numeric: tabular-nums; }
+    .stock-metric { color: var(--text); font-size: 14px; font-weight: 700; white-space: nowrap; }
+    .card p { margin: 0; }
+    .card > .muted { margin-top: auto; }
+    .overlap-panel { margin-top: 12px; background: var(--soft); padding: 24px; }
+    .overlap-panel h3 { margin-top: 0; text-align: center; font-size: 24px; }
+    .overlap-panel .muted { text-align: center; margin: -4px 0 18px; font-size: 15px; }
+    .overlap-panel th { font-size: 14px; }
+    .overlap-panel td { color: var(--text); font-size: 15px; font-weight: 700; }
+    .scope-panel { margin-top: 12px; background: var(--panel); border: 1px solid var(--line); padding: 22px 24px; }
+    .scope-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 16px 0; }
+    .scope-item { background: var(--panel-alt); padding: 16px; }
+    .scope-label { color: var(--muted); font-size: 12px; font-weight: 600; }
+    .scope-value { margin-top: 6px; font-size: 24px; line-height: 1.1; font-weight: 700; }
+    .scope-detail { color: var(--muted); font-size: 13px; line-height: 1.55; }
+    .scope-table table { min-width: 0; }
+    .scope-table td:first-child { width: 160px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+    .muted { color: var(--muted); font-size: 14px; }
+    .callout { background: var(--soft); padding: 14px 16px; font-size: 14px; }
+    .table-wrap { overflow-x: auto; width: 100%; }
+    table { width: 100%; border-collapse: collapse; min-width: 880px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 11px 12px; text-align: left; vertical-align: top; font-size: 13px; line-height: 1.45; }
+    th { color: var(--muted); font-weight: 600; white-space: nowrap; background: var(--panel); }
+    .stock-name-cell { white-space: nowrap; word-break: keep-all; }
+    tbody tr:nth-child(odd) td { background: rgba(245,245,247,.36); }
+    tbody tr.top-row td { background: var(--soft); color: var(--text); font-weight: 400; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #f5f5f7; }
+    .route-pill { display: inline-block; margin: 6px 0; padding: 3px 9px; border-radius: 999px; background: #e8f2ff; color: #06c; font-size: 12px; font-weight: 600; }
+    .leaders, .conclusion-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+    .leader, .conclusion-card { background: var(--panel-alt); padding: 22px 18px; text-align: center; min-height: 150px; }
+    .prob, .conclusion-prob { font-size: 28px; line-height: 1.08; font-weight: 700; }
+    .model, .link-row { font-size: 14px; line-height: 1.45; }
+    .link-row { margin-top: 8px; color: var(--blue); }
+    .leader-code { margin-top: 8px; color: var(--text); font-size: 18px; line-height: 1.14; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .name, .conclusion-name { font-size: 20px; line-height: 1.18; font-weight: 700; }
+    .rank, .code, .conclusion-rank, .conclusion-code, .conclusion-meta { color: var(--muted); font-size: 12px; }
+    .basis-note, .conclusion-kicker { color: var(--muted); text-align: center; }
+    .table-actions { display: flex; justify-content: center; margin: 0 0 12px; }
+    .sort-button { border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); padding: 8px 14px; cursor: pointer; }
+    .sort-button:hover { background: var(--soft); }
+    .site-disclaimer { max-width: 1180px; margin: -18px auto 34px; padding: 0 18px; color: rgba(29,29,31,.45); font-size: 12px; line-height: 1.7; text-align: center; }
+    @media (max-width: 900px) {
+      body > header { padding: 34px 18px 28px; }
+      body > header h1 { font-size: 38px; }
+      .system-dates { font-size: 12px; }
+      main h1 { font-size: 25px; }
+      h2 { font-size: 24px; }
+      .topnav { justify-content: flex-start; overflow-x: auto; padding: 0 14px; gap: 18px; }
+      .cards, .core-cards, .home-grid, .leaders, .conclusion-grid { grid-template-columns: 1fr; }
+      .stock-title, .stock-code { font-size: 16px; }
+      .stock-chip { grid-template-columns: 26px minmax(0, 1fr) auto; gap: 8px; }
+      .stock-rank { width: 26px; height: 26px; }
+      .scope-grid { grid-template-columns: 1fr 1fr; }
+      main { padding: 0 10px; }
+      .system-root { padding: 20px 12px; }
+      .system-root > section, .system-section { padding: 24px 12px; }
+      th, td { font-size: 12px; padding: 9px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="topnav">
+    <a class="active" href="latest.html">首页</a>
+    <a href="latest_dashboard.html">综合看板</a>
+    <a href="latest_limit.html">连板概率</a>
+    <a href="latest_overnight.html">隔夜单 / EV单</a>
+    <a href="latest_continuation.html">最终承接</a>
+    <a href="latest_validation.html">验证复盘</a>
+  </nav>
+  <header>
+    <h1>T+1 <span class="brand-muted">Maya v1.0</span></h1>
+    <div class="system-dates">
+      <span class="system-date-pill">Buy：2026-06-29</span>
+      <span class="system-date-pill">Sell：2026-06-30</span>
+    </div>
+  </header>
+  <main>
+    <section class="system-root"><h3 class="core-title">核心名单</h3><div class="cards core-cards"><article class="card"><div class="card-title">连板概率 Top4</div><div class="stock-list"><div class="stock-chip"><span class="stock-rank">1</span><span class="stock-main"><span class="stock-title">返利科技</span><span class="stock-code">600228</span></span><span class="stock-metric">42.3%</span></div><div class="stock-chip"><span class="stock-rank">2</span><span class="stock-main"><span class="stock-title">威派格</span><span class="stock-code">603956</span></span><span class="stock-metric">34.3%</span></div><div class="stock-chip"><span class="stock-rank">3</span><span class="stock-main"><span class="stock-title">航天工程</span><span class="stock-code">603698</span></span><span class="stock-metric">34.3%</span></div><div class="stock-chip"><span class="stock-rank">4</span><span class="stock-main"><span class="stock-title">天娱数科</span><span class="stock-code">002354</span></span><span class="stock-metric">29.2%</span></div></div></article><article class="card"><div class="card-title">隔夜单 Top4</div><div class="stock-list"><div class="stock-chip"><span class="stock-rank">1</span><span class="stock-main"><span class="stock-title">返利科技</span><span class="stock-code">600228</span></span><span class="stock-metric">可优先观察</span></div><div class="stock-chip"><span class="stock-rank">2</span><span class="stock-main"><span class="stock-title">航天工程</span><span class="stock-code">603698</span></span><span class="stock-metric">可优先观察</span></div><div class="stock-chip"><span class="stock-rank">3</span><span class="stock-main"><span class="stock-title">金帝股份</span><span class="stock-code">603270</span></span><span class="stock-metric">可优先观察</span></div><div class="stock-chip"><span class="stock-rank">4</span><span class="stock-main"><span class="stock-title">狮头股份</span><span class="stock-code">600539</span></span><span class="stock-metric">可优先观察</span></div></div></article><article class="card"><div class="card-title">EV单 Top4</div><div class="stock-list"><div class="stock-chip"><span class="stock-rank">1</span><span class="stock-main"><span class="stock-title">返利科技</span><span class="stock-code">600228</span></span><span class="stock-metric">EV -0.10</span></div><div class="stock-chip"><span class="stock-rank">2</span><span class="stock-main"><span class="stock-title">航天工程</span><span class="stock-code">603698</span></span><span class="stock-metric">EV -0.96</span></div><div class="stock-chip"><span class="stock-rank">3</span><span class="stock-main"><span class="stock-title">威派格</span><span class="stock-code">603956</span></span><span class="stock-metric">EV -1.17</span></div><div class="stock-chip"><span class="stock-rank">4</span><span class="stock-main"><span class="stock-title">狮头股份</span><span class="stock-code">600539</span></span><span class="stock-metric">EV -1.43</span></div></div></article><article class="card"><div class="card-title">最终承接 Top4</div><div class="stock-list"><div class="stock-chip"><span class="stock-rank">1</span><span class="stock-main"><span class="stock-title">返利科技</span><span class="stock-code">600228</span></span><span class="stock-metric">42</span></div><div class="stock-chip"><span class="stock-rank">2</span><span class="stock-main"><span class="stock-title">百润股份</span><span class="stock-code">002568</span></span><span class="stock-metric">33</span></div><div class="stock-chip"><span class="stock-rank">3</span><span class="stock-main"><span class="stock-title">威派格</span><span class="stock-code">603956</span></span><span class="stock-metric">33</span></div><div class="stock-chip"><span class="stock-rank">4</span><span class="stock-main"><span class="stock-title">狮头股份</span><span class="stock-code">600539</span></span><span class="stock-metric">32</span></div></div></article></div><h3 class="core-title">系统共振</h3><div class="table-wrap"><table><thead><tr><th>代码</th><th>名称</th><th>共振次数</th><th>命中系统</th></tr></thead><tbody><tr><td>600228</td><td class="stock-name-cell">返利科技</td><td>4</td><td>连板概率 / 隔夜单 / EV单 / 最终承接</td></tr><tr><td>600539</td><td class="stock-name-cell">狮头股份</td><td>3</td><td>隔夜单 / EV单 / 最终承接</td></tr><tr><td>603698</td><td class="stock-name-cell">航天工程</td><td>3</td><td>连板概率 / 隔夜单 / EV单</td></tr><tr><td>603956</td><td class="stock-name-cell">威派格</td><td>3</td><td>连板概率 / EV单 / 最终承接</td></tr></tbody></table></div></section>
+  </main>
+  <footer class="site-disclaimer">重要提示：本系统输出内容仅为量化研究与信息整理结果，不构成投资建议或任何形式的买卖依据。模型概率、排序、评分及结论均不代表未来收益保证，任何基于本系统内容作出的投资决策，均由使用者独立判断并自行承担风险。</footer>
+  <script>
+    (() => {
+      const button = document.querySelector('[data-theme-prob-sort]');
+      const table = document.querySelector('[data-theme-table]');
+      if (!button || !table) return;
+      const tbody = table.tBodies[0];
+      Array.from(tbody.rows).forEach((row, index) => row.dataset.originalIndex = String(index));
+      button.addEventListener('click', () => {
+        const nextOrder = button.dataset.order === 'desc' ? 'asc' : 'desc';
+        const direction = nextOrder === 'asc' ? 1 : -1;
+        const rows = Array.from(tbody.rows);
+        rows.sort((left, right) => {
+          const leftValue = Number.parseFloat(left.cells[2]?.textContent.replace('%', '') || '0');
+          const rightValue = Number.parseFloat(right.cells[2]?.textContent.replace('%', '') || '0');
+          if (leftValue !== rightValue) return (leftValue - rightValue) * direction;
+          return Number(left.dataset.originalIndex || '0') - Number(right.dataset.originalIndex || '0');
+        });
+        tbody.append(...rows);
+        button.dataset.order = nextOrder;
+        button.textContent = nextOrder === 'asc' ? '平均概率升序' : '平均概率降序';
+      });
+    })();
+  </script>
+</body>
+</html>
