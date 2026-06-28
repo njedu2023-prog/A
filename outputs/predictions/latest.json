@@ -1,0 +1,105 @@
+{
+  "prediction_id": "20260628_142232_日频数据分析_0629",
+  "generated_at": "20260628_142232",
+  "input_pdf": "/Users/moclh/Desktop/T+1/2026-06/日频数据分析 0629.pdf",
+  "trade_dates": {
+    "auction_buy_date": "06-29",
+    "auction_buy_date_iso": "2026-06-29",
+    "expected_sell_date": "2026-06-30"
+  },
+  "top_n": 4,
+  "model_versions": {
+    "probability": "CN-A-T1-ESE v1.1",
+    "policy": "CP-TPS v1.1"
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "code": "600228",
+      "name": "返利科技",
+      "probability": 42.3,
+      "ecs_grade": "C",
+      "height": 3,
+      "board_quality": "一字",
+      "first_limit_up_time": "09:30:00",
+      "final_limit_up_time": "09:30:00",
+      "route": "height_3_to_4",
+      "iqs": 55.8,
+      "tss": 50.0,
+      "sas": 50.0,
+      "sentiment_adjustment": 0.0,
+      "sentiment_bucket": "medium",
+      "list_sources": [
+        "Premium",
+        "Top 10"
+      ],
+      "top_n": true
+    },
+    {
+      "rank": 2,
+      "code": "603956",
+      "name": "威派格",
+      "probability": 34.3,
+      "ecs_grade": "D",
+      "height": 2,
+      "board_quality": "一字",
+      "first_limit_up_time": "09:30:00",
+      "final_limit_up_time": "09:30:00",
+      "route": "height_2_to_3",
+      "iqs": 38.2,
+      "tss": 50.0,
+      "sas": 50.0,
+      "sentiment_adjustment": 0.0,
+      "sentiment_bucket": "medium",
+      "list_sources": [
+        "Premium",
+        "Top 10"
+      ],
+      "top_n": true
+    },
+    {
+      "rank": 3,
+      "code": "603698",
+      "name": "航天工程",
+      "probability": 34.3,
+      "ecs_grade": "D",
+      "height": 2,
+      "board_quality": "高",
+      "first_limit_up_time": "10:21:17",
+      "final_limit_up_time": "10:21:17",
+      "route": "height_2_to_3",
+      "iqs": 37.9,
+      "tss": 50.0,
+      "sas": 50.0,
+      "sentiment_adjustment": 0.0,
+      "sentiment_bucket": "medium",
+      "list_sources": [
+        "Premium",
+        "Top-Decision"
+      ],
+      "top_n": true
+    },
+    {
+      "rank": 4,
+      "code": "002354",
+      "name": "天娱数科",
+      "probability": 29.2,
+      "ecs_grade": "D",
+      "height": 4,
+      "board_quality": "高",
+      "first_limit_up_time": "10:09:11",
+      "final_limit_up_time": "10:09:11",
+      "route": "n_high_continuation",
+      "iqs": 36.1,
+      "tss": 50.0,
+      "sas": 50.0,
+      "sentiment_adjustment": 0.0,
+      "sentiment_bucket": "medium",
+      "list_sources": [
+        "Premium",
+        "Top-Decision"
+      ],
+      "top_n": true
+    }
+  ]
+}

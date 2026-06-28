@@ -6,6 +6,28 @@ engine:
 output:
   top_n: 4
 
+ocr:
+  enabled: true
+  min_extracted_text_chars: 200
+  dpi: 120
+  engine: "macos_vision"
+  detail_column_crops: 3
+
+data_sources:
+  local_ths:
+    enabled: true
+    display_name: "本机同花顺"
+    access_mode: "local_desktop_search_or_export"
+    requires_user_local_session: true
+    allowed_for:
+      - "固定名单与个股详情交叉核验"
+      - "热门板块资金轮动核验"
+      - "舆情搜索强度与讨论热度"
+      - "公告与异动解读标签"
+      - "验证日涨停与连板真值"
+    truth_priority: 1
+    notes: "允许使用本机同花顺软件搜索、查看或导出系统所需信息；真值以验证日收盘后的涨停/连板状态为准。"
+
 base_probabilities:
   height_1_to_2: 17.0
   height_2_to_3: 35.0
@@ -27,19 +49,20 @@ list_sources:
   premium: "Premium"
 
 parsing:
+  valid_stock_code_prefixes: ["00", "30", "60", "68", "43", "83", "87"]
   list_section_aliases:
     top10: ["Top 10", "TOP10", "Top10"]
-    top_decision: ["Top-Decision", "Top Decision", "TOP-Decision"]
+    top_decision: ["Top-Decision", "Top -Decision", "Top Decision", "TOP-Decision"]
     premium: ["Premium", "PREMIUM"]
   sensitive_event_aliases:
-    unusual_announcement: ["异动公告"]
+    unusual_announcement: ["异动公告", "异动解读"]
     share_reduction: ["减持"]
     loss: ["亏损"]
     regulatory_warning: ["监管警示"]
     concept_clarification: ["概念澄清"]
-    earnings_forecast: ["业绩预告"]
-    order: ["订单"]
-    restructuring: ["重组"]
+    earnings_forecast: ["业绩预告", "业绩增长", "中报预增", "预增"]
+    order: ["订单", "中标"]
+    restructuring: ["重组", "收购", "拟收购"]
     control_change: ["控制权变更"]
 
 brs:
@@ -86,6 +109,22 @@ iqs:
     弱: 28.0
     炸板: 12.0
     未知: 50.0
+  board_quality_inference:
+    one_word_cutoff: "09:30:30"
+    strong_cutoff: "09:45:00"
+    high_cutoff: "10:30:00"
+    medium_cutoff: "13:00:00"
+    same_time_gap_seconds: 60
+    short_reseal_gap_seconds: 600
+    same_time_labels:
+      one_word: "一字"
+      strong: "强"
+      high: "高"
+      medium: "中"
+      weak: "弱"
+    reseal_labels:
+      short: "分歧"
+      long: "炸板"
 
 events:
   score_adjustments:
@@ -99,11 +138,29 @@ events:
     restructuring: 4.0
     control_change: 2.5
 
+sas:
+  weights:
+    search_abnormal: 0.35
+    discussion_abnormal: 0.25
+    sentiment_direction: 0.25
+    source_credibility: 0.15
+  normalization:
+    abnormal_ratio_cap: 5.0
+  direction_scores:
+    positive: 75.0
+    neutral: 50.0
+    mixed: 45.0
+    negative: 25.0
+    unknown: 50.0
+
 probability_adjustments:
   iqs_center: 50.0
   tss_center: 50.0
+  sas_center: 50.0
   iqs_weight: 0.06
   tss_weight: 0.05
+  sas_weight: 0.03
+  sas_adjustment_cap: 2.0
   event_weight: 1.0
   min_probability: 1.0
   max_probability: 95.0
@@ -112,7 +169,8 @@ ecs:
   weights:
     probability: 0.45
     iqs: 0.25
-    tss: 0.20
+    tss: 0.15
+    sas: 0.05
     event_score: 0.10
   grade_thresholds:
     A+: 80.0
@@ -121,3 +179,114 @@ ecs:
     C: 45.0
     D: 0.0
   grade_order: ["A+", "A", "B", "C", "D"]
+
+overnight_v35:
+  risk_weights:
+    buy_too_high: 0.55
+    t1_liquidity: 0.45
+  risk_thresholds:
+    avoid: 90.0
+    ev_only: 80.0
+    tiny_watch: 70.0
+    small_controlled: 60.0
+  buy_risk:
+    high_price_yuan: 100.0
+    very_high_price_yuan: 200.0
+    extreme_price_yuan: 500.0
+    turnover_10: 10.0
+    turnover_15: 15.0
+    turnover_20: 20.0
+    weak_order_pct: 5.0
+    high_height: 4
+    extreme_height: 5
+    penalties:
+      high_price: 12.0
+      very_high_price: 20.0
+      extreme_price: 30.0
+      turnover_10: 10.0
+      turnover_15: 18.0
+      turnover_20: 25.0
+      weak_order: 18.0
+      high_height: 18.0
+      extreme_height: 25.0
+      weak_board: 16.0
+      one_word_buy_chase: 8.0
+      high_volatility_board: 14.0
+  liquidity_risk:
+    low_tss: 45.0
+    weak_order_pct: 5.0
+    high_turnover_pct: 15.0
+    high_amount_yi: 8.0
+    penalties:
+      low_tss: 15.0
+      weak_order: 18.0
+      high_turnover: 16.0
+      high_amount: 10.0
+      high_height: 20.0
+      negative_event_unit: 6.0
+      high_volatility_board: 12.0
+  two_day_acceptance:
+    auction_quality_weight: 0.20
+    t_day_acceptance_weight: 0.30
+    t1_acceptance_weight: 0.35
+    limit_structure_weight: 0.10
+    sector_switch_weight: 0.05
+    fracture_penalty_weight: 0.55
+    event_penalty_weight: 1.0
+  ev:
+    fill_base: 78.0
+    fill_iqs_weight: 0.18
+    fill_risk_weight: 0.42
+    up_base: 42.0
+    up_probability_weight: 0.50
+    up_tss_weight: 0.12
+    gain_base_pct: 4.0
+    gain_tss_weight: 0.035
+    loss_base_pct: 3.5
+    loss_risk_weight: 0.035
+    fracture_penalty_weight: 0.035
+  price_lines:
+    low_risk_premium_pct: 3.0
+    medium_risk_premium_pct: 1.5
+    high_risk_premium_pct: 0.5
+
+continuation_v1:
+  missing_data_confidence_penalty: 12.0
+  weights:
+    s1_limit_quality: 0.18
+    s2_auction_acceptance: 0.22
+    s3_theme_position: 0.16
+    s4_sentiment_cycle: 0.12
+    s5_chip_structure: 0.10
+    s6_seat_funds: 0.08
+    s7_catalyst: 0.07
+    t1_sellability: 0.07
+    s8_risk_penalty: 0.24
+  static_auction:
+    iqs_weight: 0.45
+    tss_weight: 0.25
+    board_quality_weight: 0.20
+    turnover_weight: 0.10
+  risk:
+    high_turnover_pct: 15.0
+    extreme_turnover_pct: 20.0
+    weak_order_pct: 5.0
+    high_height: 4
+    high_volatility_prefixes: ["30", "68", "43", "83", "87", "92"]
+  probability:
+    t_day_base: 18.0
+    t_day_score_weight: 0.58
+    t1_base: 14.0
+    t1_score_weight: 0.48
+    risk_weight: 0.12
+  conclusion_thresholds:
+    strong: 78
+    medium_strong: 68
+    medium: 56
+    medium_weak: 45
+    weak: 30
+
+trading_calendar:
+  market: A-share
+  holidays: []
+  make_up_trading_days: []

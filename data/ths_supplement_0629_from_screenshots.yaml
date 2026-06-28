@@ -1,0 +1,224 @@
+source: "同花顺T/P/D截图补充"
+trade_date: "2026-06-29"
+note: "PDF仍为主数据源；本文件只补充截图可见字段，不新增候选名单。"
+stocks:
+  - code: "002910"
+    name: "庄园牧场"
+    turnover_rate_pct: 19.91
+    max_seal_order_yi: 1.60
+    order_to_turnover_pct: 0.38
+    first_limit_up_time: "13:26:27"
+    final_limit_up_time: "13:26:27"
+    theme: "乳业龙头+甘肃国资"
+    industry: "饮料制造"
+    main_net_inflow_yi: 0.909134
+  - code: "001400"
+    name: "江顺科技"
+    turnover_rate_pct: 8.59
+    max_seal_order_yi: 0.741189
+    order_to_turnover_pct: 0.16
+    first_limit_up_time: "11:02:54"
+    final_limit_up_time: "11:02:54"
+    theme: "3D打印+商业航天+液冷服务器+铝挤压模具"
+    industry: "专用设备"
+    main_net_inflow_yi: 0.840257
+  - code: "688432"
+    name: "有研硅"
+    turnover_rate_pct: 5.91
+    max_seal_order_yi: 0.551871
+    order_to_turnover_pct: 0.02
+    first_limit_up_time: "13:19:24"
+    final_limit_up_time: "13:19:24"
+    theme: "半导体硅片+硅片涨价预期+拟收购晶睿半导体"
+    industry: "半导体"
+    main_net_inflow_yi: 1.65
+  - code: "301349"
+    name: "信德新材"
+    turnover_rate_pct: 13.94
+    max_seal_order_yi: 0.76834
+    order_to_turnover_pct: 0.06
+    first_limit_up_time: "09:58:47"
+    final_limit_up_time: "10:37:39"
+    theme: "光纤概念+负极包覆材料+碳纤维"
+    industry: "电池"
+    main_net_inflow_yi: 0.63571
+  - code: "688596"
+    name: "正帆科技"
+    turnover_rate_pct: 15.06
+    max_seal_order_yi: 0.528796
+    order_to_turnover_pct: 0.02
+    first_limit_up_time: "13:51:28"
+    final_limit_up_time: "13:51:28"
+    theme: "碳化硅陶瓷+半导体设备+订单增长"
+    industry: "专用设备"
+    main_net_inflow_yi: -0.456904
+  - code: "601016"
+    name: "节能风电"
+    turnover_rate_pct: 4.68
+    max_seal_order_yi: 1.04
+    order_to_turnover_pct: 0.09
+    first_limit_up_time: "09:42:00"
+    final_limit_up_time: "09:42:00"
+    theme: "绿色电力+储能+风电"
+    industry: "电力"
+    main_net_inflow_yi: 4.84
+  - code: "600481"
+    name: "双良节能"
+    turnover_rate_pct: 5.93
+    max_seal_order_yi: 0.516031
+    order_to_turnover_pct: 0.09
+    first_limit_up_time: "09:46:34"
+    final_limit_up_time: "09:49:04"
+    theme: "硅片+光伏+液冷服务器"
+    industry: "光伏设备"
+    main_net_inflow_yi: 2.37
+  - code: "603163"
+    name: "圣晖集成"
+    turnover_rate_pct: 3.68
+    max_seal_order_yi: 0.501782
+    order_to_turnover_pct: 0.10
+    first_limit_up_time: "09:40:15"
+    final_limit_up_time: "09:40:15"
+    theme: "可转债申请通过+半导体洁净室+东南亚PCB"
+    industry: "建筑装饰"
+    main_net_inflow_yi: 1.62
+  - code: "300540"
+    name: "蜀道装备"
+    turnover_rate_pct: 17.73
+    max_seal_order_yi: 0.935594
+    order_to_turnover_pct: 0.08
+    first_limit_up_time: "13:36:16"
+    final_limit_up_time: "13:36:16"
+    theme: "商业航天+氢气+空分装置+业绩增长"
+    industry: "专用设备"
+    main_net_inflow_yi: 1.20
+  - code: "002568"
+    name: "百润股份"
+    turnover_rate_pct: 1.64
+    max_seal_order_yi: 1.31
+    order_to_turnover_pct: 0.67
+    first_limit_up_time: "09:30:15"
+    final_limit_up_time: "09:30:15"
+    theme: "中报预增+预调鸡尾酒+威士忌"
+    industry: "饮料制造"
+    main_net_inflow_yi: 1.07
+  - code: "603698"
+    name: "航天工程"
+    turnover_rate_pct: 6.09
+    max_seal_order_yi: 1.00
+    order_to_turnover_pct: 0.07
+    first_limit_up_time: "10:21:17"
+    final_limit_up_time: "10:21:17"
+    theme: "实控人航天科技+绿氢工程+煤气化+央企"
+    industry: "专用设备"
+    main_net_inflow_yi: 2.64
+  - code: "002354"
+    name: "天娱数科"
+    turnover_rate_pct: 30.43
+    max_seal_order_yi: 0.489268
+    order_to_turnover_pct: 0.01
+    first_limit_up_time: "10:09:11"
+    final_limit_up_time: "10:09:11"
+    theme: "具身智能数据集+3D视觉+算力租赁+AI营销"
+    industry: "文化传媒"
+    main_net_inflow_yi: 10.70
+  - code: "603928"
+    name: "兴业股份"
+    turnover_rate_pct: 3.53
+    max_seal_order_yi: 0.307111
+    order_to_turnover_pct: 0.21
+    first_limit_up_time: "09:51:10"
+    final_limit_up_time: "09:51:10"
+    theme: "铸造树脂+光刻胶+业绩增长"
+    industry: "塑料制品"
+    main_net_inflow_yi: 0.422026
+  - code: "603956"
+    name: "威派格"
+    turnover_rate_pct: 1.42
+    max_seal_order_yi: 0.487994
+    order_to_turnover_pct: 1.04
+    first_limit_up_time: "09:30:00"
+    final_limit_up_time: "09:30:00"
+    theme: "液冷泵+六氟磷酸锂+智慧水务"
+    industry: "专用设备"
+    main_net_inflow_yi: 0.215979
+  - code: "603155"
+    name: "新亚强"
+    turnover_rate_pct: 6.63
+    max_seal_order_yi: 0.721717
+    order_to_turnover_pct: 0.14
+    first_limit_up_time: "13:36:01"
+    final_limit_up_time: "13:36:01"
+    theme: "半导体材料+高纯四氯化硅+光纤概念+锂电池"
+    industry: "化学制品"
+    main_net_inflow_yi: 0.556932
+  - code: "603722"
+    name: "阿科力"
+    turnover_rate_pct: 5.95
+    max_seal_order_yi: 0.472745
+    order_to_turnover_pct: 0.21
+    first_limit_up_time: "13:18:23"
+    final_limit_up_time: "13:18:23"
+    theme: "COC放量+半导体材料+特种高耐热树脂"
+    industry: "化学制品"
+    main_net_inflow_yi: 0.310744
+  - code: "603270"
+    name: "金帝股份"
+    turnover_rate_pct: 9.96
+    max_seal_order_yi: 0.4062
+    order_to_turnover_pct: 0.18
+    first_limit_up_time: "09:56:02"
+    final_limit_up_time: "09:56:02"
+    theme: "半导体散热片+关节模组+人形机器人+精密零部件"
+    industry: "通用设备"
+    main_net_inflow_yi: 0.536191
+  - code: "600539"
+    name: "狮头股份"
+    turnover_rate_pct: 7.87
+    max_seal_order_yi: 0.394845
+    order_to_turnover_pct: 0.15
+    first_limit_up_time: "10:26:47"
+    final_limit_up_time: "10:26:47"
+    theme: "拟收购利珀科技+半导体封装+机器人视觉+AI应用"
+    industry: "互联网电商"
+    main_net_inflow_yi: 0.410477
+  - code: "603977"
+    name: "国泰集团"
+    turnover_rate_pct: 8.63
+    max_seal_order_yi: 0.228052
+    order_to_turnover_pct: 0.03
+    first_limit_up_time: "09:47:04"
+    final_limit_up_time: "10:49:24"
+    theme: "铝铌涨价+小型固体火箭+江西国资"
+    industry: "化学制品"
+    main_net_inflow_yi: 1.84
+  - code: "605399"
+    name: "晨光新材"
+    turnover_rate_pct: 3.51
+    max_seal_order_yi: 0.784679
+    order_to_turnover_pct: 0.50
+    first_limit_up_time: "13:18:54"
+    final_limit_up_time: "13:18:54"
+    theme: "功能性硅烷+气凝胶+产能释放+回购注销"
+    industry: "化学制品"
+    main_net_inflow_yi: 0.220458
+  - code: "600228"
+    name: "返利科技"
+    turnover_rate_pct: 0.14
+    max_seal_order_yi: 1.73
+    order_to_turnover_pct: 27.02
+    first_limit_up_time: "09:30:00"
+    final_limit_up_time: "09:30:00"
+    theme: "控制权变更+复牌+摘帽+在线导购"
+    industry: "文化传媒"
+    main_net_inflow_yi: 0.06414
+  - code: "601369"
+    name: "陕鼓动力"
+    turnover_rate_pct: 1.31
+    max_seal_order_yi: 0.291546
+    order_to_turnover_pct: 0.14
+    first_limit_up_time: "10:21:32"
+    final_limit_up_time: "10:21:32"
+    theme: "压缩空气储能+透平机械+国企改革"
+    industry: "专用设备"
+    main_net_inflow_yi: 0.440769
