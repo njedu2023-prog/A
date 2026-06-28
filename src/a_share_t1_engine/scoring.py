@@ -20,19 +20,22 @@ def stable_sort_key(item: ScoredStock, config: dict[str, Any]) -> tuple[float, i
 def _score_one(record: StockRecord, sectors: list[SectorRotation], config: dict[str, Any]) -> ScoredStock:
     iqs = _calculate_iqs(record, config)
     tss = _calculate_tss(record, sectors, config)
+    sas = _calculate_sas(record, config)
+    sentiment_adjustment = _calculate_sentiment_adjustment(sas, config)
     event_score = _calculate_event_score(record, config)
-    route = _route_for_height(record.height, config)
+    route = _route_for_record(record, config)
     base_probability = float(config["base_probabilities"][route])
     adj = config["probability_adjustments"]
     probability = (
         base_probability
         + (iqs - adj["iqs_center"]) * adj["iqs_weight"]
         + (tss - adj["tss_center"]) * adj["tss_weight"]
+        + sentiment_adjustment
         + event_score * adj["event_weight"]
     )
     probability = max(adj["min_probability"], min(adj["max_probability"], probability))
     probability = round(probability, int(config["engine"]["probability_precision"]))
-    ecs_score = _calculate_ecs(probability, iqs, tss, event_score, config)
+    ecs_score = _calculate_ecs(probability, iqs, tss, sas, event_score, config)
     ecs_grade = _grade_for_score(ecs_score, config)
     return ScoredStock(
         stock=record,
@@ -43,8 +46,16 @@ def _score_one(record: StockRecord, sectors: list[SectorRotation], config: dict[
         ecs_score=ecs_score,
         ecs_grade=ecs_grade,
         event_score=event_score,
+        sas=sas,
+        sentiment_adjustment=sentiment_adjustment,
         route=route,
     )
+
+
+def _route_for_record(record: StockRecord, config: dict[str, Any]) -> str:
+    if record.route_override:
+        return record.route_override
+    return _route_for_height(record.height, config)
 
 
 def _route_for_height(height: int, config: dict[str, Any]) -> str:
@@ -90,13 +101,39 @@ def _calculate_event_score(record: StockRecord, config: dict[str, Any]) -> float
     return round(sum(float(adjustments.get(event, 0.0)) for event in record.sensitive_events), 1)
 
 
-def _calculate_ecs(probability: float, iqs: float, tss: float, event_score: float, config: dict[str, Any]) -> float:
+def _calculate_sas(record: StockRecord, config: dict[str, Any]) -> float:
+    weights = config["sas"]["weights"]
+    norm = config["sas"]["normalization"]
+    direction_scores = config["sas"]["direction_scores"]
+    ratio_cap = norm["abnormal_ratio_cap"]
+    search_score = _abnormal_ratio_score(record.search_abnormal_ratio, ratio_cap)
+    discussion_score = _abnormal_ratio_score(record.discussion_abnormal_ratio, ratio_cap)
+    direction_score = float(direction_scores.get(record.sentiment_direction, direction_scores["unknown"]))
+    credibility_score = _cap_score(record.source_credibility, 1.0)
+    return round(
+        search_score * weights["search_abnormal"]
+        + discussion_score * weights["discussion_abnormal"]
+        + direction_score * weights["sentiment_direction"]
+        + credibility_score * weights["source_credibility"],
+        1,
+    )
+
+
+def _calculate_sentiment_adjustment(sas: float, config: dict[str, Any]) -> float:
+    adj = config["probability_adjustments"]
+    raw = (sas - adj["sas_center"]) * adj["sas_weight"]
+    cap = float(adj["sas_adjustment_cap"])
+    return round(max(-cap, min(cap, raw)), 1)
+
+
+def _calculate_ecs(probability: float, iqs: float, tss: float, sas: float, event_score: float, config: dict[str, Any]) -> float:
     weights = config["ecs"]["weights"]
     normalized_event = max(0.0, min(100.0, 50.0 + event_score * 10.0))
     return round(
         probability * weights["probability"]
         + iqs * weights["iqs"]
         + tss * weights["tss"]
+        + sas * weights["sas"]
         + normalized_event * weights["event_score"],
         1,
     )
@@ -136,3 +173,13 @@ def _turnover_score(value: float, ideal: float, max_value: float) -> float:
     if value <= ideal:
         return _cap_score(value, ideal)
     return max(0.0, 100.0 - (value - ideal) / (max_value - ideal) * 100.0)
+
+
+def _abnormal_ratio_score(value: float, cap: float) -> float:
+    if cap <= 1.0:
+        return 50.0
+    if value <= 0:
+        return 0.0
+    if value < 1.0:
+        return max(0.0, min(50.0, value * 50.0))
+    return max(50.0, min(100.0, 50.0 + (value - 1.0) / (cap - 1.0) * 50.0))
