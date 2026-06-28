@@ -9,6 +9,7 @@ description = "A-share T+1 limit-up continuation probability engine."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
+  "Pillow>=10.0.0",
   "PyYAML>=6.0.1",
   "pypdf>=4.2.0",
   "typer>=0.12.3",
@@ -21,6 +22,9 @@ test = [
 
 [project.scripts]
 a-share-t1-engine = "a_share_t1_engine.cli:app"
+a-share-t1-validate = "a_share_t1_engine.validate_cli:app"
+a-share-t1-calibrate = "a_share_t1_engine.calibrate_cli:app"
+a-share-t1-web = "a_share_t1_engine.web_app:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/a_share_t1_engine"]
