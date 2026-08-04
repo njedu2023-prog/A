@@ -467,11 +467,9 @@ function renderCandidates() {
   container.replaceChildren();
   const day = selectedDays().at(-1);
   if (!day || !day.candidates?.length) {
-    $("candidateCount").textContent = "0支";
     container.append(node("div", day ? "所选月最新一日三表有效交集为0，不补票。" : "所选月份尚无冻结信号。", "empty"));
     return;
   }
-  $("candidateCount").textContent = `${day.intersection_count}支`;
   const ledger = latestPortfolioIndex();
   const rows = day.candidates.map((item) => {
     const ledgerItem = ledger.get(item.candidate_id) || ledger.get(item.symbol);
