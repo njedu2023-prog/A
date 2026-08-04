@@ -72,6 +72,56 @@ def _result(value: float | None, is_final: bool) -> str:
     return "FLAT"
 
 
+def _candidate_display_fields(candidate: dict[str, Any]) -> dict[str, str]:
+    """Read frozen promotion and industry labels without inferring from the code."""
+
+    source_values = candidate.get("source_values")
+    sources = source_values if isinstance(source_values, dict) else {}
+
+    def source(source_id: str) -> dict[str, Any]:
+        value = sources.get(source_id)
+        return value if isinstance(value, dict) else {}
+
+    decision = source("decision_table")
+    premium = source("premium_top10")
+    a_top10 = source("a_top10")
+
+    def first_text(*values: Any) -> str:
+        for value in values:
+            text = str(value or "").strip()
+            if text:
+                return text
+        return "—"
+
+    def first_positive_number(*values: Any) -> float | None:
+        for value in values:
+            if _finite(value) and float(value) > 0:
+                return float(value)
+        return None
+
+    return {
+        "stage_transition": first_text(
+            decision.get("stage_transition"),
+            premium.get("stage_transition"),
+            premium.get("晋阶"),
+            a_top10.get("advance_stage"),
+            a_top10.get("晋阶"),
+        ),
+        "industry": first_text(
+            decision.get("industry"),
+            premium.get("sector"),
+            a_top10.get("board"),
+        ),
+        "d_close": first_positive_number(
+            decision.get("d_close"),
+            premium.get("close_T"),
+            premium.get("d_close"),
+            a_top10.get("d_close"),
+            a_top10.get("close_T"),
+        ),
+    }
+
+
 def _portfolio_candidate(
     signal: dict[str, Any],
     candidate: dict[str, Any],
@@ -93,6 +143,7 @@ def _portfolio_candidate(
         "rank": candidate["rank"],
         "symbol": candidate["ts_code"],
         "name": candidate["name"],
+        **_candidate_display_fields(candidate),
         "status": status,
         "is_final": is_final,
         "buy_price": buy.get("avg_price"),
@@ -277,6 +328,7 @@ def build_dashboard(
                         "candidate_id": f"{signal['decision_date']}:{item['ts_code']}",
                         "symbol": item["ts_code"],
                         "name": item["name"],
+                        **_candidate_display_fields(item),
                         "rank": item.get("rank"),
                         "model_score": item.get("metrics", {}).get("utility_score"),
                         "action": item.get("action"),
@@ -440,6 +492,13 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
         if len(candidate_ids) != len(set(candidate_ids)):
             raise ValueError("candidate ids must be unique within a decision date")
         for candidate in day["candidates"]:
+            for field in ("stage_transition", "industry"):
+                value = candidate.get(field)
+                if not isinstance(value, str) or not value.strip():
+                    raise ValueError(f"candidate {field} must be a non-empty display string")
+            d_close = candidate.get("d_close")
+            if d_close is not None and (not _finite(d_close) or float(d_close) <= 0):
+                raise ValueError("candidate d_close must be positive when present")
             if candidate.get("action") != "SHADOW":
                 raise ValueError("every intersection candidate must remain SHADOW")
             eligible = candidate.get("metrics", {}).get("policy_trade_eligible")
@@ -647,6 +706,12 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 or detail.get("name") != candidate["name"]
             ):
                 raise ValueError("portfolio candidate identity does not match ranked candidate")
+            if (
+                detail.get("stage_transition") != candidate["stage_transition"]
+                or detail.get("industry") != candidate["industry"]
+                or not _same_number(detail.get("d_close"), candidate.get("d_close"))
+            ):
+                raise ValueError("portfolio candidate display fields do not match ranked candidate")
             status = detail.get("status")
             if status not in ALLOWED_PORTFOLIO_STATUSES:
                 raise ValueError(f"unsupported portfolio candidate status: {status}")

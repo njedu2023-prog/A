@@ -136,6 +136,9 @@ function fallbackPortfolioDaily() {
         rank: candidate.rank,
         symbol: candidate.symbol,
         name: candidate.name,
+        stage_transition: candidate.stage_transition,
+        industry: candidate.industry,
+        d_close: candidate.d_close,
         status,
         is_final: isFinal,
         buy_price: slot.buy?.avg_price ?? null,
@@ -480,6 +483,9 @@ function renderCandidates() {
       {text: String(item.rank), align: "left"},
       {text: item.symbol, align: "left", className: "code"},
       {text: item.name, align: "left", className: "name"},
+      {text: item.stage_transition || "—"},
+      {text: item.industry || "—", align: "left"},
+      {text: price(item.d_close)},
       {text: pct(item.model_score), className: tone(item.model_score)},
       {text: probability(item.metrics?.p_fill_0925)},
       {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
@@ -490,11 +496,14 @@ function renderCandidates() {
     {text: "排名", align: "left"},
     {text: "代码", align: "left"},
     {text: "股票", align: "left"},
+    "晋级",
+    {text: "行业板块", align: "left"},
+    "D收盘价",
     "风险效用",
     "竞价成交概率",
     "预期净收益",
     "执行状态"
-  ], rows, "680px");
+  ], rows, "940px");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }
@@ -547,6 +556,9 @@ function renderDaily() {
       const netReturn = item.is_final === true && finite(item.net_return) ? Number(item.net_return) : null;
       return [
         {content: stockCell(item), align: "left"},
+        {text: item.stage_transition || "—"},
+        {text: item.industry || "—", align: "left"},
+        {text: price(item.d_close)},
         {text: price(item.buy_price)},
         {text: price(item.exit_price)},
         {text: pct(netReturn), className: tone(netReturn)},
@@ -557,12 +569,15 @@ function renderDaily() {
     if (childRows.length) {
       detailWrap.append(table([
         {text: "股票", align: "left"},
+        "晋级",
+        {text: "行业板块", align: "left"},
+        "D收盘价",
         "9:25入场价",
         "T+1退出价",
         "净收益",
         "结果",
         "状态"
-      ], childRows, "720px"));
+      ], childRows, "960px"));
     } else {
       detailWrap.append(node("div", "该批次暂无候选明细。", "empty"));
     }

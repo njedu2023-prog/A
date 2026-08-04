@@ -143,6 +143,8 @@ def decision_row(
         "name": f"D{rank}",
         "action": "PENDING",
         "stage_transition": "2→3",
+        "industry": "IT服务Ⅱ",
+        "d_close": 10.25,
         "decision_p_fill": 0.5,
         "decision_e_ret": 0.01,
         "decision_ev": -0.001,
@@ -298,6 +300,9 @@ class SourceContractTests(unittest.TestCase):
         self.assertEqual(result, [])
         self.assertEqual([row.rank for row in decision.rows], list(range(1, 11)))
         self.assertEqual(decision.rows[0].values["rank"], 51)
+        self.assertEqual(decision.rows[0].values["stage_transition"], "2→3")
+        self.assertEqual(decision.rows[0].values["industry"], "IT服务Ⅱ")
+        self.assertEqual(decision.rows[0].values["d_close"], 10.25)
 
     def test_decision_rejects_non_top10_display_contract(self) -> None:
         displayed = [

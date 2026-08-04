@@ -63,6 +63,39 @@ def make_trade(
 
 
 class DashboardContractTests(unittest.TestCase):
+    def test_candidate_promotion_and_industry_reach_both_detail_tables(self) -> None:
+        item = make_signal("20260803", "20260804", "20260805")
+        item["candidates"][0]["source_values"] = {
+            "a_top10": {"晋阶": "2→3", "board": "备用板块"},
+            "premium_top10": {"晋阶": "2→3", "sector": "备用行业"},
+            "decision_table": {
+                "stage_transition": "2→3",
+                "industry": "IT服务Ⅱ",
+                "d_close": 12.34,
+            },
+        }
+        payload = build_dashboard(
+            {"signals": [item], "trades": [make_trade(item)]},
+            [],
+            "2026-08-05T12:00:00+08:00",
+            {"status": "RANKED"},
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+
+        ranked = payload["days"][0]["candidates"][0]
+        ledger = payload["portfolio_daily"][0]["candidates"][0]
+        self.assertEqual(ranked["stage_transition"], "2→3")
+        self.assertEqual(ranked["industry"], "IT服务Ⅱ")
+        self.assertEqual(ranked["d_close"], 12.34)
+        self.assertEqual(ledger["stage_transition"], "2→3")
+        self.assertEqual(ledger["industry"], "IT服务Ⅱ")
+        self.assertEqual(ledger["d_close"], 12.34)
+
+        ledger["industry"] = "错误板块"
+        with self.assertRaisesRegex(ValueError, "display fields"):
+            validate_dashboard(payload)
+
     def test_no_final_observation_is_null_and_pending(self) -> None:
         item = make_signal("20260803", "20260804", "20260805")
         payload = build_dashboard(
