@@ -130,6 +130,19 @@ main {
   gap: 14px;
 }
 .panel-head > .muted { font-size: 10px; }
+.overview-summary {
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+}
+.overview-summary::-webkit-details-marker { display: none; }
+.overview-summary-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.overview-toggle { flex: 0 0 auto; }
+.overview-panel[open] .overview-toggle::before { content: "−"; }
 
 .rank-cards {
   padding: 2px 16px 13px;

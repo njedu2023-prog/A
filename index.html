@@ -21,18 +21,21 @@
   <main>
     <section id="status" class="status-card" aria-live="polite"></section>
 
-    <section class="panel">
-      <div class="panel-head">
+    <details class="panel overview-panel">
+      <summary class="panel-head overview-summary">
         <div><h2>收益概览</h2></div>
-        <span class="muted">固定前三名独立统计 · 全部候选等额统计</span>
-      </div>
+        <span class="overview-summary-meta">
+          <span class="muted">固定前三名独立统计 · 全部候选等额统计</span>
+          <span class="ledger-toggle overview-toggle" aria-hidden="true"></span>
+        </span>
+      </summary>
       <div id="rankCards" class="rank-cards"></div>
       <div class="chart-head">
         <span>第1 / 2 / 3名独立净值</span>
         <span class="chart-legend"><i class="dot rank-one"></i>第1名 <i class="dot rank-two"></i>第2名 <i class="dot rank-three"></i>第3名</span>
       </div>
       <div id="chart" class="chart" role="img" aria-label="三个固定名次的独立净值曲线"></div>
-    </section>
+    </details>
 
     <section class="panel">
       <div class="panel-head">
