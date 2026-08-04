@@ -131,27 +131,44 @@ def premium_csv(
     )
 
 
-def decision_row(rank: object, code: str) -> dict[str, object]:
-    return {
+def decision_row(
+    rank: object,
+    code: str,
+    *,
+    stage_watch_rank: object | None = None,
+) -> dict[str, object]:
+    row: dict[str, object] = {
         "rank": rank,
         "ts_code": code,
         "name": f"D{rank}",
         "action": "PENDING",
+        "stage_transition": "2→3",
         "decision_p_fill": 0.5,
         "decision_e_ret": 0.01,
         "decision_ev": -0.001,
         "decision_cost": 0.001,
         "decision_risk_penalty": 0.01,
     }
+    if stage_watch_rank is not None:
+        row["stage_watch_rank"] = stage_watch_rank
+    return row
 
 
 def decision_bytes(
     rows: list[dict[str, object]],
     *,
+    candidate_rows: list[dict[str, object]] | None = None,
     decision_date: str = "20260803",
     buy_date: str = "20260804",
     exit_date: str = "20260805",
 ) -> bytes:
+    stage_rows = []
+    for stage_rank, source_row in enumerate(rows, start=1):
+        row = dict(source_row)
+        row.setdefault("stage_watch_rank", stage_rank)
+        row.setdefault("observation_rank", row["stage_watch_rank"])
+        row.setdefault("observation_selected", 1)
+        stage_rows.append(row)
     return json.dumps(
         {
             "schema_version": "decision_action_plan_v12_top10_trade_selector",
@@ -162,7 +179,11 @@ def decision_bytes(
             "signal_date": decision_date,
             "exec_date": buy_date,
             "exit_date": exit_date,
-            "candidates": rows,
+            "stage_watch_count": len(stage_rows),
+            "stage_watch_eligible_count": len(stage_rows),
+            "stage_watch_display_limit": 10,
+            "stage_watchlist": stage_rows,
+            "candidates": candidate_rows if candidate_rows is not None else stage_rows,
         },
         ensure_ascii=False,
     ).encode()
@@ -263,16 +284,45 @@ class SourceContractTests(unittest.TestCase):
         result = strict_intersection([self.a, self.premium, decision])
         self.assertEqual([item.ts_code for item in result], ["600000.SH"])
 
-    def test_decision_actual_rendered_rows_are_not_silently_sliced(self) -> None:
-        rows = [
+    def test_decision_uses_visible_top10_not_full_candidate_pool(self) -> None:
+        displayed = [
+            decision_row(50 + rank, f"{600000 + rank:06d}.SH")
+            for rank in range(1, 11)
+        ]
+        full_pool = displayed + [decision_row(11, "600000.SH")]
+        decision = parse_decision(
+            decision_bytes(displayed, candidate_rows=full_pool),
+            "decision.json",
+        )
+        result = strict_intersection([self.a, self.premium, decision])
+        self.assertEqual(result, [])
+        self.assertEqual([row.rank for row in decision.rows], list(range(1, 11)))
+        self.assertEqual(decision.rows[0].values["rank"], 51)
+
+    def test_decision_rejects_non_top10_display_contract(self) -> None:
+        displayed = [
             decision_row(rank, f"{600000 + rank:06d}.SH")
             for rank in range(1, 11)
         ]
-        rows.append(decision_row(11, "600000.SH"))
-        decision = self.decision(rows)
-        result = strict_intersection([self.a, self.premium, decision])
-        self.assertEqual([item.ts_code for item in result], ["600000.SH"])
-        self.assertEqual(result[0].source_ranks[SOURCE_DECISION], 11)
+        displayed.append(decision_row(11, "600000.SH"))
+        payload = json.loads(decision_bytes(displayed))
+        payload["stage_watch_display_limit"] = 11
+        with self.assertRaisesRegex(ContractError, "must equal 10"):
+            parse_decision(
+                json.dumps(payload, ensure_ascii=False).encode(),
+                "decision.json",
+            )
+
+    def test_decision_missing_watchlist_never_falls_back_to_candidates(self) -> None:
+        payload = json.loads(
+            decision_bytes([decision_row(1, "600000.SH")])
+        )
+        payload.pop("stage_watchlist")
+        with self.assertRaisesRegex(ContractError, "missing required fields"):
+            parse_decision(
+                json.dumps(payload, ensure_ascii=False).encode(),
+                "decision.json",
+            )
 
     def test_zero_intersection_is_valid_and_not_padded(self) -> None:
         decision = self.decision([decision_row(1, "002999.SZ")])
@@ -284,13 +334,29 @@ class SourceContractTests(unittest.TestCase):
                 [decision_row(1, "600000.SH"), decision_row(2, "600000.SH")]
             )
 
-    def test_missing_fractional_and_zero_rank_fail_closed(self) -> None:
+    def test_missing_fractional_and_zero_visible_rank_fail_closed(self) -> None:
         for invalid in (None, 1.5, 0, -1, "1.0"):
-            row = decision_row(invalid, "600000.SH")
+            row = decision_row(53, "600000.SH", stage_watch_rank=invalid)
             if invalid is None:
-                row.pop("rank")
+                row["stage_watch_rank"] = None
+            payload = json.loads(decision_bytes([row]))
+            payload["stage_watchlist"][0]["stage_watch_rank"] = invalid
             with self.subTest(rank=invalid), self.assertRaises(ContractError):
-                self.decision([row])
+                parse_decision(
+                    json.dumps(payload, ensure_ascii=False).encode(),
+                    "decision.json",
+                )
+
+    def test_decision_watch_counts_must_match_visible_rows(self) -> None:
+        payload = json.loads(
+            decision_bytes([decision_row(53, "600000.SH")])
+        )
+        payload["stage_watch_eligible_count"] = 2
+        with self.assertRaisesRegex(ContractError, "must equal min"):
+            parse_decision(
+                json.dumps(payload, ensure_ascii=False).encode(),
+                "decision.json",
+            )
 
     def test_premium_requires_display_membership_flags(self) -> None:
         with self.assertRaises(ContractError):
