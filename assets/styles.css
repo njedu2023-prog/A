@@ -22,9 +22,7 @@
 body {
   margin: 0;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 86% 2%, rgba(116, 211, 165, .10), transparent 25rem),
-    var(--paper);
+  background: #fff;
   font: 13px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
