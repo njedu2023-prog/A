@@ -14,6 +14,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from .calendar import DEFAULT_CALENDAR_PATH, TradingCalendar, parse_calendar_date
+from .candidate_facts import candidate_validation_inputs
 from .domain import (
     Candidate,
     ContractError,
@@ -492,6 +493,7 @@ def parse_premium(data: bytes, url: str) -> SourceTable:
             "premium_eligible",
             "premium_bucket",
             "model_can_rank",
+            "close_T",
         ),
         SOURCE_PREMIUM,
     )
@@ -502,6 +504,7 @@ def parse_premium(data: bytes, url: str) -> SourceTable:
             "premium_final_score",
             "t_up_attack_score",
             "t1_accept_score",
+            "close_T",
         ),
         SOURCE_PREMIUM,
     )
@@ -517,6 +520,10 @@ def parse_premium(data: bytes, url: str) -> SourceTable:
                 raise ContractError(
                     f"premium_top10: row {index} {field} must be within [0, 100]"
                 )
+        if isinstance(row["close_T"], bool) or float(row["close_T"]) <= 0.0:
+            raise ContractError(
+                f"premium_top10: row {index} close_T must be positive"
+            )
         if not _is_true(row.get("is_top10")) or str(row.get("rank_group")).strip() != "TOP10":
             raise ContractError(
                 f"premium_top10: row {index} is not marked as a displayed TOP10 row"
@@ -625,8 +632,21 @@ def parse_decision(data: bytes, url: str) -> SourceTable:
                 "name",
                 "action",
                 "stage_transition",
+                "industry",
+                "d_close",
+                "mechanism_limit_pct",
+                "estimated_up_limit",
                 "observation_rank",
                 "observation_selected",
+            ),
+            SOURCE_DECISION,
+        )
+        _require_numeric_fields(
+            raw_rows,
+            (
+                "d_close",
+                "mechanism_limit_pct",
+                "estimated_up_limit",
             ),
             SOURCE_DECISION,
         )
@@ -661,6 +681,19 @@ def parse_decision(data: bytes, url: str) -> SourceTable:
                 raise ContractError(
                     f"decision_table: row {index} has invalid stage_transition"
                 )
+            if not str(row.get("industry") or "").strip():
+                raise ContractError(
+                    f"decision_table: row {index} industry must be non-empty"
+                )
+            for field in (
+                "d_close",
+                "mechanism_limit_pct",
+                "estimated_up_limit",
+            ):
+                if isinstance(row[field], bool) or float(row[field]) <= 0.0:
+                    raise ContractError(
+                        f"decision_table: row {index} {field} must be positive"
+                    )
             p_fill = _number(row.get("decision_p_fill"))
             cost = _number(row.get("decision_cost"))
             risk_penalty = _number(row.get("decision_risk_penalty"))
@@ -1199,14 +1232,14 @@ def strict_intersection(tables: list[SourceTable]) -> list[Candidate]:
     for code in sorted(common):
         source_rows = {source_id: row_maps[source_id][code] for source_id in SOURCE_IDS}
         name = next((row.name for row in source_rows.values() if row.name), code)
-        candidates.append(
-            Candidate(
-                ts_code=code,
-                name=name,
-                source_ranks={source_id: row.rank for source_id, row in source_rows.items()},
-                source_values={source_id: row.values for source_id, row in source_rows.items()},
-            )
+        candidate = Candidate(
+            ts_code=code,
+            name=name,
+            source_ranks={source_id: row.rank for source_id, row in source_rows.items()},
+            source_values={source_id: row.values for source_id, row in source_rows.items()},
         )
+        candidate_validation_inputs(candidate)
+        candidates.append(candidate)
     return candidates
 
 

@@ -34,6 +34,7 @@
     "lot_size": 100,
     "price_tick": 0.01,
     "auction_time": "09:25",
+    "t_validation_after_local_time": "15:10",
     "auction_phase": "OPENING_CALL_AUCTION",
     "auction_truth_schema": "auction_execution_v2",
     "auction_price_policy": "opening_auction_clearing_price",

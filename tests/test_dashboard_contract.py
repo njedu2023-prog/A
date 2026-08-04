@@ -74,8 +74,15 @@ class DashboardContractTests(unittest.TestCase):
                 "d_close": 12.34,
             },
         }
+        trade = make_trade(item)
+        trade["t_day_validation"] = {
+            "status": "VERIFIED",
+            "t_return": 0.10,
+            "is_limit_up": True,
+            "is_promoted": True,
+        }
         payload = build_dashboard(
-            {"signals": [item], "trades": [make_trade(item)]},
+            {"signals": [item], "trades": [trade]},
             [],
             "2026-08-05T12:00:00+08:00",
             {"status": "RANKED"},
@@ -88,12 +95,79 @@ class DashboardContractTests(unittest.TestCase):
         self.assertEqual(ranked["stage_transition"], "2→3")
         self.assertEqual(ranked["industry"], "IT服务Ⅱ")
         self.assertEqual(ranked["d_close"], 12.34)
+        self.assertEqual(
+            ranked["t_day_validation"],
+            {
+                "status": "VERIFIED",
+                "t_return": 0.10,
+                "is_limit_up": True,
+                "is_promoted": True,
+            },
+        )
         self.assertEqual(ledger["stage_transition"], "2→3")
         self.assertEqual(ledger["industry"], "IT服务Ⅱ")
         self.assertEqual(ledger["d_close"], 12.34)
+        self.assertEqual(ledger["t_day_validation"], ranked["t_day_validation"])
+        self.assertEqual(
+            payload["days"][0]["rank_slots"]["1"]["t_day_validation"],
+            ranked["t_day_validation"],
+        )
 
         ledger["industry"] = "错误板块"
         with self.assertRaisesRegex(ValueError, "display fields"):
+            validate_dashboard(payload)
+
+    def test_t_day_validation_defaults_to_pending_and_rejects_invalid_states(self) -> None:
+        item = make_signal("20260803", "20260804", "20260805")
+        trade = make_trade(item)
+        payload = build_dashboard(
+            {"signals": [item], "trades": [trade]},
+            [],
+            "2026-08-05T12:00:00+08:00",
+            {"status": "RANKED"},
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+        self.assertEqual(
+            payload["portfolio_daily"][0]["candidates"][0]["t_day_validation"],
+            {
+                "status": "PENDING",
+                "t_return": None,
+                "is_limit_up": None,
+                "is_promoted": None,
+            },
+        )
+
+        payload["portfolio_daily"][0]["candidates"][0]["t_day_validation"] = {
+            "status": "VERIFIED",
+            "t_return": 0.10,
+            "is_limit_up": False,
+            "is_promoted": True,
+        }
+        with self.assertRaisesRegex(ValueError, "promotion requires"):
+            validate_dashboard(payload)
+
+    def test_unverifiable_t_day_validation_keeps_outcomes_null(self) -> None:
+        item = make_signal("20260803", "20260804", "20260805")
+        trade = make_trade(item)
+        trade["t_day_validation"] = {
+            "status": "UNVERIFIABLE",
+            "t_return": None,
+            "is_limit_up": None,
+            "is_promoted": None,
+        }
+        payload = build_dashboard(
+            {"signals": [item], "trades": [trade]},
+            [],
+            "2026-08-05T12:00:00+08:00",
+            {"status": "RANKED"},
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+        payload["portfolio_daily"][0]["candidates"][0]["t_day_validation"][
+            "is_limit_up"
+        ] = False
+        with self.assertRaisesRegex(ValueError, "must remain null"):
             validate_dashboard(payload)
 
     def test_no_final_observation_is_null_and_pending(self) -> None:

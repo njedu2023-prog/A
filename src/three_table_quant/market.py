@@ -31,6 +31,7 @@ class Bar:
     time_semantics: str = "UNSPECIFIED"
     provider: str = "UNSPECIFIED"
     price_adjustment: str = "UNSPECIFIED"
+    previous_close: float | None = None
 
 
 class MarketDataError(RuntimeError):
@@ -162,6 +163,92 @@ class EastmoneyMarketData:
             )
         return [bar for bar in bars if bar.date <= end]
 
+    def raw_daily_bar(self, ts_code: str, trade_date: str) -> Bar:
+        """Return one exact-date, unadjusted cash-price daily bar.
+
+        This contract is intentionally separate from ``daily_bars`` because the
+        latter is forward-adjusted feature data.  A nearest prior session must
+        never be substituted when an exact T-day verification bar is absent.
+        """
+
+        day = normalize_date(trade_date, "trade_date")
+        payload = self._request(
+            {
+                "secid": eastmoney_secid(ts_code),
+                "klt": 101,
+                "fqt": 0,
+                "lmt": 2,
+                "beg": day,
+                "end": day,
+                "fields1": "f1,f2,f3,f4,f5,f6",
+                "fields2": "f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61",
+            }
+        )
+        matches: list[Bar] = []
+        for line in payload["data"]["klines"]:
+            parts = line.split(",")
+            if len(parts) < 7:
+                continue
+            try:
+                bar_day = normalize_date(parts[0], "Eastmoney raw daily date")
+            except Exception:
+                continue
+            if bar_day != day:
+                continue
+            open_price = _strict_float(parts[1], "Eastmoney raw daily open", positive=True)
+            close_price = _strict_float(parts[2], "Eastmoney raw daily close", positive=True)
+            high = _strict_float(parts[3], "Eastmoney raw daily high", positive=True)
+            low = _strict_float(parts[4], "Eastmoney raw daily low", positive=True)
+            volume = _strict_float(parts[5], "Eastmoney raw daily volume")
+            amount = _strict_float(parts[6], "Eastmoney raw daily amount")
+            if (
+                volume < 0
+                or amount < 0
+                or high < low
+                or low > min(open_price, close_price)
+                or high < max(open_price, close_price)
+            ):
+                raise MarketDataError("Eastmoney raw daily OHLCV is inconsistent")
+            pct_change = (
+                _strict_float(parts[8], "Eastmoney raw daily pct_change")
+                if len(parts) > 8 and str(parts[8]).strip()
+                else None
+            )
+            previous_close = None
+            if len(parts) > 9 and str(parts[9]).strip():
+                change = _strict_float(parts[9], "Eastmoney raw daily change")
+                previous_close = close_price - change
+                if not math.isfinite(previous_close) or previous_close <= 0:
+                    raise MarketDataError("Eastmoney raw daily previous close is invalid")
+            turnover = (
+                _strict_float(parts[10], "Eastmoney raw daily turnover")
+                if len(parts) > 10 and str(parts[10]).strip()
+                else None
+            )
+            matches.append(
+                Bar(
+                    date=bar_day,
+                    time=None,
+                    open=open_price,
+                    close=close_price,
+                    high=high,
+                    low=low,
+                    volume=volume,
+                    amount=amount,
+                    pct_change=pct_change,
+                    turnover=turnover,
+                    volume_unit="LOT",
+                    provider="EASTMONEY",
+                    price_adjustment="NONE",
+                    previous_close=previous_close,
+                )
+            )
+        if len(matches) != 1:
+            raise MarketDataError(
+                f"Eastmoney raw daily requires exactly one bar for {day}; found {len(matches)}"
+            )
+        return matches[0]
+
     def minute_bars(self, ts_code: str, trade_date: str) -> list[Bar]:
         day = normalize_date(trade_date, "trade_date")
         payload = self._request(
@@ -221,6 +308,7 @@ class TencentMarketData:
     """
 
     daily_endpoint = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
+    raw_daily_endpoint = "https://web.ifzq.gtimg.cn/appstock/app/kline/kline"
     minute_ohlc_endpoint = "https://ifzq.gtimg.cn/appstock/app/kline/mkline"
     minute_query_endpoint = "https://web.ifzq.gtimg.cn/appstock/app/minute/query"
     execution_period_ends = ("1101", "1102", "1103", "1104", "1105")
@@ -310,6 +398,68 @@ class TencentMarketData:
         if not bars:
             raise MarketDataError(f"Tencent fqkline returned no valid bars for {symbol}")
         return bars[-count:]
+
+    def raw_daily_bar(self, ts_code: str, trade_date: str) -> Bar:
+        """Return Tencent's exact-date raw ``day`` record without adjustment."""
+
+        day = normalize_date(trade_date, "trade_date")
+        symbol = tencent_symbol(ts_code)
+        display_day = f"{day[:4]}-{day[4:6]}-{day[6:]}"
+        param = ",".join((symbol, "day", display_day, display_day, "2"))
+        url = f"{self.raw_daily_endpoint}?{urllib.parse.urlencode({'param': param})}"
+        stock = self._stock_payload(
+            self._request(url, "Tencent raw kline"),
+            symbol,
+            "Tencent raw kline",
+        )
+        rows = stock.get("day")
+        if not isinstance(rows, list):
+            raise MarketDataError(f"Tencent raw kline has no day rows for {symbol}")
+
+        matches: list[Bar] = []
+        for row in rows:
+            if not isinstance(row, list) or len(row) < 6:
+                continue
+            try:
+                bar_day = normalize_date(row[0], "Tencent raw daily date")
+            except Exception:
+                continue
+            if bar_day != day:
+                continue
+            open_price = _strict_float(row[1], "Tencent raw daily open", positive=True)
+            close_price = _strict_float(row[2], "Tencent raw daily close", positive=True)
+            high = _strict_float(row[3], "Tencent raw daily high", positive=True)
+            low = _strict_float(row[4], "Tencent raw daily low", positive=True)
+            volume = _strict_float(row[5], "Tencent raw daily volume")
+            if (
+                volume < 0
+                or high < low
+                or low > min(open_price, close_price)
+                or high < max(open_price, close_price)
+            ):
+                raise MarketDataError("Tencent raw daily OHLCV is inconsistent")
+            matches.append(
+                Bar(
+                    date=bar_day,
+                    time=None,
+                    open=open_price,
+                    close=close_price,
+                    high=high,
+                    low=low,
+                    volume=volume,
+                    # Tencent raw day rows do not expose a stable cash-turnover
+                    # field; never invent it from a neighbouring payload slot.
+                    amount=0.0,
+                    volume_unit="LOT",
+                    provider="TENCENT",
+                    price_adjustment="NONE",
+                )
+            )
+        if len(matches) != 1:
+            raise MarketDataError(
+                f"Tencent raw daily requires exactly one bar for {day}; found {len(matches)}"
+            )
+        return matches[0]
 
     def _current_cumulative(
         self,
@@ -502,7 +652,7 @@ class ResilientMarketData:
         ts_code: str,
         requested_date: str,
         args: tuple[Any, ...],
-    ) -> list[Bar]:
+    ) -> Any:
         primary_error: Exception | None = None
         primary_status = "CIRCUIT_OPEN"
         if not self._eastmoney_circuit_open:
@@ -515,7 +665,11 @@ class ResilientMarketData:
                     self._eastmoney_circuit_open = True
 
         event = {
-            "request_type": "daily" if method == "daily_bars" else "minute",
+            "request_type": {
+                "daily_bars": "daily",
+                "raw_daily_bar": "raw_daily",
+                "minute_bars": "minute",
+            }.get(method, method),
             "ts_code": normalize_ts_code(ts_code),
             "requested_date": normalize_date(requested_date, "requested_date"),
             "primary_provider": "EASTMONEY",
@@ -544,6 +698,19 @@ class ResilientMarketData:
 
     def daily_bars(self, ts_code: str, end_date: str, limit: int = 100) -> list[Bar]:
         return self._fallback_call("daily_bars", ts_code, end_date, (end_date, limit))
+
+    def raw_daily_bar(self, ts_code: str, trade_date: str) -> Bar:
+        day = normalize_date(trade_date, "trade_date")
+        bar = self._fallback_call("raw_daily_bar", ts_code, day, (day,))
+        if not isinstance(bar, Bar):
+            raise MarketDataError("raw daily provider returned a non-Bar value")
+        if bar.date != day:
+            raise MarketDataError(
+                f"raw daily provider returned {bar.date}; exact date {day} is required"
+            )
+        if str(bar.price_adjustment).upper() != "NONE":
+            raise MarketDataError("raw daily verification requires price_adjustment=NONE")
+        return bar
 
     def minute_bars(self, ts_code: str, trade_date: str) -> list[Bar]:
         return self._fallback_call("minute_bars", ts_code, trade_date, (trade_date,))

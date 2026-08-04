@@ -3,7 +3,9 @@ from __future__ import annotations
 import json
 import unittest
 from dataclasses import replace
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 from three_table_quant.dashboard import build_dashboard, validate_dashboard
 from three_table_quant.ledger import (
@@ -85,6 +87,40 @@ class FakeMarket:
             )
             for minute in times
         ]
+
+
+class RawOutcomeMarket(FakeMarket):
+    def __init__(self, raw_bar: Bar) -> None:
+        super().__init__()
+        self.raw_bar = raw_bar
+        self.raw_calls = 0
+
+    def raw_daily_bar(self, code: str, trade_date: str) -> Bar:
+        self.raw_calls += 1
+        return self.raw_bar
+
+
+def add_t_day_facts(
+    item: dict,
+    *,
+    stage_transition: str = "2→3",
+    d_close: float = 10.0,
+    limit_up: float = 11.0,
+) -> None:
+    item["candidates"][0]["source_values"] = {
+        "premium_top10": {
+            "晋阶": stage_transition,
+            "sector": "测试行业",
+            "close_T": d_close,
+        },
+        "decision_table": {
+            "stage_transition": stage_transition,
+            "industry": "测试行业",
+            "d_close": d_close,
+            "mechanism_limit_pct": 10.0,
+            "estimated_up_limit": limit_up,
+        },
+    }
 
 
 class CapturingEastmoney(EastmoneyMarketData):
@@ -182,6 +218,155 @@ def signal(candidate_count: int = 1) -> dict:
 
 
 class LedgerDashboardTests(unittest.TestCase):
+    def test_t_day_truth_waits_for_close_then_verifies_limit_up_and_promotion(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                10.1,
+                11.0,
+                11.0,
+                10.0,
+                1000,
+                1000000,
+                pct_change=10.0,
+                volume_unit="LOT",
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+                previous_close=10.0,
+            )
+        )
+
+        settle_trades(
+            state,
+            {"auctions": {}},
+            market,
+            EXECUTION,
+            asof_at=datetime(2026, 8, 4, 11, 20, tzinfo=ZoneInfo("Asia/Shanghai")),
+        )
+        validation = state["trades"][0]["t_day_validation"]
+        self.assertEqual(validation["status"], "PENDING")
+        self.assertEqual(market.raw_calls, 0)
+
+        settle_trades(
+            state,
+            {"auctions": {}},
+            market,
+            EXECUTION,
+            asof_at=datetime(2026, 8, 4, 15, 10, tzinfo=ZoneInfo("Asia/Shanghai")),
+        )
+        self.assertEqual(validation["status"], "VERIFIED")
+        self.assertAlmostEqual(validation["t_return"], 0.10)
+        self.assertTrue(validation["touched_limit_up"])
+        self.assertTrue(validation["is_limit_up"])
+        self.assertTrue(validation["is_promoted"])
+        self.assertEqual(validation["stage_transition"], "2→3")
+
+    def test_t_day_touch_without_close_limit_is_not_promoted(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item, stage_transition="3→4")
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                10.1,
+                10.5,
+                11.0,
+                10.0,
+                1000,
+                1000000,
+                volume_unit="LOT",
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+                previous_close=10.0,
+            )
+        )
+        settle_trades(state, {"auctions": {}}, market, EXECUTION, asof_date="20260804")
+        validation = state["trades"][0]["t_day_validation"]
+        self.assertEqual(validation["status"], "VERIFIED")
+        self.assertTrue(validation["touched_limit_up"])
+        self.assertFalse(validation["is_limit_up"])
+        self.assertFalse(validation["is_promoted"])
+
+    def test_t_day_truth_is_independent_of_buy_fill_and_is_immutable(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                10.0,
+                11.0,
+                11.0,
+                10.0,
+                1000,
+                1000000,
+                volume_unit="LOT",
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+            )
+        )
+        no_fill = auction_truth(
+            filled_qty=0,
+            price=None,
+            reason="NO_AUCTION_MATCH",
+            auction_matched_qty=None,
+        )
+        settle_trades(
+            state,
+            {"auctions": {"20260804:600001.SH": no_fill}},
+            market,
+            EXECUTION,
+            asof_date="20260804",
+        )
+        trade = state["trades"][0]
+        self.assertEqual(trade["status"], "BUY_UNFILLED")
+        self.assertTrue(trade["t_day_validation"]["is_promoted"])
+
+        market.raw_bar = replace(market.raw_bar, close=10.0, high=10.0)
+        settle_trades(state, {"auctions": {}}, market, EXECUTION, asof_date="20260805")
+        self.assertTrue(trade["t_day_validation"]["is_promoted"])
+        self.assertEqual(market.raw_calls, 1)
+
+    def test_adjusted_or_conflicting_t_day_truth_is_not_fabricated(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                10.0,
+                11.0,
+                11.0,
+                10.0,
+                1000,
+                1000000,
+                volume_unit="LOT",
+                provider="TEST_QFQ",
+                price_adjustment="QFQ",
+            )
+        )
+        settle_trades(state, {"auctions": {}}, market, EXECUTION, asof_date="20260804")
+        validation = state["trades"][0]["t_day_validation"]
+        self.assertEqual(validation["status"], "UNVERIFIABLE")
+        self.assertIsNone(validation["t_return"])
+        self.assertIsNone(validation["is_limit_up"])
+        self.assertIsNone(validation["is_promoted"])
+
     def test_every_intersection_candidate_gets_one_idempotent_shadow_trade(self) -> None:
         state = empty_state()
         item = signal(candidate_count=5)

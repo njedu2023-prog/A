@@ -8,6 +8,7 @@ from three_table_quant.domain import SourceIssue
 from three_table_quant.http import HttpError
 from three_table_quant.market import (
     Bar,
+    EastmoneyMarketData,
     MarketDataError,
     ResilientMarketData,
     TencentMarketData,
@@ -26,6 +27,19 @@ def _daily_payload(*, key: str = "qfqday", malformed: bool = False) -> dict:
         else ["2026-08-04", "10.00", "10.05", "10.10", "9.95", "12345.000"]
     )
     return {"code": 0, "msg": "", "data": {"sh600001": {key: [row]}}}
+
+
+def _raw_daily_payload(
+    *,
+    date: str = "2026-08-05",
+    malformed: bool = False,
+) -> dict:
+    row = (
+        [date, "10.00", "10.05", "10.04", "9.95", "12345.000"]
+        if malformed
+        else [date, "10.00", "10.05", "10.10", "9.95", "12345.000"]
+    )
+    return {"code": 0, "msg": "", "data": {"sh600001": {"day": [row]}}}
 
 
 def _minute_payloads(
@@ -89,17 +103,21 @@ class RouteHttp:
         self,
         *,
         daily: dict | None = None,
+        raw_daily: dict | None = None,
         query: dict | None = None,
         mkline: dict | None = None,
     ) -> None:
         self.daily = daily
+        self.raw_daily = raw_daily
         self.query = query
         self.mkline = mkline
         self.urls: list[str] = []
 
     def get_bytes(self, url: str) -> bytes:
         self.urls.append(url)
-        if "/fqkline/get" in url and self.daily is not None:
+        if "/appstock/app/kline/kline" in url and self.raw_daily is not None:
+            payload = self.raw_daily
+        elif "/fqkline/get" in url and self.daily is not None:
             payload = self.daily
         elif "/minute/query" in url and self.query is not None:
             payload = self.query
@@ -142,6 +160,74 @@ class DailyFallback:
         ]
 
 
+class CapturingEastmoneyRaw(EastmoneyMarketData):
+    def __init__(self, lines: list[str]) -> None:
+        self.lines = lines
+        self.params: dict = {}
+
+    def _request(self, params: dict) -> dict:
+        self.params = params
+        return {"data": {"klines": self.lines}}
+
+
+class RawTransportFails:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, str]] = []
+
+    def raw_daily_bar(self, ts_code: str, trade_date: str) -> Bar:
+        self.calls.append((ts_code, trade_date))
+        raise HttpError("raw provider unavailable")
+
+
+class RawFallback:
+    def __init__(self, *, date: str = "20260805", adjustment: str = "NONE") -> None:
+        self.date = date
+        self.adjustment = adjustment
+        self.calls: list[tuple[str, str]] = []
+
+    def raw_daily_bar(self, ts_code: str, trade_date: str) -> Bar:
+        self.calls.append((ts_code, trade_date))
+        return Bar(
+            date=self.date,
+            time=None,
+            open=10.0,
+            close=10.5,
+            high=10.5,
+            low=9.9,
+            volume=100.0,
+            amount=0.0,
+            volume_unit="LOT",
+            provider="TENCENT",
+            price_adjustment=self.adjustment,
+        )
+
+
+class EastmoneyRawDailyTests(unittest.TestCase):
+    def test_raw_daily_uses_fqt_zero_and_exact_unadjusted_bar(self) -> None:
+        market = CapturingEastmoneyRaw(
+            ["2026-08-05,10.00,10.50,10.50,9.95,12345,12900000,5.50,5.00,0.50,2.00"]
+        )
+
+        bar = market.raw_daily_bar("600001.SH", "20260805")
+
+        self.assertEqual(market.params["fqt"], 0)
+        self.assertEqual(market.params["beg"], "20260805")
+        self.assertEqual(market.params["end"], "20260805")
+        self.assertEqual(bar.date, "20260805")
+        self.assertEqual(bar.close, 10.5)
+        self.assertEqual(bar.previous_close, 10.0)
+        self.assertEqual(bar.pct_change, 5.0)
+        self.assertEqual(bar.provider, "EASTMONEY")
+        self.assertEqual(bar.price_adjustment, "NONE")
+
+    def test_raw_daily_never_substitutes_a_nearby_date(self) -> None:
+        market = CapturingEastmoneyRaw(
+            ["2026-08-04,10.00,10.10,10.20,9.95,12345,12000000,2.50,1.00,0.10,2.00"]
+        )
+        with self.assertRaisesRegex(MarketDataError, "exactly one bar for 20260805"):
+            market.raw_daily_bar("600001.SH", "20260805")
+
+
 class TencentMarketDataTests(unittest.TestCase):
     def test_daily_qfqday_and_day_are_both_supported_without_fabricated_amount(self) -> None:
         for key in ("qfqday", "day"):
@@ -168,6 +254,32 @@ class TencentMarketDataTests(unittest.TestCase):
         market = TencentMarketData(RouteHttp(daily=_daily_payload(malformed=True)))
         with self.assertRaisesRegex(MarketDataError, "no valid bars"):
             market.daily_bars("600001.SH", "20260804")
+
+    def test_raw_daily_uses_raw_day_endpoint_and_exact_unadjusted_bar(self) -> None:
+        http = RouteHttp(raw_daily=_raw_daily_payload())
+        bar = TencentMarketData(http).raw_daily_bar("600001.SH", "20260805")
+
+        self.assertEqual(bar.date, "20260805")
+        self.assertEqual(bar.close, 10.05)
+        self.assertEqual(bar.provider, "TENCENT")
+        self.assertEqual(bar.price_adjustment, "NONE")
+        self.assertIn("/appstock/app/kline/kline", http.urls[0])
+        self.assertNotIn("qfq", http.urls[0].lower())
+        param = urllib.parse.parse_qs(
+            urllib.parse.urlsplit(http.urls[0]).query
+        )["param"][0]
+        self.assertEqual(param.split(",")[1], "day")
+        self.assertEqual(param.split(",")[2:4], ["2026-08-05", "2026-08-05"])
+
+    def test_raw_daily_fails_closed_for_wrong_date_or_malformed_ohlc(self) -> None:
+        with self.assertRaisesRegex(MarketDataError, "exactly one bar for 20260805"):
+            TencentMarketData(
+                RouteHttp(raw_daily=_raw_daily_payload(date="2026-08-04"))
+            ).raw_daily_bar("600001.SH", "20260805")
+        with self.assertRaisesRegex(MarketDataError, "OHLCV is inconsistent"):
+            TencentMarketData(
+                RouteHttp(raw_daily=_raw_daily_payload(malformed=True))
+            ).raw_daily_bar("600001.SH", "20260805")
 
     def test_current_day_minute_bars_use_period_end_and_cumulative_differences(self) -> None:
         query, mkline, expected_amounts = _minute_payloads()
@@ -208,6 +320,31 @@ class TencentMarketDataTests(unittest.TestCase):
 
 
 class ResilientMarketDataTests(unittest.TestCase):
+    def test_raw_daily_falls_back_and_preserves_exact_none_adjusted_contract(self) -> None:
+        primary = RawTransportFails()
+        fallback = RawFallback()
+        market = ResilientMarketData(primary=primary, fallback=fallback)
+
+        bar = market.raw_daily_bar("600001.SH", "20260805")
+
+        self.assertEqual(bar.date, "20260805")
+        self.assertEqual(bar.price_adjustment, "NONE")
+        self.assertEqual(primary.calls, [("600001.SH", "20260805")])
+        self.assertEqual(fallback.calls, [("600001.SH", "20260805")])
+        self.assertEqual(market.fallback_events[0]["request_type"], "raw_daily")
+
+    def test_raw_daily_rejects_wrong_date_and_adjusted_fallback(self) -> None:
+        with self.assertRaisesRegex(MarketDataError, "exact date 20260805"):
+            ResilientMarketData(
+                primary=RawTransportFails(),
+                fallback=RawFallback(date="20260804"),
+            ).raw_daily_bar("600001.SH", "20260805")
+        with self.assertRaisesRegex(MarketDataError, "price_adjustment=NONE"):
+            ResilientMarketData(
+                primary=RawTransportFails(),
+                fallback=RawFallback(adjustment="QFQ"),
+            ).raw_daily_bar("600001.SH", "20260805")
+
     def test_first_transport_failure_opens_process_circuit_and_aggregates_warning(self) -> None:
         primary = AlwaysTransportFails()
         fallback = DailyFallback()

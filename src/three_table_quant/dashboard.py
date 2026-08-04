@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from .candidate_facts import candidate_display_fields as _candidate_display_fields
 from .domain import iso_date
 
 
@@ -24,6 +25,7 @@ NONFINAL_STATUSES = {
 }
 ALLOWED_SLOT_STATUSES = FINAL_CASH_STATUSES | NONFINAL_STATUSES | {"CLOSED"}
 ALLOWED_PORTFOLIO_STATUSES = PORTFOLIO_FINAL_STATUSES | NONFINAL_STATUSES
+T_DAY_VALIDATION_STATUSES = {"PENDING", "UNVERIFIABLE", "VERIFIED"}
 
 
 def _finite(value: Any) -> bool:
@@ -72,54 +74,35 @@ def _result(value: float | None, is_final: bool) -> str:
     return "FLAT"
 
 
-def _candidate_display_fields(candidate: dict[str, Any]) -> dict[str, str]:
-    """Read frozen promotion and industry labels without inferring from the code."""
-
-    source_values = candidate.get("source_values")
-    sources = source_values if isinstance(source_values, dict) else {}
-
-    def source(source_id: str) -> dict[str, Any]:
-        value = sources.get(source_id)
-        return value if isinstance(value, dict) else {}
-
-    decision = source("decision_table")
-    premium = source("premium_top10")
-    a_top10 = source("a_top10")
-
-    def first_text(*values: Any) -> str:
-        for value in values:
-            text = str(value or "").strip()
-            if text:
-                return text
-        return "—"
-
-    def first_positive_number(*values: Any) -> float | None:
-        for value in values:
-            if _finite(value) and float(value) > 0:
-                return float(value)
-        return None
-
+def _t_day_validation(trade: dict[str, Any] | None) -> dict[str, Any]:
+    raw = (trade or {}).get("t_day_validation")
+    payload = raw if isinstance(raw, dict) else {}
     return {
-        "stage_transition": first_text(
-            decision.get("stage_transition"),
-            premium.get("stage_transition"),
-            premium.get("晋阶"),
-            a_top10.get("advance_stage"),
-            a_top10.get("晋阶"),
-        ),
-        "industry": first_text(
-            decision.get("industry"),
-            premium.get("sector"),
-            a_top10.get("board"),
-        ),
-        "d_close": first_positive_number(
-            decision.get("d_close"),
-            premium.get("close_T"),
-            premium.get("d_close"),
-            a_top10.get("d_close"),
-            a_top10.get("close_T"),
-        ),
+        "status": str(payload.get("status") or "PENDING").upper(),
+        "t_return": payload.get("t_return"),
+        "is_limit_up": payload.get("is_limit_up"),
+        "is_promoted": payload.get("is_promoted"),
     }
+
+
+def _validate_t_day_validation(payload: Any) -> None:
+    if not isinstance(payload, dict):
+        raise ValueError("t_day_validation must be an object")
+    status = payload.get("status")
+    if status not in T_DAY_VALIDATION_STATUSES:
+        raise ValueError(f"unsupported t_day_validation status: {status}")
+    value = payload.get("t_return")
+    is_limit_up = payload.get("is_limit_up")
+    is_promoted = payload.get("is_promoted")
+    if status == "VERIFIED":
+        if not _finite(value):
+            raise ValueError("VERIFIED t_day_validation requires a finite t_return")
+        if not isinstance(is_limit_up, bool) or not isinstance(is_promoted, bool):
+            raise ValueError("VERIFIED t_day_validation requires boolean outcomes")
+        if is_promoted and not is_limit_up:
+            raise ValueError("T-day promotion requires a T-day limit-up hit")
+    elif any(item is not None for item in (value, is_limit_up, is_promoted)):
+        raise ValueError("non-verified t_day_validation outcomes must remain null")
 
 
 def _portfolio_candidate(
@@ -144,6 +127,7 @@ def _portfolio_candidate(
         "symbol": candidate["ts_code"],
         "name": candidate["name"],
         **_candidate_display_fields(candidate),
+        "t_day_validation": _t_day_validation(trade),
         "status": status,
         "is_final": is_final,
         "buy_price": buy.get("avg_price"),
@@ -281,6 +265,7 @@ def build_dashboard(
                     "buy": None,
                     "exit": None,
                     "pnl": None,
+                    "t_day_validation": None,
                 }
                 daily_return = 0.0
                 is_final = True
@@ -294,6 +279,7 @@ def build_dashboard(
                     "exit": trade.get("exit"),
                     "pnl": trade.get("pnl"),
                     "diagnostics": trade.get("diagnostics", {}),
+                    "t_day_validation": _t_day_validation(trade),
                 }
                 if trade["status"] == "CLOSED":
                     daily_return = float(trade["pnl"]["net_return_on_allocated"])
@@ -329,6 +315,11 @@ def build_dashboard(
                         "symbol": item["ts_code"],
                         "name": item["name"],
                         **_candidate_display_fields(item),
+                        "t_day_validation": _t_day_validation(
+                            trades_by_key.get(
+                                (signal["decision_date"], item.get("rank"))
+                            )
+                        ),
                         "rank": item.get("rank"),
                         "model_score": item.get("metrics", {}).get("utility_score"),
                         "action": item.get("action"),
@@ -501,6 +492,7 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 raise ValueError("candidate d_close must be positive when present")
             if candidate.get("action") != "SHADOW":
                 raise ValueError("every intersection candidate must remain SHADOW")
+            _validate_t_day_validation(candidate.get("t_day_validation"))
             eligible = candidate.get("metrics", {}).get("policy_trade_eligible")
             if not isinstance(eligible, bool):
                 raise ValueError("policy_trade_eligible must remain independently recorded")
@@ -523,6 +515,12 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                     raise ValueError("missing fixed rank must remain NOT_AVAILABLE")
             elif slot.get("candidate_id") != candidate["candidate_id"]:
                 raise ValueError("fixed-rank slot candidate does not match ranked candidate")
+            if candidate is not None:
+                _validate_t_day_validation(slot.get("t_day_validation"))
+                if slot.get("t_day_validation") != candidate.get("t_day_validation"):
+                    raise ValueError(
+                        "fixed-rank T-day validation does not match ranked candidate"
+                    )
             if status in {"NOT_AVAILABLE", "NO_TRADE"}:
                 if any(slot.get(field) is not None for field in ("buy", "exit", "pnl")):
                     raise ValueError(f"{status} slot cannot contain execution data")
@@ -712,6 +710,11 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 or not _same_number(detail.get("d_close"), candidate.get("d_close"))
             ):
                 raise ValueError("portfolio candidate display fields do not match ranked candidate")
+            _validate_t_day_validation(detail.get("t_day_validation"))
+            if detail.get("t_day_validation") != candidate.get("t_day_validation"):
+                raise ValueError(
+                    "portfolio candidate T-day validation does not match ranked candidate"
+                )
             status = detail.get("status")
             if status not in ALLOWED_PORTFOLIO_STATUSES:
                 raise ValueError(f"unsupported portfolio candidate status: {status}")

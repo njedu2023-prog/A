@@ -64,6 +64,40 @@ function resultText(result, isFinal) {
   return statusText(result);
 }
 
+function tDayValidation(item) {
+  const validation = item?.t_day_validation;
+  if (!validation || typeof validation !== "object") {
+    return {status: "PENDING", t_return: null, is_limit_up: null, is_promoted: null};
+  }
+  return validation;
+}
+
+function tDayReturnText(item) {
+  const validation = tDayValidation(item);
+  if (validation.status === "PENDING") return "待验证";
+  if (validation.status === "UNVERIFIABLE") return "待补证";
+  return validation.status === "VERIFIED" && finite(validation.t_return)
+    ? pct(validation.t_return)
+    : "待补证";
+}
+
+function tDayOutcomeText(item, field) {
+  const validation = tDayValidation(item);
+  if (validation.status === "PENDING") return "待验证";
+  if (validation.status === "UNVERIFIABLE") return "待补证";
+  if (validation.status !== "VERIFIED" || typeof validation[field] !== "boolean") {
+    return "待补证";
+  }
+  return validation[field] ? "是" : "否";
+}
+
+function verifiedTReturn(item) {
+  const validation = tDayValidation(item);
+  return validation.status === "VERIFIED" && finite(validation.t_return)
+    ? Number(validation.t_return)
+    : null;
+}
+
 function badge(status, title) {
   const good = ["CLOSED", "CASH", "BUY_UNFILLED", "PROFIT", "RANKED", "NO_CANDIDATE"];
   const bad = ["INPUT_BLOCKED", "EXIT_DELAYED", "LOSS"];
@@ -139,6 +173,12 @@ function fallbackPortfolioDaily() {
         stage_transition: candidate.stage_transition,
         industry: candidate.industry,
         d_close: candidate.d_close,
+        t_day_validation: candidate.t_day_validation || slot.t_day_validation || {
+          status: "PENDING",
+          t_return: null,
+          is_limit_up: null,
+          is_promoted: null
+        },
         status,
         is_final: isFinal,
         buy_price: slot.buy?.avg_price ?? null,
@@ -479,6 +519,8 @@ function renderCandidates() {
     const ledgerStatus = ledgerItem?.status || "PENDING";
     const stateBadge = badge(ledgerStatus, reasonText(item.action_reason));
     stateBadge.classList.add("candidate-state");
+    const validationItem = ledgerItem || item;
+    const tReturn = verifiedTReturn(validationItem);
     return [
       {text: String(item.rank), align: "left"},
       {text: item.symbol, align: "left", className: "code"},
@@ -486,6 +528,9 @@ function renderCandidates() {
       {text: item.stage_transition || "—"},
       {text: item.industry || "—", align: "left"},
       {text: price(item.d_close)},
+      {text: tDayReturnText(validationItem), className: tone(tReturn)},
+      {text: tDayOutcomeText(validationItem, "is_limit_up")},
+      {text: tDayOutcomeText(validationItem, "is_promoted")},
       {text: pct(item.model_score), className: tone(item.model_score)},
       {text: probability(item.metrics?.p_fill_0925)},
       {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
@@ -496,14 +541,17 @@ function renderCandidates() {
     {text: "排名", align: "left"},
     {text: "代码", align: "left"},
     {text: "股票", align: "left"},
-    "晋级",
+    "晋级目标",
     {text: "行业板块", align: "left"},
     "D收盘价",
+    "T日涨跌幅",
+    "是否涨停",
+    "是否晋级",
     "风险效用",
     "竞价成交概率",
     "预期净收益",
     "执行状态"
-  ], rows, "940px");
+  ], rows, "1180px");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }
@@ -554,11 +602,15 @@ function renderDaily() {
     const candidates = (day.candidates || []).slice().sort((a, b) => Number(a.rank || 9999) - Number(b.rank || 9999));
     const childRows = candidates.map((item) => {
       const netReturn = item.is_final === true && finite(item.net_return) ? Number(item.net_return) : null;
+      const tReturn = verifiedTReturn(item);
       return [
         {content: stockCell(item), align: "left"},
         {text: item.stage_transition || "—"},
         {text: item.industry || "—", align: "left"},
         {text: price(item.d_close)},
+        {text: tDayReturnText(item), className: tone(tReturn)},
+        {text: tDayOutcomeText(item, "is_limit_up")},
+        {text: tDayOutcomeText(item, "is_promoted")},
         {text: price(item.buy_price)},
         {text: price(item.exit_price)},
         {text: pct(netReturn), className: tone(netReturn)},
@@ -569,15 +621,18 @@ function renderDaily() {
     if (childRows.length) {
       detailWrap.append(table([
         {text: "股票", align: "left"},
-        "晋级",
+        "晋级目标",
         {text: "行业板块", align: "left"},
         "D收盘价",
+        "T日涨跌幅",
+        "是否涨停",
+        "是否晋级",
         "9:25入场价",
         "T+1退出价",
         "净收益",
         "结果",
         "状态"
-      ], childRows, "960px"));
+      ], childRows, "1220px"));
     } else {
       detailWrap.append(node("div", "该批次暂无候选明细。", "empty"));
     }

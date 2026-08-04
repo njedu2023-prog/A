@@ -7,6 +7,10 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from three_table_quant.candidate_facts import (
+    candidate_display_fields,
+    candidate_validation_inputs,
+)
 from three_table_quant.domain import ContractError
 from three_table_quant.sources import (
     SOURCE_A,
@@ -67,6 +71,7 @@ PREMIUM_HEADER = [
     "premium_eligible",
     "premium_bucket",
     "model_can_rank",
+    "close_T",
 ]
 
 
@@ -104,6 +109,7 @@ def premium_csv(
     buy_date: str = "20260804",
     exit_date: str = "20260805",
     is_top10: str = "1",
+    close_T: object = 10.25,
 ) -> bytes:
     return csv_bytes(
         PREMIUM_HEADER,
@@ -125,6 +131,7 @@ def premium_csv(
                 0,
                 "WATCH",
                 0,
+                close_T,
             ]
             for rank, code in enumerate(codes, start=1)
         ],
@@ -145,6 +152,8 @@ def decision_row(
         "stage_transition": "2→3",
         "industry": "IT服务Ⅱ",
         "d_close": 10.25,
+        "mechanism_limit_pct": 10.0,
+        "estimated_up_limit": 11.28,
         "decision_p_fill": 0.5,
         "decision_e_ret": 0.01,
         "decision_ev": -0.001,
@@ -285,6 +294,67 @@ class SourceContractTests(unittest.TestCase):
         )
         result = strict_intersection([self.a, self.premium, decision])
         self.assertEqual([item.ts_code for item in result], ["600000.SH"])
+        display = candidate_display_fields(result[0])
+        validation = candidate_validation_inputs(result[0])
+        self.assertEqual(
+            display,
+            {
+                "stage_transition": "2→3",
+                "industry": "IT服务Ⅱ",
+                "d_close": 10.25,
+                "mechanism_limit_pct": 10.0,
+                "estimated_up_limit": 11.28,
+            },
+        )
+        self.assertEqual(validation["decision_d_close"], 10.25)
+        self.assertEqual(validation["premium_d_close"], 10.25)
+        self.assertEqual(validation["limit_up_price"], 11.28)
+        self.assertEqual(
+            validation["limit_up_source"],
+            "DECISION_FROZEN_LIMIT_PRICE",
+        )
+
+    def test_d_close_uses_decision_and_cross_checks_premium(self) -> None:
+        decision = self.decision([decision_row(1, "600000.SH")])
+        premium = parse_premium(
+            premium_csv(
+                ["600000.SH"],
+                close_T=10.254,
+            ),
+            "premium.csv",
+        )
+        candidate = strict_intersection([self.a, premium, decision])[0]
+        facts = candidate_validation_inputs(candidate)
+        self.assertEqual(facts["d_close"], 10.25)
+        self.assertEqual(facts["premium_d_close"], 10.254)
+
+        mismatched = parse_premium(
+            premium_csv(
+                ["600000.SH"],
+                close_T=10.26,
+            ),
+            "premium.csv",
+        )
+        with self.assertRaisesRegex(
+            ContractError,
+            "Decision d_close and Premium close_T disagree",
+        ):
+            strict_intersection([self.a, mismatched, decision])
+
+    def test_frozen_limit_price_must_match_d_close_and_mechanism(self) -> None:
+        invalid = decision_row(1, "600000.SH")
+        invalid["estimated_up_limit"] = 11.27
+        with self.assertRaisesRegex(
+            ContractError,
+            "estimated_up_limit disagrees",
+        ):
+            strict_intersection(
+                [
+                    self.a,
+                    self.premium,
+                    self.decision([invalid]),
+                ]
+            )
 
     def test_decision_uses_visible_top10_not_full_candidate_pool(self) -> None:
         displayed = [
@@ -369,6 +439,45 @@ class SourceContractTests(unittest.TestCase):
                 premium_csv(["600000.SH"], is_top10="0"),
                 "premium.csv",
             )
+
+    def test_premium_requires_finite_positive_d_close(self) -> None:
+        for invalid in ("", 0, -1, "nan", "inf", True):
+            with self.subTest(close_T=invalid), self.assertRaises(ContractError):
+                parse_premium(
+                    premium_csv(["600000.SH"], close_T=invalid),
+                    "premium.csv",
+                )
+
+        lines = premium_csv(["600000.SH"]).decode().strip().splitlines()
+        without_close = (
+            ",".join(lines[0].split(",")[:-1])
+            + "\n"
+            + ",".join(lines[1].split(",")[:-1])
+            + "\n"
+        ).encode()
+        with self.assertRaisesRegex(ContractError, "missing required columns"):
+            parse_premium(without_close, "premium.csv")
+
+    def test_decision_requires_frozen_candidate_facts(self) -> None:
+        required_positive = (
+            "d_close",
+            "mechanism_limit_pct",
+            "estimated_up_limit",
+        )
+        for field in required_positive:
+            for invalid in ("", 0, -1, "nan", "inf", True):
+                row = decision_row(1, "600000.SH")
+                row[field] = invalid
+                with (
+                    self.subTest(field=field, value=invalid),
+                    self.assertRaises(ContractError),
+                ):
+                    self.decision([row])
+
+        row = decision_row(1, "600000.SH")
+        row["industry"] = " "
+        with self.assertRaisesRegex(ContractError, "industry must be non-empty"):
+            self.decision([row])
 
     def test_consistent_duplicate_premium_header_is_merged_with_warning(self) -> None:
         lines = premium_csv(["600000.SH"]).decode().strip().splitlines()

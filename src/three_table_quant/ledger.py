@@ -8,11 +8,15 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from .calendar import TradingCalendar, parse_calendar_date
+from .candidate_facts import candidate_validation_inputs
 from .domain import AuctionTruth, ContractError, normalize_date
 from .market import daily_bar_on
 
 
 STATE_SCHEMA = "three_table_state_v1"
+T_DAY_PENDING = "PENDING"
+T_DAY_VERIFIED = "VERIFIED"
+T_DAY_UNVERIFIABLE = "UNVERIFIABLE"
 
 
 def empty_state() -> dict[str, Any]:
@@ -125,6 +129,7 @@ def ensure_shadow_trades(
                 False,
             )
             existing["execution_mode"] = "SHADOW_ONLY"
+            _ensure_t_day_validation(existing, candidate)
             continue
         trade = {
             "trade_id": trade_id,
@@ -148,9 +153,53 @@ def ensure_shadow_trades(
             "pnl": None,
             "diagnostics": {},
         }
+        _ensure_t_day_validation(trade, candidate)
         state["trades"].append(trade)
         existing_by_id[trade_id] = trade
     state["trades"].sort(key=lambda item: (item["decision_date"], item["rank"]))
+
+
+def _ensure_t_day_validation(
+    trade: dict[str, Any],
+    candidate: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Add a retryable T-day outcome record without changing final truth."""
+
+    current = trade.get("t_day_validation")
+    if not isinstance(current, dict):
+        current = {}
+        trade["t_day_validation"] = current
+    current.setdefault("status", T_DAY_PENDING)
+    current.setdefault("trade_date", trade.get("buy_date"))
+    current.setdefault("verified_at", None)
+    current.setdefault("t_close", None)
+    current.setdefault("t_return", None)
+    current.setdefault("t_return_source", None)
+    current.setdefault("reference_close", None)
+    current.setdefault("high", None)
+    current.setdefault("limit_up_price", None)
+    current.setdefault("limit_up_source", None)
+    current.setdefault("touched_limit_up", None)
+    current.setdefault("is_limit_up", None)
+    current.setdefault("is_promoted", None)
+    current.setdefault("stage_transition", None)
+    current.setdefault("d_close", None)
+    current.setdefault("provider", None)
+    current.setdefault("price_adjustment", None)
+    current.setdefault("reason", "waiting_for_t_close")
+
+    if candidate is None or current.get("status") == T_DAY_VERIFIED:
+        return current
+    try:
+        inputs = candidate_validation_inputs(candidate)
+    except ValueError as exc:
+        current["reason"] = "candidate_validation_inputs_invalid"
+        trade.setdefault("diagnostics", {})["t_day_candidate_error"] = str(exc)
+        return current
+    trade.setdefault("diagnostics", {}).pop("t_day_candidate_error", None)
+    for field in ("stage_transition", "d_close", "limit_up_price", "limit_up_source"):
+        current[field] = inputs.get(field)
+    return current
 
 
 def _commission(amount: float, execution: dict[str, Any]) -> float:
@@ -717,21 +766,258 @@ def _exit_dates_through(
     return dates
 
 
+def _settlement_clock(
+    asof_date: str | None,
+    asof_at: datetime | None,
+) -> datetime:
+    zone = ZoneInfo("Asia/Shanghai")
+    if asof_at is not None:
+        value = asof_at.replace(tzinfo=zone) if asof_at.tzinfo is None else asof_at.astimezone(zone)
+        if asof_date is not None and normalize_date(asof_date, "asof_date") != value.strftime("%Y%m%d"):
+            raise ContractError("asof_date and asof_at must identify the same local date")
+        return value
+    if asof_date is not None:
+        day = normalize_date(asof_date, "asof_date")
+        return datetime.strptime(f"{day} 23:59:59", "%Y%m%d %H:%M:%S").replace(tzinfo=zone)
+    return datetime.now(zone)
+
+
+def _t_day_gate_open(
+    trade_date: str,
+    now: datetime,
+    execution: dict[str, Any],
+) -> bool:
+    day = normalize_date(trade_date, "t_day_validation.trade_date")
+    today = now.strftime("%Y%m%d")
+    if day < today:
+        return True
+    if day > today:
+        return False
+    threshold = str(execution.get("t_validation_after_local_time", "15:10"))
+    try:
+        gate = datetime.strptime(threshold, "%H:%M").time()
+    except ValueError as exc:
+        raise ContractError("t_validation_after_local_time must use HH:MM") from exc
+    return now.time().replace(tzinfo=None) >= gate
+
+
+def _mark_t_day_unverifiable(
+    validation: dict[str, Any],
+    trade: dict[str, Any],
+    reason: str,
+    detail: str | None = None,
+) -> None:
+    validation.update(
+        {
+            "status": T_DAY_UNVERIFIABLE,
+            "verified_at": None,
+            "t_close": None,
+            "t_return": None,
+            "t_return_source": None,
+            "reference_close": None,
+            "high": None,
+            "touched_limit_up": None,
+            "is_limit_up": None,
+            "is_promoted": None,
+            "provider": None,
+            "price_adjustment": None,
+            "reason": reason,
+        }
+    )
+    diagnostics = trade.setdefault("diagnostics", {})
+    if detail:
+        diagnostics["t_day_validation_error"] = detail
+    else:
+        diagnostics.pop("t_day_validation_error", None)
+
+
+def _settle_t_day_validation(
+    trade: dict[str, Any],
+    provider: Any,
+    execution: dict[str, Any],
+    now: datetime,
+) -> None:
+    validation = _ensure_t_day_validation(trade)
+    if validation.get("status") == T_DAY_VERIFIED:
+        return
+    trade_date = str(validation.get("trade_date") or trade.get("buy_date") or "")
+    if not trade_date or not _t_day_gate_open(trade_date, now, execution):
+        validation["status"] = T_DAY_PENDING
+        validation["reason"] = "waiting_for_t_close"
+        return
+
+    stage = str(validation.get("stage_transition") or "")
+    d_close = validation.get("d_close")
+    limit_up_price = validation.get("limit_up_price")
+    limit_up_source = str(validation.get("limit_up_source") or "")
+    if (
+        stage not in {"2→3", "3→4"}
+        or not isinstance(d_close, (int, float))
+        or not math.isfinite(float(d_close))
+        or float(d_close) <= 0
+        or not isinstance(limit_up_price, (int, float))
+        or not math.isfinite(float(limit_up_price))
+        or float(limit_up_price) <= 0
+        or not limit_up_source
+    ):
+        _mark_t_day_unverifiable(
+            validation,
+            trade,
+            "candidate_validation_inputs_unavailable",
+        )
+        return
+
+    try:
+        bar = provider.raw_daily_bar(trade["ts_code"], trade_date)
+    except Exception as exc:
+        _mark_t_day_unverifiable(
+            validation,
+            trade,
+            "raw_t_day_market_data_unavailable",
+            str(exc),
+        )
+        return
+    if bar is None:
+        _mark_t_day_unverifiable(
+            validation,
+            trade,
+            "exact_t_day_bar_unavailable",
+        )
+        return
+    try:
+        bar_day = normalize_date(bar.date, "raw T-day bar date")
+        adjustment = str(getattr(bar, "price_adjustment", "")).upper()
+        provider_name = str(getattr(bar, "provider", "UNSPECIFIED"))
+        tick = float(
+            getattr(bar, "price_tick", None)
+            or execution.get("price_tick", 0.01)
+        )
+        prices = (
+            float(bar.open),
+            float(bar.close),
+            float(bar.high),
+            float(bar.low),
+        )
+    except Exception as exc:
+        _mark_t_day_unverifiable(
+            validation,
+            trade,
+            "raw_t_day_bar_contract_failed",
+            str(exc),
+        )
+        return
+    open_price, close_price, high, low = prices
+    limit_price = float(limit_up_price)
+    tolerance = tick / 2.0 + 1e-9
+    previous_close_raw = getattr(bar, "previous_close", None)
+    try:
+        previous_close = (
+            float(previous_close_raw)
+            if previous_close_raw is not None
+            else None
+        )
+    except (TypeError, ValueError):
+        previous_close = float("nan")
+    if (
+        bar_day != trade_date
+        or adjustment != "NONE"
+        or tick <= 0
+        or not all(math.isfinite(value) and value > 0 for value in prices)
+        or high < low
+        or low > min(open_price, close_price) + tolerance
+        or high < max(open_price, close_price) - tolerance
+        or high > limit_price + tolerance
+        or (
+            previous_close is not None
+            and (
+                not math.isfinite(previous_close)
+                or previous_close <= 0
+                or not math.isclose(
+                    previous_close,
+                    float(d_close),
+                    rel_tol=0.0,
+                    abs_tol=0.005,
+                )
+            )
+        )
+    ):
+        _mark_t_day_unverifiable(
+            validation,
+            trade,
+            "raw_t_day_bar_contract_failed",
+            (
+                f"date={getattr(bar, 'date', None)};"
+                f"adjustment={adjustment};provider={provider_name}"
+            ),
+        )
+        return
+
+    cash_return = close_price / float(d_close) - 1.0
+    reported_pct = getattr(bar, "pct_change", None)
+    try:
+        reported_return = (
+            float(reported_pct) / 100.0
+            if reported_pct is not None and math.isfinite(float(reported_pct))
+            else None
+        )
+    except (TypeError, ValueError):
+        reported_return = None
+    if reported_return is not None:
+        if not math.isclose(
+            reported_return,
+            cash_return,
+            rel_tol=0.0,
+            abs_tol=0.00015,
+        ):
+            _mark_t_day_unverifiable(
+                validation,
+                trade,
+                "t_day_return_contract_conflict",
+                f"reported={reported_return};cash={cash_return}",
+            )
+            return
+        t_return = reported_return
+        t_return_source = "PROVIDER_PCT_CHANGE"
+    else:
+        t_return = cash_return
+        t_return_source = "FROZEN_D_CLOSE"
+
+    is_limit_up = abs(close_price - limit_price) <= tolerance
+    validation.update(
+        {
+            "status": T_DAY_VERIFIED,
+            "verified_at": now.isoformat(timespec="seconds"),
+            "t_close": close_price,
+            "t_return": t_return,
+            "t_return_source": t_return_source,
+            "reference_close": previous_close if previous_close is not None else float(d_close),
+            "high": high,
+            "touched_limit_up": high >= limit_price - tolerance,
+            "is_limit_up": is_limit_up,
+            "is_promoted": bool(is_limit_up and stage in {"2→3", "3→4"}),
+            "provider": provider_name,
+            "price_adjustment": adjustment,
+            "reason": "t_day_eod_verified",
+        }
+    )
+    trade.setdefault("diagnostics", {}).pop("t_day_validation_error", None)
+
+
 def settle_trades(
     state: dict[str, Any],
     truth: dict[str, Any],
     provider: Any,
     execution: dict[str, Any],
     asof_date: str | None = None,
+    asof_at: datetime | None = None,
 ) -> None:
-    today = normalize_date(
-        asof_date or datetime.now(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d"),
-        "asof_date",
-    )
+    now = _settlement_clock(asof_date, asof_at)
+    today = now.strftime("%Y%m%d")
     calendar_path = execution.get("trading_calendar_path")
     calendar = TradingCalendar.from_file(calendar_path) if calendar_path else TradingCalendar.from_file()
     for trade in state["trades"]:
         _migrate_trade_execution(trade, execution)
+        _settle_t_day_validation(trade, provider, execution, now)
         if trade["status"] in {"PENDING_BUY", "BUY_UNVERIFIABLE"} and trade["buy_date"] <= today:
             _settle_entry(trade, truth, provider, execution)
         if (
