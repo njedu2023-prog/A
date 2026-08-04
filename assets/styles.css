@@ -266,15 +266,16 @@ td.name { color: var(--ink); font-weight: 570; }
 .ledger-fact small {
   display: block;
   margin-bottom: 2px;
-  color: var(--subtle);
+  color: #56615b;
   font-size: 9px;
+  font-weight: 620;
 }
 .ledger-fact strong {
   display: block;
   overflow: hidden;
-  color: #28332d;
+  color: var(--ink);
   font-size: 12px;
-  font-weight: 560;
+  font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
