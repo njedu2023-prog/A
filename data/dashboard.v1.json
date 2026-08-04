@@ -1,0 +1,609 @@
+{
+  "schema_version": "dashboard_v1",
+  "generated_at": "2026-08-04T20:18:41+08:00",
+  "timezone": "Asia/Shanghai",
+  "return_unit": "decimal",
+  "policy": {
+    "intersection": "ALL_THREE_ACTUAL_ROWS",
+    "tracked_ranks": [
+      1,
+      2,
+      3
+    ],
+    "allow_backfill": false,
+    "execution_mode": "SHADOW_ONLY",
+    "entry": "T 09:25 opening call auction exact fill truth required",
+    "exit": "T+1 11:00-11:05 five one-minute slices"
+  },
+  "current_run": {
+    "status": "RANKED",
+    "message": "D日信号已冻结；保留7支候选且不事后改写",
+    "source_table_counts": {
+      "a_top10": 10,
+      "premium_top10": 10,
+      "decision_table": 123
+    },
+    "source_dates": {
+      "a_top10": {
+        "D": "20260804",
+        "T": "20260805",
+        "T1": null
+      },
+      "premium_top10": {
+        "D": "20260804",
+        "T": "20260805",
+        "T1": "20260806"
+      },
+      "decision_table": {
+        "D": "20260804",
+        "T": "20260805",
+        "T1": "20260806"
+      }
+    },
+    "intersection_count": 7
+  },
+  "source_issues": [
+    {
+      "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
+      "severity": "warning",
+      "source_id": "premium_top10",
+      "message": "重复CSV列名的逐行值一致或仅一侧非空，已安全合并；源仓库仍应修复表头",
+      "details": {
+        "headers": [
+          "intraday_hard_risk_flag"
+        ],
+        "row_count": 10
+      }
+    },
+    {
+      "code": "A_TOP10_INTRADAY_COVERAGE_ZERO",
+      "severity": "warning",
+      "source_id": "a_top10",
+      "message": "当前展示行的 intraday_available 全为0；成员关系仍可读取，但分时证据缺失",
+      "details": {
+        "row_count": 10
+      }
+    },
+    {
+      "code": "PREMIUM_NO_ELIGIBLE_ROWS",
+      "severity": "warning",
+      "source_id": "premium_top10",
+      "message": "当前 Premium 展示行的 premium_eligible 全为0；保留其表内成员关系，但不把该状态视为交易背书",
+      "details": {
+        "row_count": 10
+      }
+    },
+    {
+      "code": "PREMIUM_MODEL_NOT_PROMOTED",
+      "severity": "warning",
+      "source_id": "premium_top10",
+      "message": "当前 Premium 展示行的 model_can_rank 全为 false，模型尚未通过晋级门槛",
+      "details": {
+        "row_count": 10
+      }
+    },
+    {
+      "code": "DECISION_AUXILIARY_COVERAGE_INCOMPLETE",
+      "severity": "warning",
+      "source_id": "decision_table",
+      "message": "Decision辅助模型字段存在缺失；实际展示成员继续参与交集，缺失值不作为数值特征",
+      "details": {
+        "row_count": 123,
+        "non_null_counts": {
+          "decision_p_fill": 70,
+          "decision_e_ret": 70,
+          "decision_ev": 70,
+          "decision_cost": 70,
+          "decision_risk_penalty": 70
+        }
+      }
+    },
+    {
+      "code": "DECISION_NO_FORMAL_BUY",
+      "severity": "warning",
+      "source_id": "decision_table",
+      "message": "当前 Decision 表没有正式 BUY 行；这里只使用成员关系与辅助特征",
+      "details": {
+        "actions": [
+          "REJECT",
+          "SHADOW_ONLY"
+        ],
+        "row_count": 123
+      }
+    },
+    {
+      "code": "MARKET_DATA_PROVIDER_FALLBACK",
+      "severity": "warning",
+      "source_id": "market_data",
+      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
+      "details": {
+        "primary_provider": "EASTMONEY",
+        "fallback_provider": "TENCENT",
+        "affected_codes": [
+          "000595.SZ",
+          "000815.SZ",
+          "002281.SZ",
+          "002384.SZ",
+          "002421.SZ",
+          "002428.SZ",
+          "600186.SH"
+        ],
+        "persisted_with_frozen_signal": true
+      }
+    }
+  ],
+  "available_months": [
+    "2026-08"
+  ],
+  "rank_metrics": {
+    "1": {
+      "cumulative_return": null,
+      "final_days": 0,
+      "pending_days": 1,
+      "is_provisional": false,
+      "closed_trades": 0,
+      "win_rate": null
+    },
+    "2": {
+      "cumulative_return": null,
+      "final_days": 0,
+      "pending_days": 1,
+      "is_provisional": false,
+      "closed_trades": 0,
+      "win_rate": null
+    },
+    "3": {
+      "cumulative_return": null,
+      "final_days": 0,
+      "pending_days": 1,
+      "is_provisional": false,
+      "closed_trades": 0,
+      "win_rate": null
+    }
+  },
+  "days": [
+    {
+      "decision_date": "2026-08-04",
+      "buy_date": "2026-08-05",
+      "planned_exit_date": "2026-08-06",
+      "selection_status": "RANKED",
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/cdb808eda1acc4980bd8595d484a2d0045b55091/outputs/learning/pred_top10_20260804.csv",
+          "decision_date": "20260804",
+          "content_sha256": "09f09349d668a813e38f6d1bf0d04e2f4418c80c1d085e29b21688eb8fabfa35",
+          "repository_commit_sha": "cdb808eda1acc4980bd8595d484a2d0045b55091",
+          "generated_at": "2026-08-04T11:17:58Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/7bc8d81fd74a992b8d78def7b1296238875a644d/outputs/premium/premium_top10_20260804.csv",
+          "decision_date": "20260804",
+          "content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
+          "repository_commit_sha": "7bc8d81fd74a992b8d78def7b1296238875a644d",
+          "generated_at": "2026-08-04T11:36:10Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/7bc8d81fd74a992b8d78def7b1296238875a644d/outputs/decision/action_plan_20260805.json",
+          "decision_date": "20260804",
+          "content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
+          "repository_commit_sha": "7bc8d81fd74a992b8d78def7b1296238875a644d",
+          "generated_at": "2026-08-04T11:33:59+00:00",
+          "row_count": 123
+        }
+      ],
+      "market_data_provenance": {
+        "daily_features": {
+          "000595.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "000815.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "002281.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "002384.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "002421.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "002428.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "600186.SH": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          }
+        }
+      },
+      "intersection_count": 7,
+      "candidates": [
+        {
+          "candidate_id": "20260804:000595.SZ",
+          "symbol": "000595.SZ",
+          "name": "新能股份",
+          "rank": 1,
+          "model_score": -0.00643005096635128,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive",
+          "source_ranks": {
+            "a_top10": 9,
+            "premium_top10": 4,
+            "decision_table": 109
+          },
+          "metrics": {
+            "p_fill_0925": 0.30812874786892896,
+            "expected_gross_return": 0.00048591944788933697,
+            "expected_net_return": -0.001134080552110663,
+            "cvar_loss_10pct": 0.07216704914088985,
+            "p_exit_delay": 0.1974846126502053,
+            "uncertainty": 0.23493327919794416,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.00643005096635128,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": 0.21256931608133067,
+            "ret_20d": 0.09333333333333327,
+            "volatility_20d": 0.06742777466219509,
+            "cvar_loss_10pct": 0.07216704914088985,
+            "max_drawdown_20d": -0.2400000000000001,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 408131.9,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.29751062537947787,
+            "rank_disagreement": 0.5220739537732092,
+            "source_strength": 0.3418076621200305,
+            "bar_count": 100.0
+          }
+        },
+        {
+          "candidate_id": "20260804:000815.SZ",
+          "symbol": "000815.SZ",
+          "name": "美利云",
+          "rank": 2,
+          "model_score": -0.007369995289025428,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;risk_adjusted_utility_not_positive",
+          "source_ranks": {
+            "a_top10": 7,
+            "premium_top10": 2,
+            "decision_table": 120
+          },
+          "metrics": {
+            "p_fill_0925": 0.3890817650851378,
+            "expected_gross_return": 0.004217600599385416,
+            "expected_net_return": 0.0025976005993854157,
+            "cvar_loss_10pct": 0.079349953406935,
+            "p_exit_delay": 0.14731637612373974,
+            "uncertainty": 0.3218507333105411,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.007369995289025428,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": 0.16118836915297097,
+            "ret_20d": 0.4130769230769231,
+            "volatility_20d": 0.06759570683437023,
+            "cvar_loss_10pct": 0.079349953406935,
+            "max_drawdown_20d": -0.22209695603156698,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 686971.55,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.4156041287188828,
+            "rank_disagreement": 0.7152238518012024,
+            "source_strength": 0.366188139933949,
+            "bar_count": 100.0
+          }
+        },
+        {
+          "candidate_id": "20260804:002428.SZ",
+          "symbol": "002428.SZ",
+          "name": "云南锗业",
+          "rank": 3,
+          "model_score": -0.010559044900178241,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive",
+          "source_ranks": {
+            "a_top10": 2,
+            "premium_top10": 7,
+            "decision_table": 86
+          },
+          "metrics": {
+            "p_fill_0925": 0.3659326230135866,
+            "expected_gross_return": -0.00017990093910847456,
+            "expected_net_return": -0.0017999009391084745,
+            "cvar_loss_10pct": 0.09999459402283371,
+            "p_exit_delay": 0.26592466198972603,
+            "uncertainty": 0.24232954986516647,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.010559044900178241,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": 0.05692999718864211,
+            "ret_20d": -0.31645454545454543,
+            "volatility_20d": 0.06867801638562081,
+            "cvar_loss_10pct": 0.09999459402283371,
+            "max_drawdown_20d": -0.43818181818181823,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 617886.3,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.5085003035822707,
+            "rank_disagreement": 0.538510110811481,
+            "source_strength": 0.393536226669232,
+            "bar_count": 100.0
+          }
+        },
+        {
+          "candidate_id": "20260804:002281.SZ",
+          "symbol": "002281.SZ",
+          "name": "光迅科技",
+          "rank": 4,
+          "model_score": -0.010700706494618916,
+          "action": "NO_TRADE",
+          "action_reason": "rank_outside_tracked_1_2_3",
+          "source_ranks": {
+            "a_top10": 4,
+            "premium_top10": 6,
+            "decision_table": 13
+          },
+          "metrics": {
+            "p_fill_0925": 0.3771042153751386,
+            "expected_gross_return": -0.0002984401338956918,
+            "expected_net_return": -0.0019184401338956918,
+            "cvar_loss_10pct": 0.09840543634778391,
+            "p_exit_delay": 0.27043516884177,
+            "uncertainty": 0.16800590659758566,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.010700706494618916,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": -0.007201705363830135,
+            "ret_20d": -0.22262823115441877,
+            "volatility_20d": 0.06849386124301436,
+            "cvar_loss_10pct": 0.09840543634778391,
+            "max_drawdown_20d": -0.3612730093504969,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 449281.1,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.670916818457802,
+            "rank_disagreement": 0.3733464591057459,
+            "source_strength": 0.35191950621915874,
+            "bar_count": 100.0
+          }
+        },
+        {
+          "candidate_id": "20260804:002384.SZ",
+          "symbol": "002384.SZ",
+          "name": "东山精密",
+          "rank": 5,
+          "model_score": -0.011685760058205949,
+          "action": "NO_TRADE",
+          "action_reason": "rank_outside_tracked_1_2_3",
+          "source_ranks": {
+            "a_top10": 3,
+            "premium_top10": 8,
+            "decision_table": 2
+          },
+          "metrics": {
+            "p_fill_0925": 0.42331051178199,
+            "expected_gross_return": 0.001082705692359662,
+            "expected_net_return": -0.0005372943076403379,
+            "cvar_loss_10pct": 0.09999588815306625,
+            "p_exit_delay": 0.23873821627146305,
+            "uncertainty": 0.29189612939168535,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.011685760058205949,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": -0.06093020816947203,
+            "ret_20d": -0.24393127031705153,
+            "volatility_20d": 0.07010709465209336,
+            "cvar_loss_10pct": 0.09999588815306625,
+            "max_drawdown_20d": -0.39806547619047616,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 1072842.1,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.6639344262295083,
+            "rank_disagreement": 0.6486580653148564,
+            "source_strength": 0.4080493794085667,
+            "bar_count": 100.0
+          }
+        },
+        {
+          "candidate_id": "20260804:002421.SZ",
+          "symbol": "002421.SZ",
+          "name": "达实智能",
+          "rank": 6,
+          "model_score": -0.014363013114435781,
+          "action": "NO_TRADE",
+          "action_reason": "rank_outside_tracked_1_2_3",
+          "source_ranks": {
+            "a_top10": 5,
+            "premium_top10": 1,
+            "decision_table": 113
+          },
+          "metrics": {
+            "p_fill_0925": 0.6760354382376255,
+            "expected_gross_return": 0.00451686155443309,
+            "expected_net_return": 0.0028968615544330903,
+            "cvar_loss_10pct": 0.09190658254756882,
+            "p_exit_delay": 0.03081452863589758,
+            "uncertainty": 0.3373634363828842,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.014363013114435781,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": 0.24285714285714288,
+            "ret_20d": 0.11182108626198084,
+            "volatility_20d": 0.045790981447926725,
+            "cvar_loss_10pct": 0.09190658254756882,
+            "max_drawdown_20d": -0.17142857142857149,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 1521309.1,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.5458409228901032,
+            "rank_disagreement": 0.7496965252952982,
+            "source_strength": 0.3798135407813765,
+            "bar_count": 100.0
+          }
+        },
+        {
+          "candidate_id": "20260804:600186.SH",
+          "symbol": "600186.SH",
+          "name": "莲花控股",
+          "rank": 7,
+          "model_score": -0.017291006721842216,
+          "action": "NO_TRADE",
+          "action_reason": "rank_outside_tracked_1_2_3",
+          "source_ranks": {
+            "a_top10": 8,
+            "premium_top10": 5,
+            "decision_table": 60
+          },
+          "metrics": {
+            "p_fill_0925": 0.6586026161630055,
+            "expected_gross_return": -0.0009160374098206109,
+            "expected_net_return": -0.0025360374098206107,
+            "cvar_loss_10pct": 0.09252467496329742,
+            "p_exit_delay": 0.03704150185129804,
+            "uncertainty": 0.1338892602867236,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.017291006721842216,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false
+          },
+          "features": {
+            "ret_5d": 0.0747663551401867,
+            "ret_20d": -0.1711711711711712,
+            "volatility_20d": 0.0522690755450845,
+            "cvar_loss_10pct": 0.09252467496329742,
+            "max_drawdown_20d": -0.29909909909909904,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 1673310.7,
+            "avg_turnover_20d": null,
+            "rank_consensus": 0.43139040680024293,
+            "rank_disagreement": 0.2975316895260524,
+            "source_strength": 0.3597308941380597,
+            "bar_count": 100.0
+          }
+        }
+      ],
+      "rank_slots": {
+        "1": {
+          "candidate_id": "20260804:000595.SZ",
+          "status": "PENDING_BUY",
+          "reason": "waiting_for_exact_auction_truth",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "diagnostics": {}
+        },
+        "2": {
+          "candidate_id": "20260804:000815.SZ",
+          "status": "PENDING_BUY",
+          "reason": "waiting_for_exact_auction_truth",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "diagnostics": {}
+        },
+        "3": {
+          "candidate_id": "20260804:002428.SZ",
+          "status": "PENDING_BUY",
+          "reason": "waiting_for_exact_auction_truth",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "diagnostics": {}
+        }
+      }
+    }
+  ],
+  "rank_daily": [
+    {
+      "date": "2026-08-06",
+      "decision_date": "2026-08-04",
+      "ranks": {
+        "1": {
+          "state": "PENDING_BUY",
+          "is_final": false,
+          "daily_return": null,
+          "return_date": "2026-08-06",
+          "equity_index": 1.0
+        },
+        "2": {
+          "state": "PENDING_BUY",
+          "is_final": false,
+          "daily_return": null,
+          "return_date": "2026-08-06",
+          "equity_index": 1.0
+        },
+        "3": {
+          "state": "PENDING_BUY",
+          "is_final": false,
+          "daily_return": null,
+          "return_date": "2026-08-06",
+          "equity_index": 1.0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+# 三表汇总量化系统
+
+本仓库是独立的影子研究系统。它只读取两个源仓库的公开产物，不导入源仓库内部代码，也不向源仓库写入任何文件：
+
+- `njedu2023-prog/a-top10`
+- `njedu2023-prog/top10-decision` 的 Premium 与 Decision 页面数据
+
+## 已冻结的业务规则
+
+1. 按证券代码对三张页面实际展示的候选求严格交集；交集有几支就保留几支，绝不补票。
+2. 三源的 `D / T / T+1` 必须完全一致，并通过固化的2026年上交所交易日历验证严格后继关系；任一源缺失或错期，当日 `INPUT_BLOCKED`，不回退旧榜单。
+3. 对全部交集候选重新量化排序，不把三个相关来源的概率相乘。
+4. 固定第1、第2、第3名分别建立影子账本；不足三个名次时显示“无候选”，不顺延、不补位。
+5. T日只接受9:25开盘集合竞价的精确成交真值。日线开盘价只作诊断代理，不能当成真实成交。
+6. T+1在 `[11:00, 11:05)` 分成五个一分钟子单退出；无法成交的余额保留为延迟退出，不删除样本、不虚构价格。
+7. 当前版本不连接券商、不发送订单，所有记录均为影子验证。
+
+源表里不影响展示成员资格的辅助字段缺失只产生质量警告，不会把实际展示股票踢出交集。Premium 重复表头仅在逐行值可安全合并时容错并告警；冲突值仍会阻断输入。
+
+看板中的 `0` 只表示已最终确认的现金日（如零交集或竞价未成交）；未完成交易的收益为 `null`，页面显示“待验证”。同月同时存在最终与未完成记录时，收益标记为“暂定”，曲线在未完成点断开。延迟退出完全平仓后，收益按 `actual_exit_date` 归属，不回填计划T+1。月份筛选对候选、日账和固定名次收益使用同一归属口径。
+
+## 运行
+
+```bash
+python -m pip install -e .
+python -m unittest discover -s tests -v
+python -m three_table_quant.cli --config config/system.json
+```
+
+输出：
+
+- `data/state.v1.json`：不可覆写的信号与影子交易状态
+- `data/dashboard.v1.json`：静态页面唯一数据源
+- `data/source_issues.v1.json`：源端问题，只报告、不修复
+
+精确竞价成交回报可写入 `data/execution_truth.v1.json`。键格式为 `YYYYMMDD:000000.SH`，单条记录必须符合 `auction_execution_v2`：精确到09:25:00的带时区事件、开盘集合竞价阶段、证券代码、申报/成交股数、限价、数据来源与证据层级均会校验。非 `ACTUAL` 的正成交还必须有逐笔队列前方量和可执行量证据；否则不生成成交。可靠的零成交记录可不含成交价，但必须给出可验证原因。完整字段见 [输入与执行契约](docs/CONTRACT.md)。
+
+## 自动化与发布
+
+GitHub Actions 在北京时间11:20尝试结算已到期退出，在21:30读取同日三源并冻结新信号。程序层面另设20:00首次冻结硬门禁。读取时先固定两个源仓库各自的远端commit SHA，再从固定commit获取全部指针与日期文件。首次上传或站点/程序文件变更会通过路径受限的 `push` 触发，生成数据提交不会循环触发。
+
+生成数据通过 GitHub Git Data API 合并为一个提交，不使用普通 `git push`。发布前必须校验远端分支仍等于工作流检出的父SHA；若期间已有其他提交，本次拒绝写入并需从新HEAD重跑。三个生成文件与父树完全相同时返回 `no_changes`，不创建空提交。Pages制品只包含 `dashboard.v1.json` 和 `source_issues.v1.json`；`state.v1.json` 与 `execution_truth.v1.json` 不进入站点制品。
+
+D日特征行情优先读取 Eastmoney；传输不可用时可切换至腾讯只读日线。实际使用的供应商、复权口径和样本数会随冻结信号持久化，后续重跑不会丢失这项审计证据。退出执行只接受未复权分钟数据，且价、量、额与时间语义必须全部可验证；否则失败关闭，不伪造成交。
+
+## 费用与规则依据
+
+费率按生效日期保存在配置中。默认券商佣金为研究假设，实际账户应覆盖；印花税、交易过户费和交易时间依据当前官方公开规则：
+
+- [财政部、税务总局：自2023-08-28减半征收证券交易印花税](https://xj.mof.gov.cn/zcfagui/202311/t20231108_3915476.htm)
+- [上交所：股票交易时间与费用](https://one.sse.com.cn/onething/gptz/)
+- [深交所：2026年收费及代收税费标准](https://investor.szse.cn/marketServices/deal/payFees/index.html)
+- [中国结算：A股交易过户费标准](https://www.chinaclear.cn/zdjs/fbzyls/202506/ab6384ba25514554a7eceaee3e521032/files/%E6%B7%B1%E5%9C%B3%E5%B8%82%E5%9C%BA%E8%AF%81%E5%88%B8%E7%99%BB%E8%AE%B0%E7%BB%93%E7%AE%97%E4%B8%9A%E5%8A%A1%E6%94%B6%E8%B4%B9%E5%8F%8A%E4%BB%A3%E6%94%B6%E7%A8%8E%E8%B4%B9%E4%B8%80%E8%A7%88%E8%A1%A8.pdf)
+- [上交所2026年交易规则](https://www.sse.com.cn/lawandrules/sselawsrules2025/stocks/exchange/c/c_20260424_10816482.shtml)
+- [深交所2026年交易规则](https://docs.static.szse.cn/www/lawrules/rule/trade/current/W020260424690713155663.pdf)
+- [上交所：2026年部分节假日休市安排](https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml)
+
+详见 [输入与执行契约](docs/CONTRACT.md) 和 [验证方案](docs/VALIDATION.md)。研究结果不构成投资建议或收益保证。

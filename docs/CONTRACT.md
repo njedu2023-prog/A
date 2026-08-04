@@ -1,0 +1,80 @@
+# 输入与执行契约
+
+## 三表成员关系
+
+`a_top10` 与 `premium_top10` 读取各自正式Top10文件；Decision读取 `decision.html` 实际按 `report_index.json.reports[0].action_url` 渲染的 `action_plan.candidates` 全部行。求交集前统一证券代码、要求显式正整数连续排名，并检查重复代码与重复排名。Premium的 `WATCH/EXCLUDED` 和Decision的 `PENDING/BUY` 只作为特征，不改变“是否出现在表中”。
+
+每次读取先分别解析 `a-top10/main` 与 `top10-decision/main` 的完整远端 commit SHA，再用该 SHA 读取同一仓库内的指针、日期文件和索引。禁止在同一次快照中直接读取可变的 `raw/.../main/...`。a-top10 的指针 `run_id/commit_sha` 必须与日期CSV一致；Premium指针必须明确 `ok=True`；Decision索引的 `latest_report_date`、`reports[0].report_date` 与行动文件 `report_date` 必须一致。
+
+Premium CSV 若出现重复表头，仅在每行重复值一致（数值等价也视为一致）或仅一侧非空时安全合并，并记录源质量警告；任一行存在冲突值则阻断。Decision 的 `decision_p_fill/decision_e_ret/decision_ev/decision_cost/decision_risk_penalty` 是辅助数值特征：缺失时记录覆盖率警告但保留该实际展示成员；非空值仍必须是有限数，且概率、成本和风险惩罚必须满足合法范围。
+
+严格交集：
+
+```text
+intersection = codes(a_top10) ∩ codes(premium_top10) ∩ codes(decision_table)
+```
+
+交集为零是合法结果。大于三时保留全部候选；收益统计仍只跟踪排序后固定第1/2/3名。
+
+## 日期链
+
+```text
+a.trade_date = premium.trade_date = premium.base_date = decision.signal_date = D
+a.verify_date = premium.buy_date = decision.exec_date = T
+premium.target_date = decision.exit_date = T+1
+```
+
+三个上游产物先交叉验证，再由版本化的 `data/trading_calendar_2026.json` 验证严格的交易日后继关系。该日历按上海证券交易所《关于上海证券交易所2026年部分节假日休市安排的通知》固化：周六、周日及通知列明的休市日均不可作为 D/T/T+1。日历缺失、超出2026年、日期非法或并非严格下一交易日时，一律 `INPUT_BLOCKED`。
+
+同一D日首次冻结不得早于北京时间20:00；20:00整允许冻结。已有冻结信号不受该时间门禁影响，仍可结算并只读比较最新源表。冻结后若源表内容哈希或固定仓库commit发生变化，只报告 `SOURCE_REVISION_AFTER_FREEZE`，不得重写原排名。
+
+官方日历依据：[上交所2026年休市安排](https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml)。
+
+## 9:25买入真值
+
+集合竞价申报存在价格与时间队列。`data/execution_truth.v1.json` 的每个键为 `YYYYMMDD:000000.SH`，每条值必须是 `auction_execution_v2`，至少包含：
+
+```json
+{
+  "schema_version": "auction_execution_v2",
+  "trade_date": "20260805",
+  "ts_code": "000000.SZ",
+  "event_at": "2026-08-05T09:25:00+08:00",
+  "phase": "OPENING_CALL_AUCTION",
+  "source": "BROKER_EXECUTION",
+  "data_tier": "BROKER_LOG",
+  "label_quality": "ACTUAL",
+  "quantity_unit": "SHARES",
+  "submitted_qty": 1000,
+  "filled_qty": 1000,
+  "limit_price": 10.00,
+  "price": 10.00,
+  "auction_matched_qty": 200000,
+  "price_limit_source": "BROKER_ORDER_RECORD"
+}
+```
+
+`ACTUAL` 只接受券商成交日志。`REPLAY` 和 `CONSERVATIVE` 若声称正成交，必须使用 `ORDERBOOK` 证据并额外提供 `queue_ahead_qty` 与 `executable_qty_at_order`，证明竞价同价队列确实轮到该申报。参与率、整手、资金上限、最小价位、限价和成交数量关系均会拒绝式校验。真实券商回报即使超出研究参与率也保留事实，但会记录越限诊断；非真实回报则直接拒绝。
+
+`filled_qty=0` 可以不含 `price`，但必须给出停牌、无集合竞价撮合、队列未轮到等配置允许的可靠原因。
+
+日线 `open` 可能来自9:30后的首笔连续竞价，所以只保存为 `daily_open_proxy` 诊断，`counts_as_fill=false`。缺失真值时状态为 `BUY_UNVERIFIABLE`，收益保持 `null`，不会显示为0%。
+
+## T+1退出
+
+退出基准使用 `[11:00,11:01)` 至 `[11:04,11:05)` 五个一分钟桶。供应商的分钟结束标签必须先归一化为区间左边界；系统因此不会把10:59–11:04误当目标窗口。执行价固定使用不复权行情，每分钟价格必须由成交额和明确单位的成交量还原，并落在该分钟高低价和合法最小价位范围内；缺一根或数据不自洽即 `EXIT_UNVERIFIABLE`。
+
+每分钟目标为剩余持仓的五分之一，并受保守的5%成交量参与率上限约束。缺少精确跌停价时，一字分钟线按无法成交处理；模拟成交价会限制在该分钟合法价格区间内。11:05仍有余额则 `EXIT_DELAYED`，已卖数量、每笔最低佣金、费用、剩余数量与已处理窗口全部持久化。系统仅在官方交易日历的后续交易日重试，不重放旧窗口；完全退出后按最后一笔真实归属日记账，绝不回填计划T+1。
+
+## 状态语义
+
+- `NOT_AVAILABLE`：该日不存在这个固定名次。
+- `PENDING_BUY`：T尚未到达或真值尚未入库。
+- `BUY_UNVERIFIABLE`：只有代理价，不能判成交。
+- `BUY_UNFILLED`：精确真值确认未成交，现金收益为0。
+- `OPEN`：已成交，等待T+1。
+- `EXIT_UNVERIFIABLE`：退出数据不足，收益未知。
+- `EXIT_DELAYED`：按规则仅部分退出，持仓仍存在。
+- `CLOSED`：全部退出且费用后收益已结算。
+
+`null` 表示未知或不适用，绝不等同于0。

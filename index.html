@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>三表汇总 · 量化影子验证</title>
+  <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">STRICT INTERSECTION · T+1</p>
+      <h1>三表汇总量化</h1>
+      <p id="updated" class="muted">正在读取数据…</p>
+    </div>
+    <label class="month-picker">统计月份
+      <select id="month"></select>
+    </label>
+  </header>
+
+  <main>
+    <section id="status" class="status-card" aria-live="polite"></section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">FIXED RANKS</p><h2>第1 / 2 / 3名独立收益</h2></div>
+        <span class="muted">无候选、未成交与不可验证严格区分</span>
+      </div>
+      <div id="rankCards" class="rank-cards"></div>
+      <div id="chart" class="chart" role="img" aria-label="三个固定名次的独立净值曲线"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">LATEST IN MONTH</p><h2>所选月最新严格交集与重新排序</h2></div>
+        <span id="candidateCount" class="pill">0支</span>
+      </div>
+      <div id="candidates" class="table-wrap"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">DAILY LEDGER</p><h2>单日收益与执行状态</h2></div>
+      </div>
+      <div id="daily" class="table-wrap"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div><p class="eyebrow">SOURCE AUDIT</p><h2>源端问题提示</h2></div>
+        <span class="muted">这里只报告，不修改源仓库</span>
+      </div>
+      <div id="issues"></div>
+    </section>
+  </main>
+
+  <footer>影子研究系统，不连接券商、不发送订单、不构成投资建议。9:25缺少精确成交真值时不会用日线开盘价替代。</footer>
+  <script src="./assets/app.js" defer></script>
+</body>
+</html>

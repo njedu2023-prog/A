@@ -1,0 +1,70 @@
+{
+  "schema_version": "system_config_v1",
+  "timezone": "Asia/Shanghai",
+  "tracked_ranks": [1, 2, 3],
+  "input_contract": {
+    "trading_calendar_path": "data/trading_calendar_2026.json",
+    "freeze_after_local_time": "20:00"
+  },
+  "sources": {
+    "a_repo_head_url": "https://api.github.com/repos/njedu2023-prog/a-top10/commits/main",
+    "a_raw_base_template": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/{commit_sha}/",
+    "a_pointer_path": "outputs/learning/_last_run.txt",
+    "a_csv_path_template": "outputs/learning/pred_top10_{date}.csv",
+    "decision_repo_head_url": "https://api.github.com/repos/njedu2023-prog/top10-decision/commits/main",
+    "decision_raw_base_template": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/{commit_sha}/",
+    "premium_pointer_path": "outputs/premium/_last_run.txt",
+    "premium_csv_path_template": "outputs/premium/premium_top10_{date}.csv",
+    "decision_index_path": "outputs/decision/report_index.json"
+  },
+  "ranking": {
+    "version": "transparent_shadow_baseline_v1",
+    "min_daily_bars": 21,
+    "min_fill_probability": 0.40,
+    "min_expected_net_return": 0.0,
+    "min_utility_score": 0.0,
+    "max_missing_fraction": 0.34,
+    "cvar_weight": 0.25,
+    "exit_delay_weight": 0.005,
+    "uncertainty_weight": 0.003
+  },
+  "execution": {
+    "mode": "shadow_only",
+    "slot_capital_cny": 100000.0,
+    "lot_size": 100,
+    "price_tick": 0.01,
+    "auction_time": "09:25",
+    "auction_phase": "OPENING_CALL_AUCTION",
+    "auction_truth_schema": "auction_execution_v2",
+    "auction_price_policy": "opening_auction_clearing_price",
+    "public_data_fallback": "daily_open_proxy_flagged",
+    "daily_open_proxy_counts_as_fill": false,
+    "auction_participation_cap": 0.01,
+    "accepted_price_limit_sources": ["EXCHANGE_SECURITY_MASTER", "BROKER_ORDER_RECORD"],
+    "reliable_zero_fill_reasons": [
+      "NO_AUCTION_MATCH",
+      "SUSPENDED",
+      "ORDER_REJECTED",
+      "QUEUE_NOT_REACHED",
+      "INSUFFICIENT_SELL_VOLUME"
+    ],
+    "exit_window_start": "11:00",
+    "exit_window_end": "11:05",
+    "exit_minute_count": 5,
+    "max_exit_participation_rate": 0.05,
+    "one_price_bar_is_locked_without_limit": true,
+    "trading_calendar_path": "data/trading_calendar_2026.json",
+    "commission_rate": 0.0003,
+    "minimum_commission_cny": 5.0,
+    "stamp_duty_sell_rate": 0.0005,
+    "transfer_fee_rate_each_side": 0.00001,
+    "slippage_rate_each_side": 0.0005,
+    "fee_effective_from": "2023-08-28"
+  },
+  "paths": {
+    "state": "data/state.v1.json",
+    "dashboard": "data/dashboard.v1.json",
+    "source_issues": "data/source_issues.v1.json",
+    "execution_truth": "data/execution_truth.v1.json"
+  }
+}
