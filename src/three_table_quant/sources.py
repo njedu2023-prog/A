@@ -277,14 +277,17 @@ def _ranked_rows(
     source_id: str,
     *,
     max_rank: int | None,
+    rank_field: str = "rank",
 ) -> tuple[SourceRow, ...]:
     parsed: list[SourceRow] = []
     seen_codes: set[str] = set()
     seen_ranks: set[int] = set()
     for row in raw_rows:
-        if "rank" not in row or row.get("rank") in (None, ""):
-            raise ContractError(f"{source_id}: explicit rank is required")
-        rank = _parse_rank(row["rank"], source_id)
+        if rank_field not in row or row.get(rank_field) in (None, ""):
+            raise ContractError(
+                f"{source_id}: explicit {rank_field} is required"
+            )
+        rank = _parse_rank(row[rank_field], source_id)
         if max_rank is not None and rank > max_rank:
             continue
         code = normalize_ts_code(_first_value(row, ("ts_code", "symbol", "code")))
@@ -561,6 +564,10 @@ def parse_decision(data: bytes, url: str) -> SourceTable:
         "exec_date",
         "exit_date",
         "candidates",
+        "stage_watchlist",
+        "stage_watch_count",
+        "stage_watch_eligible_count",
+        "stage_watch_display_limit",
     )
     missing_top_level = [
         field for field in required_top_level if payload.get(field) in (None, "")
@@ -569,19 +576,57 @@ def parse_decision(data: bytes, url: str) -> SourceTable:
         raise ContractError(
             f"decision_table: missing required fields {sorted(missing_top_level)}"
         )
-    raw_rows = payload.get("candidates")
+    raw_rows = payload.get("stage_watchlist")
     if not isinstance(raw_rows, list):
-        raise ContractError("decision_table: candidates must be a list")
+        raise ContractError("decision_table: stage_watchlist must be a list")
+
+    def parse_count(field: str, *, positive: bool = False) -> int:
+        value = payload.get(field)
+        minimum = 1 if positive else 0
+        if isinstance(value, bool) or not isinstance(value, int) or value < minimum:
+            qualifier = "positive" if positive else "nonnegative"
+            raise ContractError(
+                f"decision_table: {field} must be a {qualifier} integer"
+            )
+        return value
+
+    watch_count = parse_count("stage_watch_count")
+    eligible_count = parse_count("stage_watch_eligible_count")
+    display_limit = parse_count("stage_watch_display_limit", positive=True)
+    if display_limit != 10:
+        raise ContractError(
+            "decision_table: stage_watch_display_limit must equal 10"
+        )
+    if watch_count != len(raw_rows):
+        raise ContractError(
+            "decision_table: stage_watch_count does not match stage_watchlist"
+        )
+    if watch_count != min(eligible_count, display_limit):
+        raise ContractError(
+            "decision_table: stage_watch_count must equal "
+            "min(stage_watch_eligible_count, stage_watch_display_limit)"
+        )
+    candidate_rows = payload.get("candidates")
+    if not isinstance(candidate_rows, list) or not all(
+        isinstance(row, dict) for row in candidate_rows
+    ):
+        raise ContractError("decision_table: candidates must be a list of objects")
     if raw_rows:
         if not all(isinstance(row, dict) for row in raw_rows):
-            raise ContractError("decision_table: every candidate must be an object")
+            raise ContractError(
+                "decision_table: every stage_watchlist row must be an object"
+            )
         _require_fields(
             raw_rows,
             (
+                "stage_watch_rank",
                 "rank",
                 "ts_code",
                 "name",
                 "action",
+                "stage_transition",
+                "observation_rank",
+                "observation_selected",
             ),
             SOURCE_DECISION,
         )
@@ -598,6 +643,24 @@ def parse_decision(data: bytes, url: str) -> SourceTable:
             SOURCE_DECISION,
         )
         for index, row in enumerate(raw_rows, start=1):
+            stage_rank = _parse_rank(row.get("stage_watch_rank"), SOURCE_DECISION)
+            observation_rank = _parse_rank(
+                row.get("observation_rank"),
+                SOURCE_DECISION,
+            )
+            if observation_rank != stage_rank:
+                raise ContractError(
+                    f"decision_table: row {index} observation_rank must equal "
+                    "stage_watch_rank"
+                )
+            if not _is_true(row.get("observation_selected")):
+                raise ContractError(
+                    f"decision_table: row {index} observation_selected must be true"
+                )
+            if str(row.get("stage_transition") or "").strip() not in {"2→3", "3→4"}:
+                raise ContractError(
+                    f"decision_table: row {index} has invalid stage_transition"
+                )
             p_fill = _number(row.get("decision_p_fill"))
             cost = _number(row.get("decision_cost"))
             risk_penalty = _number(row.get("decision_risk_penalty"))
@@ -611,8 +674,38 @@ def parse_decision(data: bytes, url: str) -> SourceTable:
                 raise ContractError(
                     f"decision_table: row {index} cost and risk penalty must be nonnegative"
                 )
-    # decision.html renders every item in `candidates`; do not silently slice to 10.
-    ranked = _ranked_rows(raw_rows, SOURCE_DECISION, max_rank=None)
+        candidates_by_code: dict[str, list[dict[str, Any]]] = {}
+        for candidate in candidate_rows:
+            code = normalize_ts_code(
+                _first_value(candidate, ("ts_code", "symbol", "code"))
+            )
+            candidates_by_code.setdefault(code, []).append(candidate)
+        for index, row in enumerate(raw_rows, start=1):
+            code = normalize_ts_code(
+                _first_value(row, ("ts_code", "symbol", "code"))
+            )
+            matches = candidates_by_code.get(code, [])
+            if len(matches) != 1:
+                raise ContractError(
+                    f"decision_table: row {index} must map to exactly one candidate"
+                )
+            if _parse_rank(matches[0].get("rank"), SOURCE_DECISION) != _parse_rank(
+                row.get("rank"),
+                SOURCE_DECISION,
+            ):
+                raise ContractError(
+                    f"decision_table: row {index} candidate rank does not match"
+                )
+    # The main Decision table is rendered from `stage_watchlist`.
+    # Its `rank` is the full candidate-pool rank; `stage_watch_rank` is the
+    # visible 1..N table rank.  The aggregation contract uses exactly these
+    # zero-to-ten visible rows and never pads from the full candidate pool.
+    ranked = _ranked_rows(
+        raw_rows,
+        SOURCE_DECISION,
+        max_rank=None,
+        rank_field="stage_watch_rank",
+    )
     decision_date = normalize_date(payload.get("signal_date"), "signal_date")
     generated = str(payload.get("generated_at_utc") or "")
     _validate_post_close_timestamp(
