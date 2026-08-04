@@ -222,7 +222,23 @@ main {
   font-size: 11px;
   text-align: center;
 }
-.table-wrap { overflow-x: auto; }
+.panel,
+.table-wrap,
+.daily-ledger,
+.ledger-day {
+  min-width: 0;
+}
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap:focus-visible {
+  outline: 2px solid #5d9f83;
+  outline-offset: -3px;
+}
 table { width: 100%; border-collapse: collapse; min-width: 760px; }
 th, td {
   height: 42px;
@@ -334,14 +350,120 @@ footer {
   .portfolio-card { grid-column: span 1; }
 }
 
+@media (max-width: 900px) {
+  .ledger-day > summary {
+    min-width: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    padding-right: 58px;
+    position: relative;
+  }
+  .ledger-day > summary .ledger-toggle {
+    position: absolute;
+    top: 11px;
+    right: 16px;
+  }
+}
+
 @media (max-width: 720px) {
   .topbar, .status-card, .panel-head { align-items: stretch; flex-direction: column; }
-  .topbar { padding-top: 22px; }
+  .topbar {
+    gap: 12px;
+    padding: 16px 8px 10px;
+  }
+  h1 { font-size: 20px !important; }
+  .month-picker,
+  select#month { width: 100%; }
+  select#month {
+    min-height: 44px;
+    padding-block: 9px;
+    font-size: 16px !important;
+  }
+  main {
+    gap: 10px;
+    padding: 0 8px 28px;
+  }
+  footer { padding: 0 12px 22px; }
+  .status-card {
+    gap: 8px;
+    padding: 11px 12px;
+  }
+  .status-title {
+    font-size: 16px !important;
+    line-height: 1.35;
+  }
   .status-meta { justify-content: flex-start; }
+  .panel-head {
+    min-height: 52px;
+    gap: 5px;
+    padding: 11px 12px 9px;
+  }
+  .overview-summary {
+    min-height: 52px;
+    align-items: center;
+    flex-direction: row;
+  }
+  .overview-summary-meta { margin-left: auto; }
+  .overview-summary-meta > .muted { display: none; }
+  .overview-toggle {
+    width: 32px;
+    height: 32px;
+  }
   .rank-cards { grid-template-columns: 1fr; }
+  .rank-cards { padding-inline: 12px; }
   .chart-head { align-items: flex-start; flex-direction: column; gap: 5px; }
-  main, .topbar { padding-left: 10px; padding-right: 10px; }
   .panel, .status-card { border-radius: 10px; }
+  .ledger-day > summary {
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 12px;
+    padding: 12px 52px 12px 12px;
+  }
+  .ledger-day > summary .ledger-toggle {
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+  }
+  .ledger-fact strong {
+    overflow: visible;
+    line-height: 1.3;
+    text-overflow: clip;
+    white-space: normal;
+  }
+  .candidate-table th.sticky-code,
+  .candidate-table td.sticky-code {
+    left: 0;
+    width: 96px !important;
+  }
+  .candidate-table th.sticky-name,
+  .candidate-table td.sticky-name {
+    left: 96px;
+    width: 96px !important;
+    box-shadow: 5px 0 8px -7px rgba(24, 34, 29, .6);
+  }
+  .candidate-table .sticky-code,
+  .candidate-table .sticky-name,
+  .daily-detail-table .sticky-stock {
+    position: sticky;
+    z-index: 2;
+    background: #fff;
+  }
+  .candidate-table th.sticky-code,
+  .candidate-table th.sticky-name,
+  .daily-detail-table th.sticky-stock {
+    z-index: 3;
+    background: #fafbfa;
+  }
+  .daily-detail-table .sticky-stock {
+    left: 0;
+    width: 170px;
+    max-width: 170px;
+    box-shadow: 5px 0 8px -7px rgba(24, 34, 29, .6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ledger-day .table-wrap { animation: none; }
 }
 
 /* Typography scale aligned with the Decision reference page. */

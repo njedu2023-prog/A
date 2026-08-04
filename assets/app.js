@@ -472,21 +472,28 @@ function renderChart() {
   container.append(svg);
 }
 
-function table(headers, rows, minWidth) {
+function table(headers, rows, minWidth, ariaLabel) {
   const result = node("table");
   if (minWidth) result.style.minWidth = minWidth;
+  if (ariaLabel) result.setAttribute("aria-label", ariaLabel);
   const headRow = node("tr");
   headers.forEach((header) => {
     const config = typeof header === "string" ? {text: header} : header;
-    headRow.append(node("th", config.text, config.align === "left" ? "left" : ""));
+    const className = `${config.align === "left" ? "left " : ""}${config.className || ""}`.trim();
+    const heading = node("th", config.text, className);
+    heading.scope = "col";
+    headRow.append(heading);
   });
   const thead = node("thead");
   thead.append(headRow);
   const tbody = node("tbody");
   rows.forEach((cells) => {
     const row = node("tr");
-    cells.forEach((cell) => {
+    cells.forEach((cell, index) => {
       const td = node("td", null, `${cell.align === "left" ? "left " : ""}${cell.className || ""}`.trim());
+      const header = headers[index];
+      const label = typeof header === "string" ? header : header?.text;
+      if (label) td.dataset.label = label;
       if (cell.title) td.title = cell.title;
       if (cell.content instanceof Node) td.append(cell.content);
       else td.textContent = cell.text ?? "—";
@@ -523,8 +530,8 @@ function renderCandidates() {
     const tReturn = verifiedTReturn(validationItem);
     return [
       {text: String(item.rank), align: "left"},
-      {text: item.symbol, align: "left", className: "code"},
-      {text: item.name, align: "left", className: "name"},
+      {text: item.symbol, align: "left", className: "code sticky-code"},
+      {text: item.name, align: "left", className: "name sticky-name"},
       {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
       {text: item.stage_transition || "—"},
       {text: item.industry || "—", align: "left"},
@@ -538,8 +545,8 @@ function renderCandidates() {
   });
   const candidateTable = table([
     {text: "排名", align: "left"},
-    {text: "代码", align: "left"},
-    {text: "股票", align: "left"},
+    {text: "代码", align: "left", className: "sticky-code"},
+    {text: "股票", align: "left", className: "sticky-name"},
     "预期净收益",
     "晋级目标",
     {text: "行业板块", align: "left"},
@@ -549,7 +556,7 @@ function renderCandidates() {
     "风险效用",
     "竞价成交概率",
     "执行状态"
-  ], rows, "1100px");
+  ], rows, "1100px", "汇集排序候选表");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }
@@ -602,7 +609,7 @@ function renderDaily() {
       const netReturn = item.is_final === true && finite(item.net_return) ? Number(item.net_return) : null;
       const tReturn = verifiedTReturn(item);
       return [
-        {content: stockCell(item), align: "left"},
+        {content: stockCell(item), align: "left", className: "sticky-stock"},
         {text: item.stage_transition || "—"},
         {text: item.industry || "—", align: "left"},
         {text: price(item.d_close)},
@@ -616,8 +623,11 @@ function renderDaily() {
       ];
     });
     if (childRows.length) {
-      detailWrap.append(table([
-        {text: "股票", align: "left"},
+      detailWrap.tabIndex = 0;
+      detailWrap.setAttribute("role", "region");
+      detailWrap.setAttribute("aria-label", `${day.decision_date || "该批次"}候选明细，可横向滑动查看全部字段`);
+      const dailyTable = table([
+        {text: "股票", align: "left", className: "sticky-stock"},
         "晋级目标",
         {text: "行业板块", align: "left"},
         "D收盘价",
@@ -628,7 +638,9 @@ function renderDaily() {
         "净收益",
         "结果",
         "状态"
-      ], childRows, "1130px"));
+      ], childRows, "1130px", `${day.decision_date || "该批次"}候选验证明细`);
+      dailyTable.classList.add("daily-detail-table");
+      detailWrap.append(dailyTable);
     } else {
       detailWrap.append(node("div", "该批次暂无候选明细。", "empty"));
     }
