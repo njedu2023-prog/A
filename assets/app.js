@@ -476,12 +476,11 @@ function renderCandidates() {
     stateBadge.classList.add("candidate-state");
     return [
       {text: String(item.rank), align: "left"},
-      {text: item.symbol, align: "left"},
+      {text: item.symbol, align: "left", className: "code"},
       {text: item.name, align: "left", className: "name"},
       {text: pct(item.model_score), className: tone(item.model_score)},
       {text: probability(item.metrics?.p_fill_0925)},
       {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
-      {text: "影子账本"},
       {content: stateBadge, title: reasonText(item.action_reason)}
     ];
   });
@@ -492,9 +491,8 @@ function renderCandidates() {
     "风险效用",
     "P_fill",
     "预期净收益",
-    "账本",
     "执行状态"
-  ], rows, "760px");
+  ], rows, "680px");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }

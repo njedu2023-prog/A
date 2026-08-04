@@ -114,6 +114,13 @@ main {
 .badge.good { background: var(--green-soft); color: var(--green-deep); }
 .badge.warn { background: var(--orange-soft); color: var(--orange); }
 .badge.bad { background: var(--red-soft); color: #a83b35; }
+.status-meta .pill,
+.status-meta .badge {
+  min-height: auto;
+  padding: 0 2px;
+  border-radius: 0;
+  background: transparent;
+}
 .panel-head {
   min-height: 58px;
   padding: 13px 16px 10px;
@@ -221,8 +228,9 @@ th {
   letter-spacing: .025em;
 }
 th.left, td.left { text-align: left; }
-td.name { font-weight: 570; }
-.positive { color: var(--red); }
+td.code,
+td.name { color: var(--ink); font-weight: 570; }
+.positive { color: var(--red); font-weight: 650; }
 .negative { color: var(--green-deep); }
 .candidate-state { max-width: 88px; }
 .candidate-table th,
@@ -231,6 +239,13 @@ td.name { font-weight: 570; }
   padding: 5px 8px;
 }
 .candidate-table th { height: 30px; }
+.candidate-table { table-layout: fixed; }
+.candidate-table th:nth-child(1),
+.candidate-table td:nth-child(1) { width: 54px; }
+.candidate-table th:nth-child(2),
+.candidate-table td:nth-child(2) { width: 108px; }
+.candidate-table th:nth-child(3),
+.candidate-table td:nth-child(3) { width: 116px; }
 
 .daily-ledger { border-top: 1px solid var(--line-soft); }
 .ledger-day + .ledger-day { border-top: 1px solid var(--line); }
