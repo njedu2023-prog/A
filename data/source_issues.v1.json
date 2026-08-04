@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-04T21:09:31+08:00",
+  "generated_at": "2026-08-04T21:16:27+08:00",
   "issues": [
     {
       "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
@@ -68,6 +68,46 @@
           "SHADOW_ONLY"
         ],
         "row_count": 123
+      }
+    },
+    {
+      "code": "SOURCE_REVISION_AFTER_FREEZE",
+      "severity": "warning",
+      "source_id": "aggregate",
+      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
+      "details": {
+        "frozen_codes": [
+          "000595.SZ",
+          "000815.SZ",
+          "002281.SZ",
+          "002384.SZ",
+          "002421.SZ",
+          "002428.SZ",
+          "600186.SH"
+        ],
+        "live_codes": [
+          "000595.SZ",
+          "000815.SZ",
+          "002281.SZ",
+          "002384.SZ",
+          "002421.SZ",
+          "002428.SZ",
+          "600186.SH"
+        ],
+        "changed_sources": {
+          "decision_table": {
+            "frozen_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
+            "live_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
+            "frozen_repository_commit_sha": "7bc8d81fd74a992b8d78def7b1296238875a644d",
+            "live_repository_commit_sha": "b27a3d68d6b62a68c7519114a7752453196c9a1f"
+          },
+          "premium_top10": {
+            "frozen_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
+            "live_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
+            "frozen_repository_commit_sha": "7bc8d81fd74a992b8d78def7b1296238875a644d",
+            "live_repository_commit_sha": "b27a3d68d6b62a68c7519114a7752453196c9a1f"
+          }
+        }
       }
     },
     {
