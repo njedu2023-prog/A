@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-04T23:43:58+08:00",
+  "generated_at": "2026-08-04T23:51:21+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -132,13 +132,13 @@
             "frozen_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
             "live_content_sha256": "f254c560112a218565b63fb9e739bc4a4b922dd1a837624e32d1ff94ab4a45f5",
             "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "f84b3eb6ff8cf686f03f2a4ab364dde39002d168"
+            "live_repository_commit_sha": "2bd63884636a024cfd38713bca70a46581682875"
           },
           "premium_top10": {
             "frozen_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
             "live_content_sha256": "5cedb7e127dde70a98d62be0a5b6dfcd0190e5e23b2374a31c19951e59506b19",
             "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "f84b3eb6ff8cf686f03f2a4ab364dde39002d168"
+            "live_repository_commit_sha": "2bd63884636a024cfd38713bca70a46581682875"
           }
         }
       }
