@@ -190,7 +190,11 @@ function renderStatus() {
   container.replaceChildren();
   container.className = `status-card ${run.status === "INPUT_BLOCKED" ? "error" : "ok"}`;
   const copy = node("div");
-  copy.append(node("h2", run.message || "暂无运行结论", "status-title"));
+  const latestDecisionDate = model.days?.at(-1)?.decision_date;
+  const title = run.status === "RANKED" && latestDecisionDate
+    ? `D日信号已冻结：${latestDecisionDate}`
+    : run.message || "暂无运行结论";
+  copy.append(node("h2", title, "status-title"));
   const meta = node("div", null, "status-meta");
   meta.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
   const dates = run.source_dates || {};
