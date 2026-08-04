@@ -525,15 +525,14 @@ function renderCandidates() {
       {text: String(item.rank), align: "left"},
       {text: item.symbol, align: "left", className: "code"},
       {text: item.name, align: "left", className: "name"},
+      {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
       {text: item.stage_transition || "—"},
       {text: item.industry || "—", align: "left"},
       {text: price(item.d_close)},
       {text: tDayReturnText(validationItem), className: tone(tReturn)},
-      {text: tDayOutcomeText(validationItem, "is_limit_up")},
       {text: tDayOutcomeText(validationItem, "is_promoted")},
       {text: pct(item.model_score), className: tone(item.model_score)},
       {text: probability(item.metrics?.p_fill_0925)},
-      {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
       {content: stateBadge, title: reasonText(item.action_reason)}
     ];
   });
@@ -541,17 +540,16 @@ function renderCandidates() {
     {text: "排名", align: "left"},
     {text: "代码", align: "left"},
     {text: "股票", align: "left"},
+    "预期净收益",
     "晋级目标",
     {text: "行业板块", align: "left"},
     "D收盘价",
     "T日涨跌幅",
-    "是否涨停",
     "是否晋级",
     "风险效用",
     "竞价成交概率",
-    "预期净收益",
     "执行状态"
-  ], rows, "1180px");
+  ], rows, "1100px");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }
@@ -609,7 +607,6 @@ function renderDaily() {
         {text: item.industry || "—", align: "left"},
         {text: price(item.d_close)},
         {text: tDayReturnText(item), className: tone(tReturn)},
-        {text: tDayOutcomeText(item, "is_limit_up")},
         {text: tDayOutcomeText(item, "is_promoted")},
         {text: price(item.buy_price)},
         {text: price(item.exit_price)},
@@ -625,14 +622,13 @@ function renderDaily() {
         {text: "行业板块", align: "left"},
         "D收盘价",
         "T日涨跌幅",
-        "是否涨停",
         "是否晋级",
         "9:25入场价",
         "T+1退出价",
         "净收益",
         "结果",
         "状态"
-      ], childRows, "1220px"));
+      ], childRows, "1130px"));
     } else {
       detailWrap.append(node("div", "该批次暂无候选明细。", "empty"));
     }
