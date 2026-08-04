@@ -2,11 +2,11 @@
 
 ## 三表成员关系
 
-`a_top10` 与 `premium_top10` 读取各自正式Top10文件；Decision读取 `decision.html` 实际按 `report_index.json.reports[0].action_url` 渲染的 `action_plan.candidates` 全部行。求交集前统一证券代码、要求显式正整数连续排名，并检查重复代码与重复排名。Premium的 `WATCH/EXCLUDED` 和Decision的 `PENDING/BUY` 只作为特征，不改变“是否出现在表中”。
+`a_top10` 与 `premium_top10` 读取各自正式Top10文件；Decision读取 `decision.html` 主表实际按 `report_index.json.reports[0].action_url` 渲染的 `action_plan.stage_watchlist`。Decision 的页面排名必须使用 `stage_watch_rank`；同一行的 `rank` 只是全量 `candidates` 池排名，不得用于三表成员关系。每张表最多取实际展示的前10名，不足10名时按实际数量，绝不从全量候选池补票。求交集前统一证券代码、要求显式正整数连续页面排名，并检查重复代码与重复排名。Premium的 `WATCH/EXCLUDED` 和Decision的 `REJECT/SHADOW_ONLY/BUY` 只作为特征，不改变“是否出现在主表前10名”。
 
 每次读取先分别解析 `a-top10/main` 与 `top10-decision/main` 的完整远端 commit SHA，再用该 SHA 读取同一仓库内的指针、日期文件和索引。禁止在同一次快照中直接读取可变的 `raw/.../main/...`。a-top10 的指针 `run_id/commit_sha` 必须与日期CSV一致；Premium指针必须明确 `ok=True`；Decision索引的 `latest_report_date`、`reports[0].report_date` 与行动文件 `report_date` 必须一致。
 
-Premium CSV 若出现重复表头，仅在每行重复值一致（数值等价也视为一致）或仅一侧非空时安全合并，并记录源质量警告；任一行存在冲突值则阻断。Decision 的 `decision_p_fill/decision_e_ret/decision_ev/decision_cost/decision_risk_penalty` 是辅助数值特征：缺失时记录覆盖率警告但保留该实际展示成员；非空值仍必须是有限数，且概率、成本和风险惩罚必须满足合法范围。
+Premium CSV 若出现重复表头，仅在每行重复值一致（数值等价也视为一致）或仅一侧非空时安全合并，并记录源质量警告；任一行存在冲突值则阻断。Decision 的 `stage_watch_display_limit` 必须为10；`stage_watch_count` 必须等于 `stage_watchlist` 行数，并等于 `min(stage_watch_eligible_count, 10)`。每个主表成员还必须能按代码及原始 `rank` 唯一映射回 `candidates`，且 `observation_rank` 与 `stage_watch_rank` 一致；任何不一致均阻断输入，绝不回退全量池。`decision_p_fill/decision_e_ret/decision_ev/decision_cost/decision_risk_penalty` 是辅助数值特征：缺失时记录覆盖率警告但保留该实际展示成员；非空值仍必须是有限数，且概率、成本和风险惩罚必须满足合法范围。
 
 严格交集：
 
