@@ -79,8 +79,10 @@ class ScoringTests(unittest.TestCase):
         )
         self.assertEqual(len(result), 4)
         self.assertEqual([item.rank for item in result], [1, 2, 3, 4])
-        self.assertTrue(all(item.action == "SHADOW" for item in result[:3]))
-        self.assertEqual(result[3].action, "NO_TRADE")
+        self.assertTrue(all(item.action == "SHADOW" for item in result))
+        self.assertTrue(
+            all("not_a_broker_order" in item.action_reason for item in result)
+        )
 
     def test_missing_market_data_keeps_candidate_but_blocks_policy_gate(self) -> None:
         item = candidate("600001.SH", (1, 1, 1))

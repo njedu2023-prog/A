@@ -436,7 +436,11 @@
           },
           "rank": 1,
           "action": "SHADOW",
-          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive"
+          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          }
         },
         {
           "ts_code": "000815.SZ",
@@ -837,7 +841,11 @@
           },
           "rank": 2,
           "action": "SHADOW",
-          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;risk_adjusted_utility_not_positive"
+          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;risk_adjusted_utility_not_positive",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          }
         },
         {
           "ts_code": "002428.SZ",
@@ -1238,7 +1246,11 @@
           },
           "rank": 3,
           "action": "SHADOW",
-          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive"
+          "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          }
         },
         {
           "ts_code": "002281.SZ",
@@ -1638,8 +1650,18 @@
             "policy_trade_eligible": false
           },
           "rank": 4,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3"
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ]
         },
         {
           "ts_code": "002384.SZ",
@@ -2039,8 +2061,18 @@
             "policy_trade_eligible": false
           },
           "rank": 5,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3"
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ]
         },
         {
           "ts_code": "002421.SZ",
@@ -2440,8 +2472,18 @@
             "policy_trade_eligible": false
           },
           "rank": 6,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3"
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ]
         },
         {
           "ts_code": "600186.SH",
@@ -2841,8 +2883,18 @@
             "policy_trade_eligible": false
           },
           "rank": 7,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3"
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ]
         }
       ],
       "model_version": "transparent_shadow_baseline_v1",
@@ -2933,7 +2985,8 @@
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {}
+      "diagnostics": {},
+      "execution_mode": "SHADOW_ONLY"
     },
     {
       "trade_id": "20260804:R2",
@@ -2951,7 +3004,8 @@
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {}
+      "diagnostics": {},
+      "execution_mode": "SHADOW_ONLY"
     },
     {
       "trade_id": "20260804:R3",
@@ -2964,6 +3018,83 @@
       "name": "云南锗业",
       "model_score": -0.010559044900178241,
       "policy_trade_eligible": false,
+      "status": "PENDING_BUY",
+      "reason": "waiting_for_exact_auction_truth",
+      "buy": null,
+      "exit": null,
+      "pnl": null,
+      "diagnostics": {},
+      "execution_mode": "SHADOW_ONLY"
+    },
+    {
+      "trade_id": "20260804:R4",
+      "signal_id": "20260804-0d1ccf3c346b",
+      "decision_date": "20260804",
+      "buy_date": "20260805",
+      "planned_exit_date": "20260806",
+      "rank": 4,
+      "ts_code": "002281.SZ",
+      "name": "光迅科技",
+      "model_score": -0.010700706494618916,
+      "policy_trade_eligible": false,
+      "execution_mode": "SHADOW_ONLY",
+      "status": "PENDING_BUY",
+      "reason": "waiting_for_exact_auction_truth",
+      "buy": null,
+      "exit": null,
+      "pnl": null,
+      "diagnostics": {}
+    },
+    {
+      "trade_id": "20260804:R5",
+      "signal_id": "20260804-0d1ccf3c346b",
+      "decision_date": "20260804",
+      "buy_date": "20260805",
+      "planned_exit_date": "20260806",
+      "rank": 5,
+      "ts_code": "002384.SZ",
+      "name": "东山精密",
+      "model_score": -0.011685760058205949,
+      "policy_trade_eligible": false,
+      "execution_mode": "SHADOW_ONLY",
+      "status": "PENDING_BUY",
+      "reason": "waiting_for_exact_auction_truth",
+      "buy": null,
+      "exit": null,
+      "pnl": null,
+      "diagnostics": {}
+    },
+    {
+      "trade_id": "20260804:R6",
+      "signal_id": "20260804-0d1ccf3c346b",
+      "decision_date": "20260804",
+      "buy_date": "20260805",
+      "planned_exit_date": "20260806",
+      "rank": 6,
+      "ts_code": "002421.SZ",
+      "name": "达实智能",
+      "model_score": -0.014363013114435781,
+      "policy_trade_eligible": false,
+      "execution_mode": "SHADOW_ONLY",
+      "status": "PENDING_BUY",
+      "reason": "waiting_for_exact_auction_truth",
+      "buy": null,
+      "exit": null,
+      "pnl": null,
+      "diagnostics": {}
+    },
+    {
+      "trade_id": "20260804:R7",
+      "signal_id": "20260804-0d1ccf3c346b",
+      "decision_date": "20260804",
+      "buy_date": "20260805",
+      "planned_exit_date": "20260806",
+      "rank": 7,
+      "ts_code": "600186.SH",
+      "name": "莲花控股",
+      "model_score": -0.017291006721842216,
+      "policy_trade_eligible": false,
+      "execution_mode": "SHADOW_ONLY",
       "status": "PENDING_BUY",
       "reason": "waiting_for_exact_auction_truth",
       "buy": null,

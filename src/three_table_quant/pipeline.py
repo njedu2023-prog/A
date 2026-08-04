@@ -15,6 +15,7 @@ from .ledger import (
     ensure_shadow_trades,
     load_json,
     load_state,
+    migrate_signal_candidates_to_shadow,
     save_json,
     settle_trades,
 )
@@ -151,6 +152,17 @@ def _append_frozen_market_fallback_issue(
     )
 
 
+def _ensure_all_candidate_shadow_ledger(
+    state: dict[str, Any],
+    tracked_ranks: list[int],
+) -> None:
+    """Migrate and backfill every frozen signal before execution settlement."""
+
+    for signal in state.get("signals", []):
+        migrate_signal_candidates_to_shadow(signal)
+        ensure_shadow_trades(state, signal, tracked_ranks)
+
+
 def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, Any]:
     config = load_config(config_path)
     paths = config["paths"]
@@ -164,6 +176,7 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
     active_signal: dict[str, Any] | None = None
 
     # Pending historical positions are processed even when today's source set is blocked.
+    _ensure_all_candidate_shadow_ledger(state, list(config["tracked_ranks"]))
     settle_trades(state, truth, market, config["execution"])
 
     loader = SourceLoader(config, http)
@@ -269,14 +282,17 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
                 market_data_provenance=_market_data_provenance(bars_by_code),
             ).to_dict()
             active_signal = signal
-            if add_signal(state, signal):
-                ensure_shadow_trades(state, signal, list(config["tracked_ranks"]))
+            add_signal(state, signal)
             current_run["status"] = signal["status"]
             current_run["message"] = (
                 f"三表严格交集实际保留{len(scored)}支并完成重新排序"
                 if scored
                 else "三表交集为0；合法空选且不补票"
             )
+        # This is intentionally independent of add_signal(): a frozen legacy
+        # signal can be missing rank 4+ shadow trades and must be repaired
+        # idempotently before any settlement attempt.
+        _ensure_all_candidate_shadow_ledger(state, list(config["tracked_ranks"]))
         settle_trades(state, truth, market, config["execution"])
 
     _append_market_fallback_issue(source_issues, market)

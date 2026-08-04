@@ -14,6 +14,7 @@ def _compound(returns: list[float]) -> float:
 
 
 FINAL_CASH_STATUSES = {"NOT_AVAILABLE", "NO_TRADE", "BUY_UNFILLED"}
+PORTFOLIO_FINAL_STATUSES = {"CLOSED", "NO_TRADE", "BUY_UNFILLED"}
 NONFINAL_STATUSES = {
     "PENDING_BUY",
     "BUY_UNVERIFIABLE",
@@ -22,6 +23,7 @@ NONFINAL_STATUSES = {
     "EXIT_DELAYED",
 }
 ALLOWED_SLOT_STATUSES = FINAL_CASH_STATUSES | NONFINAL_STATUSES | {"CLOSED"}
+ALLOWED_PORTFOLIO_STATUSES = PORTFOLIO_FINAL_STATUSES | NONFINAL_STATUSES
 
 
 def _finite(value: Any) -> bool:
@@ -29,6 +31,17 @@ def _finite(value: Any) -> bool:
         return value is not None and math.isfinite(float(value))
     except (TypeError, ValueError):
         return False
+
+
+def _same_number(actual: Any, expected: float | None) -> bool:
+    if expected is None:
+        return actual is None
+    return _finite(actual) and math.isclose(
+        float(actual),
+        float(expected),
+        rel_tol=1e-12,
+        abs_tol=1e-12,
+    )
 
 
 def _event_date(value: Any) -> str:
@@ -49,6 +62,122 @@ def _return_date(signal: dict[str, Any], trade: dict[str, Any] | None) -> str:
     return iso_date(signal["exit_date"])
 
 
+def _result(value: float | None, is_final: bool) -> str:
+    if not is_final or value is None:
+        return "PENDING"
+    if value > 0:
+        return "PROFIT"
+    if value < 0:
+        return "LOSS"
+    return "FLAT"
+
+
+def _portfolio_candidate(
+    signal: dict[str, Any],
+    candidate: dict[str, Any],
+    trade: dict[str, Any] | None,
+) -> dict[str, Any]:
+    status = str(trade.get("status")) if trade is not None else "MISSING_TRADE"
+    is_final = status in PORTFOLIO_FINAL_STATUSES
+    if status == "CLOSED":
+        net_return = float((trade.get("pnl") or {})["net_return_on_allocated"])
+    elif status in {"NO_TRADE", "BUY_UNFILLED"}:
+        net_return = 0.0
+    else:
+        net_return = None
+    buy = (trade or {}).get("buy") or {}
+    exit_payload = (trade or {}).get("exit") or {}
+    return_date = _return_date(signal, trade)
+    return {
+        "candidate_id": f"{signal['decision_date']}:{candidate['ts_code']}",
+        "rank": candidate["rank"],
+        "symbol": candidate["ts_code"],
+        "name": candidate["name"],
+        "status": status,
+        "is_final": is_final,
+        "buy_price": buy.get("avg_price"),
+        "exit_price": exit_payload.get("avg_price"),
+        "net_return": net_return,
+        "result": _result(net_return, is_final),
+        "return_date": return_date,
+    }
+
+
+def _build_portfolio_metrics(portfolio_daily: list[dict[str, Any]]) -> dict[str, Any]:
+    final_rows = sorted(
+        (row for row in portfolio_daily if row["is_final"]),
+        key=lambda row: (row["return_date"], row["decision_date"]),
+    )
+    pending_rows = [row for row in portfolio_daily if not row["is_final"]]
+    equity = 1.0
+    equity_by_decision_date: dict[str, float] = {}
+    final_returns: list[float] = []
+    for row in final_rows:
+        value = float(row["portfolio_return"])
+        equity *= 1.0 + value
+        final_returns.append(value)
+        equity_by_decision_date[row["decision_date"]] = equity
+
+    history = [
+        {
+            "date": row["return_date"] or row["planned_exit_date"],
+            "decision_date": row["decision_date"],
+            "planned_exit_date": row["planned_exit_date"],
+            "return_date": row["return_date"],
+            "candidate_count": row["candidate_count"],
+            "final_count": row["final_count"],
+            "pending_count": row["pending_count"],
+            "profitable_count": row["profitable_count"],
+            "portfolio_return": row["portfolio_return"],
+            "equity_index": equity_by_decision_date.get(row["decision_date"]),
+            "result": row["result"],
+            "is_final": row["is_final"],
+            "is_provisional": row["is_provisional"],
+        }
+        for row in sorted(
+            portfolio_daily,
+            key=lambda item: (
+                item["return_date"] or item["planned_exit_date"],
+                item["decision_date"],
+            ),
+        )
+    ]
+
+    final_by_month: dict[str, list[float]] = {}
+    pending_by_month: dict[str, int] = {}
+    for row in final_rows:
+        final_by_month.setdefault(row["return_date"][:7], []).append(
+            float(row["portfolio_return"])
+        )
+    for row in pending_rows:
+        month = row["planned_exit_date"][:7]
+        pending_by_month[month] = pending_by_month.get(month, 0) + 1
+    month_keys = sorted(set(final_by_month) | set(pending_by_month), reverse=True)
+    by_month = {
+        month: {
+            "cumulative_return": (
+                _compound(final_by_month[month])
+                if final_by_month.get(month)
+                else None
+            ),
+            "final_days": len(final_by_month.get(month, [])),
+            "pending_days": pending_by_month.get(month, 0),
+            "is_provisional": bool(
+                final_by_month.get(month) and pending_by_month.get(month, 0)
+            ),
+        }
+        for month in month_keys
+    }
+    return {
+        "cumulative_return": _compound(final_returns) if final_returns else None,
+        "final_days": len(final_rows),
+        "pending_days": len(pending_rows),
+        "is_provisional": bool(final_rows and pending_rows),
+        "history": history,
+        "by_month": by_month,
+    }
+
+
 def build_dashboard(
     state: dict[str, Any],
     issues: list[dict[str, Any]],
@@ -62,8 +191,31 @@ def build_dashboard(
     trades_by_key = {
         (item["decision_date"], item["rank"]): item for item in state["trades"]
     }
+    expected_trades = {
+        (signal["decision_date"], candidate["rank"]): (signal, candidate)
+        for signal in state["signals"]
+        for candidate in signal.get("candidates", [])
+    }
+    if set(trades_by_key) != set(expected_trades):
+        missing = sorted(set(expected_trades) - set(trades_by_key))
+        extra = sorted(set(trades_by_key) - set(expected_trades))
+        raise ValueError(
+            f"all-candidate shadow ledger mismatch; missing={missing}, extra={extra}"
+        )
+    for key, (signal, candidate) in expected_trades.items():
+        trade = trades_by_key[key]
+        if (
+            trade.get("trade_id") != f"{signal['decision_date']}:R{candidate['rank']}"
+            or trade.get("signal_id") != signal.get("signal_id")
+            or trade.get("ts_code") != candidate.get("ts_code")
+            or trade.get("name") != candidate.get("name")
+            or trade.get("buy_date") != signal.get("buy_date")
+            or trade.get("planned_exit_date") != signal.get("exit_date")
+        ):
+            raise ValueError(f"shadow trade identity mismatch for {key}")
     days: list[dict[str, Any]] = []
     rank_daily: list[dict[str, Any]] = []
+    portfolio_daily: list[dict[str, Any]] = []
     for signal in sorted(state["signals"], key=lambda item: item["decision_date"]):
         candidates = signal.get("candidates", [])
         slots: dict[str, Any] = {}
@@ -129,6 +281,8 @@ def build_dashboard(
                         "model_score": item.get("metrics", {}).get("utility_score"),
                         "action": item.get("action"),
                         "action_reason": item.get("action_reason"),
+                        "action_audit": item.get("action_audit", []),
+                        "policy_decision": item.get("policy_decision", {}),
                         "source_ranks": item.get("source_ranks", {}),
                         "metrics": item.get("metrics", {}),
                         "features": item.get("features", {}),
@@ -136,6 +290,52 @@ def build_dashboard(
                     for item in candidates
                 ],
                 "rank_slots": slots,
+            }
+        )
+        portfolio_candidates = [
+            _portfolio_candidate(
+                signal,
+                candidate,
+                trades_by_key.get((signal["decision_date"], candidate["rank"])),
+            )
+            for candidate in candidates
+        ]
+        final_count = sum(item["is_final"] for item in portfolio_candidates)
+        pending_count = len(portfolio_candidates) - final_count
+        profitable_count = sum(
+            item["is_final"] and float(item["net_return"]) > 0
+            for item in portfolio_candidates
+        )
+        is_final = not portfolio_candidates or pending_count == 0
+        is_provisional = bool(final_count and pending_count)
+        if not portfolio_candidates:
+            portfolio_return = 0.0
+            portfolio_return_date = iso_date(signal["exit_date"])
+        elif is_final:
+            portfolio_return = sum(
+                float(item["net_return"]) for item in portfolio_candidates
+            ) / len(portfolio_candidates)
+            portfolio_return_date = max(
+                item["return_date"] for item in portfolio_candidates
+            )
+        else:
+            portfolio_return = None
+            portfolio_return_date = None
+        portfolio_daily.append(
+            {
+                "decision_date": iso_date(signal["decision_date"]),
+                "buy_date": iso_date(signal["buy_date"]),
+                "planned_exit_date": iso_date(signal["exit_date"]),
+                "return_date": portfolio_return_date,
+                "candidate_count": len(portfolio_candidates),
+                "final_count": final_count,
+                "pending_count": pending_count,
+                "profitable_count": profitable_count,
+                "portfolio_return": portfolio_return,
+                "result": _result(portfolio_return, is_final),
+                "is_final": is_final,
+                "is_provisional": is_provisional,
+                "candidates": portfolio_candidates,
             }
         )
         rank_daily.append(
@@ -182,12 +382,14 @@ def build_dashboard(
             ),
         }
 
+    portfolio_metrics = _build_portfolio_metrics(portfolio_daily)
     months = sorted(
         {
             item["return_date"][:7]
             for row in rank_daily
             for item in row["ranks"].values()
-        },
+        }
+        | set(portfolio_metrics["by_month"]),
         reverse=True,
     )
     return {
@@ -207,8 +409,10 @@ def build_dashboard(
         "source_issues": issues,
         "available_months": months,
         "rank_metrics": metrics,
+        "portfolio_metrics": portfolio_metrics,
         "days": days,
         "rank_daily": rank_daily,
+        "portfolio_daily": portfolio_daily,
     }
 
 
@@ -235,6 +439,12 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
         candidate_ids = [item["candidate_id"] for item in day["candidates"]]
         if len(candidate_ids) != len(set(candidate_ids)):
             raise ValueError("candidate ids must be unique within a decision date")
+        for candidate in day["candidates"]:
+            if candidate.get("action") != "SHADOW":
+                raise ValueError("every intersection candidate must remain SHADOW")
+            eligible = candidate.get("metrics", {}).get("policy_trade_eligible")
+            if not isinstance(eligible, bool):
+                raise ValueError("policy_trade_eligible must remain independently recorded")
         if day["intersection_count"] == 0:
             if day["selection_status"] != "NO_CANDIDATE":
                 raise ValueError("zero intersection must be NO_CANDIDATE")
@@ -395,12 +605,170 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
         if metric.get("closed_trades") != len(closed_values) or not win_rate_matches:
             raise ValueError("rank win rate must use CLOSED observations only")
 
+    portfolio_daily = payload.get("portfolio_daily")
+    if not isinstance(portfolio_daily, list) or len(portfolio_daily) != len(payload["days"]):
+        raise ValueError("portfolio_daily must contain exactly one row per signal")
+    if [row.get("decision_date") for row in portfolio_daily] != sorted(
+        days_by_decision_date
+    ):
+        raise ValueError("portfolio_daily must be uniquely ordered by decision_date")
+    seen_portfolio_decisions: set[str] = set()
+    for row in portfolio_daily:
+        decision_date = row.get("decision_date")
+        if decision_date in seen_portfolio_decisions:
+            raise ValueError("duplicate portfolio_daily decision_date")
+        seen_portfolio_decisions.add(decision_date)
+        day = days_by_decision_date.get(decision_date)
+        if day is None:
+            raise ValueError("portfolio_daily row is not linked to its decision day")
+        if (
+            row.get("buy_date") != day["buy_date"]
+            or row.get("planned_exit_date") != day["planned_exit_date"]
+        ):
+            raise ValueError("portfolio_daily dates do not match the signal")
+        details = row.get("candidates")
+        if not isinstance(details, list):
+            raise ValueError("portfolio candidates must be a list")
+        expected_candidates = day["candidates"]
+        if row.get("candidate_count") != len(details) or len(details) != len(expected_candidates):
+            raise ValueError("portfolio candidate_count does not match strict intersection")
+        if [item.get("rank") for item in details] != [
+            item["rank"] for item in expected_candidates
+        ]:
+            raise ValueError("portfolio candidates must preserve deterministic rank order")
+
+        final_count = 0
+        profitable_count = 0
+        candidate_returns: list[float] = []
+        for detail, candidate in zip(details, expected_candidates, strict=True):
+            if (
+                detail.get("candidate_id") != candidate["candidate_id"]
+                or detail.get("symbol") != candidate["symbol"]
+                or detail.get("name") != candidate["name"]
+            ):
+                raise ValueError("portfolio candidate identity does not match ranked candidate")
+            status = detail.get("status")
+            if status not in ALLOWED_PORTFOLIO_STATUSES:
+                raise ValueError(f"unsupported portfolio candidate status: {status}")
+            return_date = detail.get("return_date")
+            if not isinstance(return_date, str) or len(return_date) != 10:
+                raise ValueError("portfolio candidate return_date must be an ISO date")
+            for price_field in ("buy_price", "exit_price"):
+                price = detail.get(price_field)
+                if price is not None and (not _finite(price) or float(price) <= 0):
+                    raise ValueError(f"portfolio {price_field} must be positive when present")
+            expected_final = status in PORTFOLIO_FINAL_STATUSES
+            if detail.get("is_final") is not expected_final:
+                raise ValueError("portfolio candidate final state disagrees with status")
+            value = detail.get("net_return")
+            if status == "CLOSED":
+                if not _finite(value):
+                    raise ValueError("CLOSED portfolio candidate needs a finite return")
+            elif status in {"NO_TRADE", "BUY_UNFILLED"}:
+                if not _same_number(value, 0.0):
+                    raise ValueError("final cash portfolio candidate must return zero")
+            elif value is not None:
+                raise ValueError("pending portfolio candidate must keep net_return null")
+            expected_result = _result(
+                float(value) if value is not None else None,
+                expected_final,
+            )
+            if detail.get("result") != expected_result:
+                raise ValueError("portfolio candidate result disagrees with return")
+            if expected_final:
+                final_count += 1
+                numeric = float(value)
+                candidate_returns.append(numeric)
+                profitable_count += numeric > 0
+            if detail["rank"] in tracked:
+                slot = day["rank_slots"][str(detail["rank"])]
+                if slot["status"] != status:
+                    raise ValueError("portfolio candidate and fixed-rank slot status disagree")
+
+        pending_count = len(details) - final_count
+        expected_final = not details or pending_count == 0
+        expected_provisional = bool(final_count and pending_count)
+        if (
+            row.get("final_count") != final_count
+            or row.get("pending_count") != pending_count
+            or row.get("profitable_count") != profitable_count
+        ):
+            raise ValueError("portfolio daily counts do not match candidate observations")
+        if row.get("is_final") is not expected_final:
+            raise ValueError("portfolio daily final state is inconsistent")
+        if row.get("is_provisional") is not expected_provisional:
+            raise ValueError("portfolio daily provisional state is inconsistent")
+        expected_return = (
+            0.0
+            if not details
+            else sum(candidate_returns) / len(details)
+            if expected_final
+            else None
+        )
+        if not _same_number(row.get("portfolio_return"), expected_return):
+            raise ValueError("portfolio return must be an all-candidate equal-weight average")
+        expected_result = _result(expected_return, expected_final)
+        if row.get("result") != expected_result:
+            raise ValueError("portfolio daily result disagrees with return")
+        if not details:
+            expected_return_date = day["planned_exit_date"]
+        elif expected_final:
+            expected_return_date = max(item["return_date"] for item in details)
+        else:
+            expected_return_date = None
+        if row.get("return_date") != expected_return_date:
+            raise ValueError("portfolio return_date must be the last candidate completion date")
+
+    portfolio_metrics = payload.get("portfolio_metrics")
+    if not isinstance(portfolio_metrics, dict):
+        raise ValueError("portfolio_metrics must be an object")
+    expected_portfolio_metrics = _build_portfolio_metrics(portfolio_daily)
+    if not _same_number(
+        portfolio_metrics.get("cumulative_return"),
+        expected_portfolio_metrics["cumulative_return"],
+    ):
+        raise ValueError("portfolio cumulative return does not match final days")
+    for field in ("final_days", "pending_days", "is_provisional"):
+        if portfolio_metrics.get(field) != expected_portfolio_metrics[field]:
+            raise ValueError(f"portfolio metric {field} does not match observations")
+    history = portfolio_metrics.get("history")
+    expected_history = expected_portfolio_metrics["history"]
+    if not isinstance(history, list) or len(history) != len(expected_history):
+        raise ValueError("portfolio history must contain every signal day")
+    numeric_history_fields = {"portfolio_return", "equity_index"}
+    for actual, expected in zip(history, expected_history, strict=True):
+        if set(actual) != set(expected):
+            raise ValueError("portfolio history schema mismatch")
+        for field, expected_value in expected.items():
+            if field in numeric_history_fields:
+                if not _same_number(actual.get(field), expected_value):
+                    raise ValueError(f"portfolio history {field} mismatch")
+            elif actual.get(field) != expected_value:
+                raise ValueError(f"portfolio history {field} mismatch")
+    by_month = portfolio_metrics.get("by_month")
+    expected_by_month = expected_portfolio_metrics["by_month"]
+    if not isinstance(by_month, dict) or set(by_month) != set(expected_by_month):
+        raise ValueError("portfolio monthly buckets do not match observations")
+    for month, expected in expected_by_month.items():
+        actual = by_month[month]
+        if not isinstance(actual, dict) or set(actual) != set(expected):
+            raise ValueError("portfolio monthly schema mismatch")
+        if not _same_number(
+            actual.get("cumulative_return"),
+            expected["cumulative_return"],
+        ):
+            raise ValueError("portfolio monthly return does not match final days")
+        for field in ("final_days", "pending_days", "is_provisional"):
+            if actual.get(field) != expected[field]:
+                raise ValueError(f"portfolio monthly {field} mismatch")
+
     expected_months = sorted(
         {
             item["return_date"][:7]
             for row in payload["rank_daily"]
             for item in row["ranks"].values()
-        },
+        }
+        | set(expected_by_month),
         reverse=True,
     )
     if payload.get("available_months") != expected_months:

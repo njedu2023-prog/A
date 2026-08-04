@@ -262,14 +262,20 @@ def score_candidates(
         if float(metrics["missing_fraction"]) > float(ranking["max_missing_fraction"]):
             reasons.append("market_features_incomplete")
         metrics["policy_trade_eligible"] = not reasons
-        # The first release is intentionally shadow-only. Every existing fixed
-        # rank 1/2/3 is observed so that gate thresholds can later be validated;
-        # this never creates a broker order.
-        candidate.action = "SHADOW" if rank <= 3 else "NO_TRADE"
-        if rank > 3:
-            candidate.action_reason = "rank_outside_tracked_1_2_3"
-        elif reasons:
-            candidate.action_reason = "shadow_validation;policy_gate=NO_TRADE;" + ";".join(reasons)
+        # Every member of the strict three-table intersection is observed.
+        # Policy eligibility remains an independent diagnostic and never
+        # creates a broker order in this shadow-only system.
+        candidate.action = "SHADOW"
+        if reasons:
+            candidate.action_reason = (
+                "shadow_validation_all_intersection_candidates;"
+                "policy_gate=NO_TRADE;"
+                + ";".join(reasons)
+                + ";not_a_broker_order"
+            )
         else:
-            candidate.action_reason = "shadow_validation;policy_gate=TRADE;not_a_broker_order"
+            candidate.action_reason = (
+                "shadow_validation_all_intersection_candidates;"
+                "policy_gate=TRADE;not_a_broker_order"
+            )
     return candidates

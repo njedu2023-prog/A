@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-04T20:22:41+08:00",
+  "generated_at": "2026-08-04T21:01:11+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -161,6 +161,37 @@
       "win_rate": null
     }
   },
+  "portfolio_metrics": {
+    "cumulative_return": null,
+    "final_days": 0,
+    "pending_days": 1,
+    "is_provisional": false,
+    "history": [
+      {
+        "date": "2026-08-06",
+        "decision_date": "2026-08-04",
+        "planned_exit_date": "2026-08-06",
+        "return_date": null,
+        "candidate_count": 7,
+        "final_count": 0,
+        "pending_count": 7,
+        "profitable_count": 0,
+        "portfolio_return": null,
+        "equity_index": null,
+        "result": "PENDING",
+        "is_final": false,
+        "is_provisional": false
+      }
+    ],
+    "by_month": {
+      "2026-08": {
+        "cumulative_return": null,
+        "final_days": 0,
+        "pending_days": 1,
+        "is_provisional": false
+      }
+    }
+  },
   "days": [
     {
       "decision_date": "2026-08-04",
@@ -273,6 +304,11 @@
           "model_score": -0.00643005096635128,
           "action": "SHADOW",
           "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive",
+          "action_audit": [],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 9,
             "premium_top10": 4,
@@ -313,6 +349,11 @@
           "model_score": -0.007369995289025428,
           "action": "SHADOW",
           "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;risk_adjusted_utility_not_positive",
+          "action_audit": [],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 7,
             "premium_top10": 2,
@@ -353,6 +394,11 @@
           "model_score": -0.010559044900178241,
           "action": "SHADOW",
           "action_reason": "shadow_validation;policy_gate=NO_TRADE;p_fill_below_threshold;expected_net_return_not_positive;risk_adjusted_utility_not_positive",
+          "action_audit": [],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 2,
             "premium_top10": 7,
@@ -391,8 +437,18 @@
           "name": "光迅科技",
           "rank": 4,
           "model_score": -0.010700706494618916,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3",
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 4,
             "premium_top10": 6,
@@ -431,8 +487,18 @@
           "name": "东山精密",
           "rank": 5,
           "model_score": -0.011685760058205949,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3",
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 3,
             "premium_top10": 8,
@@ -471,8 +537,18 @@
           "name": "达实智能",
           "rank": 6,
           "model_score": -0.014363013114435781,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3",
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 5,
             "premium_top10": 1,
@@ -511,8 +587,18 @@
           "name": "莲花控股",
           "rank": 7,
           "model_score": -0.017291006721842216,
-          "action": "NO_TRADE",
-          "action_reason": "rank_outside_tracked_1_2_3",
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;not_a_broker_order;previous_action_preserved_in_action_audit",
+          "action_audit": [
+            {
+              "action": "NO_TRADE",
+              "action_reason": "rank_outside_tracked_1_2_3"
+            }
+          ],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
           "source_ranks": {
             "a_top10": 8,
             "premium_top10": 5,
@@ -604,6 +690,115 @@
           "equity_index": 1.0
         }
       }
+    }
+  ],
+  "portfolio_daily": [
+    {
+      "decision_date": "2026-08-04",
+      "buy_date": "2026-08-05",
+      "planned_exit_date": "2026-08-06",
+      "return_date": null,
+      "candidate_count": 7,
+      "final_count": 0,
+      "pending_count": 7,
+      "profitable_count": 0,
+      "portfolio_return": null,
+      "result": "PENDING",
+      "is_final": false,
+      "is_provisional": false,
+      "candidates": [
+        {
+          "candidate_id": "20260804:000595.SZ",
+          "rank": 1,
+          "symbol": "000595.SZ",
+          "name": "新能股份",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        },
+        {
+          "candidate_id": "20260804:000815.SZ",
+          "rank": 2,
+          "symbol": "000815.SZ",
+          "name": "美利云",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        },
+        {
+          "candidate_id": "20260804:002428.SZ",
+          "rank": 3,
+          "symbol": "002428.SZ",
+          "name": "云南锗业",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        },
+        {
+          "candidate_id": "20260804:002281.SZ",
+          "rank": 4,
+          "symbol": "002281.SZ",
+          "name": "光迅科技",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        },
+        {
+          "candidate_id": "20260804:002384.SZ",
+          "rank": 5,
+          "symbol": "002384.SZ",
+          "name": "东山精密",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        },
+        {
+          "candidate_id": "20260804:002421.SZ",
+          "rank": 6,
+          "symbol": "002421.SZ",
+          "name": "达实智能",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        },
+        {
+          "candidate_id": "20260804:600186.SH",
+          "rank": 7,
+          "symbol": "600186.SH",
+          "name": "莲花控股",
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-06"
+        }
+      ]
     }
   ]
 }

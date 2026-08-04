@@ -57,35 +57,99 @@ def add_signal(state: dict[str, Any], signal: dict[str, Any]) -> bool:
     return True
 
 
-def ensure_shadow_trades(state: dict[str, Any], signal: dict[str, Any], tracked_ranks: list[int]) -> None:
-    existing = {trade["trade_id"] for trade in state["trades"]}
+def migrate_signal_candidates_to_shadow(signal: dict[str, Any]) -> bool:
+    """Migrate every frozen intersection candidate into shadow-only mode.
+
+    Older frozen signals used ``NO_TRADE`` for ranks outside the fixed 1/2/3
+    reporting slots.  That policy decision remains auditable, but it must not
+    prevent an otherwise valid intersection candidate from collecting an
+    execution label in the shadow ledger.
+    """
+
+    changed = False
+    for candidate in signal.get("candidates", []):
+        metrics = candidate.setdefault("metrics", {})
+        eligible = bool(metrics.get("policy_trade_eligible", False))
+        previous_action = candidate.get("action")
+        previous_reason = candidate.get("action_reason")
+        candidate["policy_decision"] = {
+            "trade_eligible": eligible,
+            "broker_order_created": False,
+        }
+        if previous_action == "SHADOW":
+            continue
+        audit = candidate.setdefault("action_audit", [])
+        previous = {
+            "action": previous_action,
+            "action_reason": previous_reason,
+        }
+        if previous not in audit:
+            audit.append(previous)
+        candidate["action"] = "SHADOW"
+        candidate["action_reason"] = (
+            "shadow_validation_all_intersection_candidates;"
+            f"policy_gate={'TRADE' if eligible else 'NO_TRADE'};"
+            "not_a_broker_order;previous_action_preserved_in_action_audit"
+        )
+        changed = True
+    return changed
+
+
+def ensure_shadow_trades(
+    state: dict[str, Any],
+    signal: dict[str, Any],
+    tracked_ranks: list[int] | None = None,
+) -> None:
+    """Idempotently create one shadow trade for every ranked candidate.
+
+    ``tracked_ranks`` remains accepted for compatibility with callers, but it
+    controls reporting slots only.  It must never filter the all-candidate
+    execution ledger.
+    """
+
+    del tracked_ranks
+    existing_by_id = {trade["trade_id"]: trade for trade in state["trades"]}
     for candidate in signal.get("candidates", []):
         rank = candidate.get("rank")
-        if rank not in tracked_ranks:
-            continue
         trade_id = f"{signal['decision_date']}:R{rank}"
-        if trade_id in existing:
+        if trade_id in existing_by_id:
+            existing = existing_by_id[trade_id]
+            if (
+                existing.get("signal_id") != signal.get("signal_id")
+                or existing.get("ts_code") != candidate.get("ts_code")
+                or existing.get("rank") != rank
+            ):
+                raise ValueError(f"shadow trade identity mismatch for {trade_id}")
+            existing["policy_trade_eligible"] = candidate.get("metrics", {}).get(
+                "policy_trade_eligible",
+                False,
+            )
+            existing["execution_mode"] = "SHADOW_ONLY"
             continue
-        state["trades"].append(
-            {
-                "trade_id": trade_id,
-                "signal_id": signal["signal_id"],
-                "decision_date": signal["decision_date"],
-                "buy_date": signal["buy_date"],
-                "planned_exit_date": signal["exit_date"],
-                "rank": rank,
-                "ts_code": candidate["ts_code"],
-                "name": candidate["name"],
-                "model_score": candidate.get("metrics", {}).get("utility_score"),
-                "policy_trade_eligible": candidate.get("metrics", {}).get("policy_trade_eligible", False),
-                "status": "PENDING_BUY",
-                "reason": "waiting_for_exact_auction_truth",
-                "buy": None,
-                "exit": None,
-                "pnl": None,
-                "diagnostics": {},
-            }
-        )
+        trade = {
+            "trade_id": trade_id,
+            "signal_id": signal["signal_id"],
+            "decision_date": signal["decision_date"],
+            "buy_date": signal["buy_date"],
+            "planned_exit_date": signal["exit_date"],
+            "rank": rank,
+            "ts_code": candidate["ts_code"],
+            "name": candidate["name"],
+            "model_score": candidate.get("metrics", {}).get("utility_score"),
+            "policy_trade_eligible": candidate.get("metrics", {}).get(
+                "policy_trade_eligible",
+                False,
+            ),
+            "execution_mode": "SHADOW_ONLY",
+            "status": "PENDING_BUY",
+            "reason": "waiting_for_exact_auction_truth",
+            "buy": None,
+            "exit": None,
+            "pnl": None,
+            "diagnostics": {},
+        }
+        state["trades"].append(trade)
+        existing_by_id[trade_id] = trade
     state["trades"].sort(key=lambda item: (item["decision_date"], item["rank"]))
 
 

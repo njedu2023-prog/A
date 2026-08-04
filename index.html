@@ -9,10 +9,11 @@
 </head>
 <body>
   <header class="topbar">
-    <div>
-      <p class="eyebrow">STRICT INTERSECTION · T+1</p>
-      <h1>三表汇总量化</h1>
-      <p id="updated" class="muted">正在读取数据…</p>
+    <div class="brand">
+      <p class="eyebrow">STRICT INTERSECTION · SHADOW LEDGER</p>
+      <h1>三表汇总量化验证</h1>
+      <p class="intro">三表实际交集全部进入影子账本，按9:25竞价与T+1退出真值验证。</p>
+      <p id="updated" class="updated">正在读取数据…</p>
     </div>
     <label class="month-picker">统计月份
       <select id="month"></select>
@@ -24,10 +25,14 @@
 
     <section class="panel">
       <div class="panel-head">
-        <div><p class="eyebrow">FIXED RANKS</p><h2>第1 / 2 / 3名独立收益</h2></div>
-        <span class="muted">无候选、未成交与不可验证严格区分</span>
+        <div><p class="eyebrow">PERFORMANCE</p><h2>收益概览</h2></div>
+        <span class="muted">固定前三名独立统计 · 全部候选等额统计</span>
       </div>
       <div id="rankCards" class="rank-cards"></div>
+      <div class="chart-head">
+        <span>第1 / 2 / 3名独立净值</span>
+        <span class="chart-legend"><i class="dot rank-one"></i>第1名 <i class="dot rank-two"></i>第2名 <i class="dot rank-three"></i>第3名</span>
+      </div>
       <div id="chart" class="chart" role="img" aria-label="三个固定名次的独立净值曲线"></div>
     </section>
 
@@ -42,8 +47,9 @@
     <section class="panel">
       <div class="panel-head">
         <div><p class="eyebrow">DAILY LEDGER</p><h2>单日收益与执行状态</h2></div>
+        <span class="muted">按信号批次展开查看全部候选</span>
       </div>
-      <div id="daily" class="table-wrap"></div>
+      <div id="daily" class="daily-ledger"></div>
     </section>
 
     <section class="panel">

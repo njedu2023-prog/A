@@ -6,8 +6,14 @@ from dataclasses import replace
 from pathlib import Path
 
 from three_table_quant.dashboard import build_dashboard, validate_dashboard
-from three_table_quant.ledger import empty_state, ensure_shadow_trades, settle_trades
+from three_table_quant.ledger import (
+    empty_state,
+    ensure_shadow_trades,
+    migrate_signal_candidates_to_shadow,
+    settle_trades,
+)
 from three_table_quant.market import Bar, EastmoneyMarketData, period_end_to_interval_start
+from three_table_quant.pipeline import _ensure_all_candidate_shadow_ledger
 
 
 EXECUTION = {
@@ -176,6 +182,109 @@ def signal(candidate_count: int = 1) -> dict:
 
 
 class LedgerDashboardTests(unittest.TestCase):
+    def test_every_intersection_candidate_gets_one_idempotent_shadow_trade(self) -> None:
+        state = empty_state()
+        item = signal(candidate_count=5)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        self.assertEqual(len(state["trades"]), 5)
+        self.assertEqual([trade["rank"] for trade in state["trades"]], [1, 2, 3, 4, 5])
+        self.assertTrue(
+            all(trade["execution_mode"] == "SHADOW_ONLY" for trade in state["trades"])
+        )
+
+    def test_frozen_legacy_signal_is_migrated_and_missing_trades_are_backfilled(self) -> None:
+        legacy = signal(candidate_count=3)
+        state = empty_state()
+        ensure_shadow_trades(state, legacy, [1, 2, 3])
+        frozen = signal(candidate_count=5)
+        for candidate in frozen["candidates"][3:]:
+            candidate["action"] = "NO_TRADE"
+            candidate["action_reason"] = "rank_outside_tracked_1_2_3"
+            candidate["metrics"]["policy_trade_eligible"] = False
+        state["signals"] = [frozen]
+
+        _ensure_all_candidate_shadow_ledger(state, [1, 2, 3])
+        _ensure_all_candidate_shadow_ledger(state, [1, 2, 3])
+
+        self.assertEqual(len(state["trades"]), 5)
+        self.assertTrue(
+            all(candidate["action"] == "SHADOW" for candidate in frozen["candidates"])
+        )
+        self.assertEqual(
+            frozen["candidates"][3]["action_audit"],
+            [
+                {
+                    "action": "NO_TRADE",
+                    "action_reason": "rank_outside_tracked_1_2_3",
+                }
+            ],
+        )
+        self.assertFalse(
+            frozen["candidates"][3]["policy_decision"]["trade_eligible"]
+        )
+        self.assertFalse(
+            frozen["candidates"][3]["policy_decision"]["broker_order_created"]
+        )
+
+    def test_candidate_slots_settle_independently_but_portfolio_waits_for_everyone(self) -> None:
+        state = empty_state()
+        item = signal(candidate_count=4)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        second = auction_truth()
+        second["ts_code"] = "600002.SH"
+        fourth = auction_truth()
+        fourth["ts_code"] = "600004.SH"
+        truth = {
+            "auctions": {
+                "20260804:600002.SH": second,
+                "20260804:600004.SH": fourth,
+            }
+        }
+        settle_trades(
+            state,
+            truth,
+            FakeMarket(),
+            EXECUTION,
+            asof_date="20260805",
+        )
+        by_rank = {trade["rank"]: trade for trade in state["trades"]}
+        self.assertEqual(by_rank[1]["status"], "BUY_UNVERIFIABLE")
+        self.assertEqual(by_rank[2]["status"], "CLOSED")
+        self.assertEqual(by_rank[3]["status"], "BUY_UNVERIFIABLE")
+        self.assertEqual(by_rank[4]["status"], "CLOSED")
+
+        dashboard = build_dashboard(
+            state,
+            [],
+            "2026-08-05T12:00:00+08:00",
+            {"status": "RANKED"},
+            [1, 2, 3],
+        )
+        validate_dashboard(dashboard)
+        self.assertEqual(
+            dashboard["rank_daily"][0]["ranks"]["2"]["state"],
+            "CLOSED",
+        )
+        self.assertIsNotNone(
+            dashboard["rank_daily"][0]["ranks"]["2"]["daily_return"]
+        )
+        self.assertIsNone(dashboard["portfolio_daily"][0]["portfolio_return"])
+        self.assertEqual(dashboard["portfolio_daily"][0]["final_count"], 2)
+        self.assertEqual(dashboard["portfolio_daily"][0]["pending_count"], 2)
+
+    def test_shadow_migration_is_idempotent_and_preserves_previous_reason(self) -> None:
+        item = signal(candidate_count=1)
+        candidate = item["candidates"][0]
+        candidate["action"] = "NO_TRADE"
+        candidate["action_reason"] = "legacy_policy_reason"
+        self.assertTrue(migrate_signal_candidates_to_shadow(item))
+        self.assertFalse(migrate_signal_candidates_to_shadow(item))
+        self.assertEqual(len(candidate["action_audit"]), 1)
+        self.assertIn("policy_gate=TRADE", candidate["action_reason"])
+
     def test_daily_open_proxy_never_becomes_fill(self) -> None:
         state = empty_state()
         item = signal()
