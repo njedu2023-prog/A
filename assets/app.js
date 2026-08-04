@@ -266,7 +266,7 @@ function renderRankCards() {
     const all = model.rank_metrics?.[String(rank)] || {};
     const month = periodStats(rank);
     const card = node("article", null, `rank-card rank-${rank}`);
-    card.append(node("span", `固定第${rank}名 · 所选月`, "card-label"), node("strong", pct(month.value), tone(month.value)));
+    card.append(node("span", `TOP${rank}`, "card-label top-rank-label"), node("strong", pct(month.value), tone(month.value)));
     addMetricRow(card, "月度状态", verificationLabel(month));
     const allLabel = !finite(all.cumulative_return)
       ? "待验证"
@@ -458,19 +458,6 @@ function latestPortfolioIndex() {
   return new Map((entry?.candidates || []).map((item) => [item.candidate_id || item.symbol, item]));
 }
 
-function candidateSource(item) {
-  const ranks = item.source_ranks || {};
-  const sources = [
-    ["Top10", "a_top10"],
-    ["Premium", "premium_top10"],
-    ["Decision", "decision_table"]
-  ];
-  return {
-    text: sources.map(([label]) => label).join(" · "),
-    title: sources.map(([label, key]) => `${label}第${ranks[key] ?? "—"}名`).join("；")
-  };
-}
-
 function renderCandidates() {
   const container = $("candidates");
   container.replaceChildren();
@@ -487,12 +474,10 @@ function renderCandidates() {
     const ledgerStatus = ledgerItem?.status || "PENDING";
     const stateBadge = badge(ledgerStatus, reasonText(item.action_reason));
     stateBadge.classList.add("candidate-state");
-    const source = candidateSource(item);
     return [
       {text: String(item.rank), align: "left"},
       {text: item.symbol, align: "left"},
       {text: item.name, align: "left", className: "name"},
-      {text: source.text, align: "left", className: "candidate-source", title: source.title},
       {text: pct(item.model_score), className: tone(item.model_score)},
       {text: probability(item.metrics?.p_fill_0925)},
       {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
@@ -504,13 +489,12 @@ function renderCandidates() {
     {text: "排名", align: "left"},
     {text: "代码", align: "left"},
     {text: "股票", align: "left"},
-    {text: "来源", align: "left"},
     "风险效用",
     "P_fill",
     "预期净收益",
     "账本",
     "执行状态"
-  ], rows, "900px");
+  ], rows, "760px");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }
@@ -605,13 +589,18 @@ function availableMonths() {
   return [...values].sort().reverse();
 }
 
+function formatUpdatedAt(value) {
+  const match = String(value || "").match(/^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2})/);
+  return match ? `${match[1]}：${match[2]}:${match[3]}` : String(value || "—");
+}
+
 async function start() {
   try {
     const response = await fetch(`./data/dashboard.v1.json?t=${Date.now()}`, {cache: "no-store"});
     if (!response.ok) throw new Error(`数据请求失败 HTTP ${response.status}`);
     model = await response.json();
     validate(model);
-    $("updated").textContent = `数据更新时间 ${model.generated_at} · ${model.timezone}`;
+    $("updated").textContent = `数据更新时间 ${formatUpdatedAt(model.generated_at)}`;
     const months = availableMonths();
     const select = $("month");
     select.replaceChildren();

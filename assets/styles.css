@@ -51,7 +51,7 @@ h2 {
   font-weight: 560;
   letter-spacing: -.02em;
 }
-.updated { margin: 0; color: var(--subtle); font-size: 11px; }
+.updated { margin: 0; color: #4f5b54; font-size: 12px; font-weight: 560; }
 .muted { color: var(--muted); }
 .month-picker {
   display: grid;
@@ -69,6 +69,7 @@ select {
   font: inherit;
   outline: none;
 }
+select#month { font-size: 14px !important; }
 select:focus { border-color: #83b9a3; box-shadow: 0 0 0 3px rgba(22, 134, 95, .09); }
 
 main {
@@ -230,7 +231,6 @@ td.name { font-weight: 570; }
   padding: 5px 8px;
 }
 .candidate-table th { height: 30px; }
-.candidate-source { color: #58635d; }
 
 .daily-ledger { border-top: 1px solid var(--line-soft); }
 .ledger-day + .ledger-day { border-top: 1px solid var(--line); }
@@ -336,4 +336,10 @@ h2 {
 .metric-row,
 .ledger-fact small {
   font-size: 11px !important;
+}
+
+.rank-card > .top-rank-label {
+  color: var(--ink);
+  font-size: 14px !important;
+  font-weight: 650;
 }
