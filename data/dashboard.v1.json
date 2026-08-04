@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-05T00:10:40+08:00",
+  "generated_at": "2026-08-05T04:30:22+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -14,6 +14,32 @@
     "execution_mode": "SHADOW_ONLY",
     "entry": "T 09:25 opening call auction exact fill truth required",
     "exit": "T+1 11:00-11:05 five one-minute slices"
+  },
+  "engine": {
+    "engine_version": "formal_ranking_engine_v2",
+    "selected_model_id": "transparent_shadow_champion_v2",
+    "selected_model_kind": "transparent_baseline",
+    "feature_schema_version": "formal_features_v2",
+    "label_schema_version": "training_dataset_v1",
+    "prediction_stage": "D_PRIOR",
+    "status": "BASELINE_ACTIVE",
+    "status_label": "基线运行 · 样本积累中",
+    "training_cutoff": null,
+    "calibrated": false,
+    "fallback_active": false,
+    "fallback_reason": null,
+    "mature_candidates": 0,
+    "required_mature_candidates": 180,
+    "mature_rank_counts": {
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "required_rank_samples": 60,
+    "lockbox_days": 0,
+    "required_lockbox_days": 126,
+    "promotion_eligible": false,
+    "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126"
   },
   "current_run": {
     "status": "RANKED",
@@ -40,7 +66,36 @@
         "T1": "20260806"
       }
     },
-    "intersection_count": 3
+    "intersection_count": 3,
+    "ranking_engine": {
+      "engine_version": "formal_ranking_engine_v2",
+      "selected_model_id": "transparent_shadow_champion_v2",
+      "selected_model_kind": "transparent_baseline",
+      "feature_schema_version": "formal_features_v2",
+      "label_schema_version": "training_dataset_v1",
+      "prediction_schema_version": "ranking_prediction_v2",
+      "prediction_stage": "D_PRIOR",
+      "status": "BASELINE_ACTIVE",
+      "status_label": "基线运行 · 样本积累中",
+      "training_cutoff": null,
+      "calibrated": false,
+      "fallback_active": false,
+      "fallback_reason": null,
+      "mature_candidates": 0,
+      "required_mature_candidates": 180,
+      "mature_rank_counts": {
+        "1": 0,
+        "2": 0,
+        "3": 0
+      },
+      "required_rank_samples": 60,
+      "lockbox_days": 0,
+      "required_lockbox_days": 126,
+      "promotion_eligible": false,
+      "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
+      "training_row_count": 0,
+      "excluded_feature_row_count": 3
+    }
   },
   "source_issues": [
     {
@@ -132,13 +187,13 @@
             "frozen_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
             "live_content_sha256": "f254c560112a218565b63fb9e739bc4a4b922dd1a837624e32d1ff94ab4a45f5",
             "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "0c48b17a6ec8ba6151882ffb566cdab5250693a2"
+            "live_repository_commit_sha": "d8549379426600ca4d5d2971048a7d4aed440949"
           },
           "premium_top10": {
             "frozen_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
             "live_content_sha256": "5cedb7e127dde70a98d62be0a5b6dfcd0190e5e23b2374a31c19951e59506b19",
             "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "0c48b17a6ec8ba6151882ffb566cdab5250693a2"
+            "live_repository_commit_sha": "d8549379426600ca4d5d2971048a7d4aed440949"
           }
         }
       }
@@ -159,8 +214,8 @@
         "request_types": [
           "daily"
         ],
-        "event_count": 3,
-        "successful_event_count": 3,
+        "event_count": 6,
+        "successful_event_count": 6,
         "failed_event_count": 0,
         "circuit_open": true
       }
@@ -232,6 +287,18 @@
       "buy_date": "2026-08-05",
       "planned_exit_date": "2026-08-06",
       "selection_status": "RANKED",
+      "model": {
+        "engine_version": "legacy_ranking_engine_v1",
+        "selected_model_id": "transparent_shadow_baseline_v1",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "legacy_features_v1",
+        "label_schema_version": "executable_labels_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
       "source_snapshots": [
         {
           "source_id": "a_top10",
@@ -303,6 +370,43 @@
           "d_close": 18.37,
           "mechanism_limit_pct": 10.0,
           "estimated_up_limit": 20.21,
+          "model": {
+            "engine_version": "legacy_ranking_engine_v1",
+            "selected_model_id": "transparent_shadow_baseline_v1",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "label_schema_version": "executable_labels_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_baseline_v1",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-04",
+            "calibrated": false,
+            "fill_probability": 0.3544440035346939,
+            "conditional_net_return_mean": 0.000748892359258721,
+            "conditional_net_return_p10": null,
+            "conditional_net_return_p50": null,
+            "conditional_net_return_p90": null,
+            "exit_delay_probability": 0.17950064515716338,
+            "expected_exit_delay_days": null,
+            "promotion_probability": null,
+            "expected_shortfall": 0.079349953406935,
+            "uncertainty": 0.2943920288775949,
+            "risk_adjusted_utility": -0.007396989489934219,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "p_fill_below_threshold",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -365,6 +469,44 @@
           "d_close": 6.56,
           "mechanism_limit_pct": 10.0,
           "estimated_up_limit": 7.22,
+          "model": {
+            "engine_version": "legacy_ranking_engine_v1",
+            "selected_model_id": "transparent_shadow_baseline_v1",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "label_schema_version": "executable_labels_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_baseline_v1",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-04",
+            "calibrated": false,
+            "fill_probability": 0.3621979592716428,
+            "conditional_net_return_mean": -0.0036242305272881125,
+            "conditional_net_return_p10": null,
+            "conditional_net_return_p50": null,
+            "conditional_net_return_p90": null,
+            "exit_delay_probability": 0.19521413395034365,
+            "expected_exit_delay_days": null,
+            "promotion_probability": null,
+            "expected_shortfall": 0.07216704914088985,
+            "uncertainty": 0.23570226039551587,
+            "risk_adjusted_utility": -0.008457021820107297,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "p_fill_below_threshold",
+              "expected_net_return_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -427,6 +569,42 @@
           "d_close": 3.48,
           "mechanism_limit_pct": 10.0,
           "estimated_up_limit": 3.83,
+          "model": {
+            "engine_version": "legacy_ranking_engine_v1",
+            "selected_model_id": "transparent_shadow_baseline_v1",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "label_schema_version": "executable_labels_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_baseline_v1",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-04",
+            "calibrated": false,
+            "fill_probability": 0.6771541562013951,
+            "conditional_net_return_mean": 0.0005788398758937007,
+            "conditional_net_return_p10": null,
+            "conditional_net_return_p50": null,
+            "conditional_net_return_p90": null,
+            "exit_delay_probability": 0.03322789387598293,
+            "expected_exit_delay_days": null,
+            "promotion_probability": null,
+            "expected_shortfall": 0.09190658254756882,
+            "uncertainty": 0.3681787005729087,
+            "risk_adjusted_utility": -0.016027210505004715,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -573,6 +751,18 @@
       "result": "PENDING",
       "is_final": false,
       "is_provisional": false,
+      "model": {
+        "engine_version": "legacy_ranking_engine_v1",
+        "selected_model_id": "transparent_shadow_baseline_v1",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "legacy_features_v1",
+        "label_schema_version": "executable_labels_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
       "candidates": [
         {
           "candidate_id": "20260804:000815.SZ",
@@ -584,6 +774,43 @@
           "d_close": 18.37,
           "mechanism_limit_pct": 10.0,
           "estimated_up_limit": 20.21,
+          "model": {
+            "engine_version": "legacy_ranking_engine_v1",
+            "selected_model_id": "transparent_shadow_baseline_v1",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "label_schema_version": "executable_labels_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_baseline_v1",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-04",
+            "calibrated": false,
+            "fill_probability": 0.3544440035346939,
+            "conditional_net_return_mean": 0.000748892359258721,
+            "conditional_net_return_p10": null,
+            "conditional_net_return_p50": null,
+            "conditional_net_return_p90": null,
+            "exit_delay_probability": 0.17950064515716338,
+            "expected_exit_delay_days": null,
+            "promotion_probability": null,
+            "expected_shortfall": 0.079349953406935,
+            "uncertainty": 0.2943920288775949,
+            "risk_adjusted_utility": -0.007396989489934219,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "p_fill_below_threshold",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -608,6 +835,44 @@
           "d_close": 6.56,
           "mechanism_limit_pct": 10.0,
           "estimated_up_limit": 7.22,
+          "model": {
+            "engine_version": "legacy_ranking_engine_v1",
+            "selected_model_id": "transparent_shadow_baseline_v1",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "label_schema_version": "executable_labels_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_baseline_v1",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-04",
+            "calibrated": false,
+            "fill_probability": 0.3621979592716428,
+            "conditional_net_return_mean": -0.0036242305272881125,
+            "conditional_net_return_p10": null,
+            "conditional_net_return_p50": null,
+            "conditional_net_return_p90": null,
+            "exit_delay_probability": 0.19521413395034365,
+            "expected_exit_delay_days": null,
+            "promotion_probability": null,
+            "expected_shortfall": 0.07216704914088985,
+            "uncertainty": 0.23570226039551587,
+            "risk_adjusted_utility": -0.008457021820107297,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "p_fill_below_threshold",
+              "expected_net_return_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -632,6 +897,42 @@
           "d_close": 3.48,
           "mechanism_limit_pct": 10.0,
           "estimated_up_limit": 3.83,
+          "model": {
+            "engine_version": "legacy_ranking_engine_v1",
+            "selected_model_id": "transparent_shadow_baseline_v1",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "label_schema_version": "executable_labels_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_baseline_v1",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "legacy_features_v1",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-04",
+            "calibrated": false,
+            "fill_probability": 0.6771541562013951,
+            "conditional_net_return_mean": 0.0005788398758937007,
+            "conditional_net_return_p10": null,
+            "conditional_net_return_p50": null,
+            "conditional_net_return_p90": null,
+            "exit_delay_probability": 0.03322789387598293,
+            "expected_exit_delay_days": null,
+            "promotion_probability": null,
+            "expected_shortfall": 0.09190658254756882,
+            "uncertainty": 0.3681787005729087,
+            "risk_adjusted_utility": -0.016027210505004715,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
