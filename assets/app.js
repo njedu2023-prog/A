@@ -489,7 +489,7 @@ function renderCandidates() {
     {text: "代码", align: "left"},
     {text: "股票", align: "left"},
     "风险效用",
-    "P_fill",
+    "竞价成交概率",
     "预期净收益",
     "执行状态"
   ], rows, "680px");
