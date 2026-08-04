@@ -336,9 +336,32 @@ footer {
   .panel, .status-card { border-radius: 10px; }
 }
 
-/* Unified typography: every visible text element uses the requested 12px size. */
+/* Typography scale aligned with the Decision reference page. */
 html,
 body,
 body * {
   font-size: 12px !important;
+}
+
+h1 {
+  font-size: 22px !important;
+}
+
+h2 {
+  font-size: 16px !important;
+}
+
+.status-title {
+  font-size: 18px !important;
+}
+
+.rank-card strong {
+  font-size: 19px !important;
+}
+
+.eyebrow,
+.rank-card > .card-label,
+.metric-row,
+.ledger-fact small {
+  font-size: 11px !important;
 }
