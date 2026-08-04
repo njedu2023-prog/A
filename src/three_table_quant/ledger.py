@@ -10,6 +10,7 @@ from zoneinfo import ZoneInfo
 from .calendar import TradingCalendar, parse_calendar_date
 from .candidate_facts import candidate_validation_inputs
 from .domain import AuctionTruth, ContractError, normalize_date
+from .execution_policy import validate_truth_against_order_spec
 from .market import daily_bar_on
 
 
@@ -129,6 +130,8 @@ def ensure_shadow_trades(
                 False,
             )
             existing["execution_mode"] = "SHADOW_ONLY"
+            if candidate.get("order_spec") and not existing.get("order_spec"):
+                existing["order_spec"] = candidate["order_spec"]
             _ensure_t_day_validation(existing, candidate)
             continue
         trade = {
@@ -146,6 +149,7 @@ def ensure_shadow_trades(
                 False,
             ),
             "execution_mode": "SHADOW_ONLY",
+            "order_spec": candidate.get("order_spec") or None,
             "status": "PENDING_BUY",
             "reason": "waiting_for_exact_auction_truth",
             "buy": None,
@@ -436,6 +440,19 @@ def _settle_entry(
             trade["diagnostics"]["auction_truth_error"] = str(exc)
             return
         trade["diagnostics"].pop("auction_truth_error", None)
+        try:
+            validate_truth_against_order_spec(
+                trade.get("order_spec"),
+                submitted_qty=auction.submitted_qty,
+                limit_price=auction.limit_price,
+                price_tick=float(execution.get("price_tick", 0.01)),
+            )
+        except ContractError as exc:
+            trade["status"] = "BUY_UNVERIFIABLE"
+            trade["reason"] = "auction_truth_order_spec_mismatch"
+            trade["diagnostics"]["auction_order_spec_error"] = str(exc)
+            return
+        trade["diagnostics"].pop("auction_order_spec_error", None)
         if auction.participation_cap_breached:
             trade["diagnostics"]["auction_participation_cap_breached"] = {
                 "rate": auction.participation_rate,

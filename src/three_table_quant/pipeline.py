@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 
 from .dashboard import build_dashboard, validate_dashboard
 from .domain import Signal, SourceIssue
+from .execution_policy import build_order_spec
 from .http import HttpClient
 from .ledger import (
     add_signal,
@@ -20,6 +21,13 @@ from .ledger import (
     settle_trades,
 )
 from .market import ResilientMarketData
+from .model_registry import (
+    BASELINE_MODEL_ID,
+    create_registry,
+    evaluate_promotion_readiness,
+    resolve_champion,
+    validate_registry,
+)
 from .scoring import score_candidates
 from .sources import (
     SourceLoader,
@@ -29,6 +37,7 @@ from .sources import (
     strict_intersection,
     validate_timeline,
 )
+from .training_dataset import build_training_dataset
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
@@ -122,6 +131,156 @@ def _market_data_provenance(bars_by_code: dict[str, list[Any]]) -> dict[str, Any
     }
 
 
+def _compatible_training_rows(
+    rows: list[dict[str, Any]],
+    feature_schema: str,
+) -> list[dict[str, Any]]:
+    """Keep legacy frozen rows auditable without counting them as V2 samples."""
+
+    return [
+        row
+        for row in rows
+        if str(row.get("feature_version") or "") == feature_schema
+    ]
+
+
+def _refresh_model_registry(
+    state: dict[str, Any],
+    config: dict[str, Any],
+    config_path: str | Path,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], SourceIssue | None]:
+    """Refresh label readiness without ever training on incomplete outcomes."""
+
+    dataset = build_training_dataset(state)
+    ranking = config["ranking"]
+    feature_schema = str(
+        ranking.get("feature_schema_version", "formal_features_v2")
+    )
+    compatible_rows = _compatible_training_rows(dataset["rows"], feature_schema)
+    excluded_feature_rows = len(dataset["rows"]) - len(compatible_rows)
+    promotion = ranking.get("model_promotion", {})
+    readiness = evaluate_promotion_readiness(
+        compatible_rows,
+        minimum_mature_candidates=int(
+            promotion.get("minimum_mature_candidates", 180)
+        ),
+        minimum_per_fixed_rank=int(
+            promotion.get("minimum_per_fixed_rank", 60)
+        ),
+        minimum_lockbox_days=int(
+            promotion.get("minimum_lockbox_days", 126)
+        ),
+    )
+    registry_path = Path(config["paths"]["model_registry"])
+    default_registry = create_registry(compatible_rows)
+    default_registry["promotion_readiness"] = readiness
+    registry = load_json(registry_path, default_registry)
+    issue: SourceIssue | None = None
+    try:
+        validate_registry(registry)
+    except Exception as exc:
+        registry = default_registry
+        issue = SourceIssue(
+            "MODEL_REGISTRY_INVALID",
+            "warning",
+            "ranking_engine",
+            "模型注册表无效；已失败关闭并回退透明冠军基线",
+            {"error": str(exc)},
+        )
+    else:
+        registry["promotion_readiness"] = readiness
+        champion = registry.get("champion", {})
+        if (
+            isinstance(champion, dict)
+            and champion.get("kind") == "BASELINE"
+            and champion.get("model_id") != BASELINE_MODEL_ID
+        ):
+            champion["model_id"] = BASELINE_MODEL_ID
+        challenger = registry.get("challenger")
+        if isinstance(challenger, dict) and challenger.get("status") in {
+            "INSUFFICIENT_DATA",
+            "CANDIDATE",
+        }:
+            challenger["status"] = (
+                "CANDIDATE"
+                if readiness["status"] == "ELIGIBLE_FOR_VALIDATION"
+                else "INSUFFICIENT_DATA"
+            )
+
+    root = Path(config_path).resolve().parent.parent
+    resolved = resolve_champion(registry, base_dir=root)
+    model_info = resolved["model"]
+    fallback_active = bool(resolved["fallback"] or issue is not None)
+    fallback_reason = (
+        resolved.get("fallback_reason")
+        or ("MODEL_REGISTRY_INVALID" if issue is not None else None)
+    )
+    reasons = list(readiness.get("reasons", []))
+    selected_kind = (
+        "learned_challenger"
+        if model_info.get("kind") == "TRAINED"
+        else "transparent_baseline"
+    )
+    status = (
+        "CHALLENGER_ACTIVE"
+        if selected_kind == "learned_challenger"
+        else "BASELINE_ACTIVE"
+    )
+    engine_status = {
+        "engine_version": ranking.get(
+            "engine_version",
+            "formal_ranking_engine_v2",
+        ),
+        "selected_model_id": model_info.get("model_id", BASELINE_MODEL_ID),
+        "selected_model_kind": selected_kind,
+        "feature_schema_version": ranking.get(
+            "feature_schema_version",
+            "formal_features_v2",
+        ),
+        "label_schema_version": ranking.get(
+            "label_schema_version",
+            "training_dataset_v1",
+        ),
+        "prediction_schema_version": ranking.get(
+            "prediction_schema_version",
+            "ranking_prediction_v2",
+        ),
+        "prediction_stage": ranking.get("prediction_stage", "D_PRIOR"),
+        "status": status,
+        "status_label": (
+            "挑战者模型运行"
+            if status == "CHALLENGER_ACTIVE"
+            else "基线运行 · 样本积累中"
+        ),
+        "training_cutoff": model_info.get("trained_through"),
+        "calibrated": bool(model_info.get("calibrated", False)),
+        "fallback_active": fallback_active,
+        "fallback_reason": fallback_reason,
+        "mature_candidates": int(readiness["mature_candidates"]),
+        "required_mature_candidates": int(
+            readiness["required"]["mature_candidates"]
+        ),
+        "mature_rank_counts": readiness["fixed_rank_mature_counts"],
+        "required_rank_samples": int(
+            readiness["required"]["per_fixed_rank"]
+        ),
+        "lockbox_days": int(readiness["mature_decision_days"]),
+        "required_lockbox_days": int(
+            readiness["required"]["lockbox_decision_days"]
+        ),
+        "promotion_eligible": readiness["status"]
+        == "ELIGIBLE_FOR_VALIDATION",
+        "promotion_reason": (
+            "；".join(reasons)
+            if reasons
+            else "样本门槛已满足，仍须通过前推验证、锁箱与压力测试"
+        ),
+        "training_row_count": len(compatible_rows),
+        "excluded_feature_row_count": excluded_feature_rows,
+    }
+    return registry, engine_status, resolved, issue
+
+
 def _append_frozen_market_fallback_issue(
     source_issues: list[SourceIssue],
     signal: dict[str, Any] | None,
@@ -178,9 +337,14 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
     # Pending historical positions are processed even when today's source set is blocked.
     _ensure_all_candidate_shadow_ledger(state, list(config["tracked_ranks"]))
     settle_trades(state, truth, market, config["execution"])
+    registry, engine_status, resolved_model, registry_issue = (
+        _refresh_model_registry(state, config, config_path)
+    )
 
     loader = SourceLoader(config, http)
     tables, source_issues = loader.load()
+    if registry_issue is not None:
+        source_issues.append(registry_issue)
     source_issues.extend(
         validate_timeline(
             tables,
@@ -201,6 +365,7 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
             for table in tables
         },
         "intersection_count": None,
+        "ranking_engine": engine_status,
     }
 
     if not any(item.severity == "error" for item in source_issues):
@@ -267,7 +432,17 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
                 bars_by_code,
                 {table.source_id: len(table.rows) for table in tables},
                 config,
+                decision_date=decision_date,
+                resolved_model=resolved_model,
+                model_base_dir=Path(config_path).resolve().parent.parent,
             )
+            for candidate in scored:
+                candidate.order_spec = build_order_spec(
+                    candidate,
+                    decision_date=decision_date,
+                    buy_date=buy_date,
+                    execution=config["execution"],
+                )
             snapshots = _source_snapshots(tables)
             signal = Signal(
                 signal_id=_signal_id(decision_date, snapshots),
@@ -277,9 +452,10 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
                 generated_at=_now(),
                 source_snapshots=snapshots,
                 candidates=scored,
-                model_version=config["ranking"]["version"],
+                model_version=engine_status["selected_model_id"],
                 status="RANKED" if scored else "NO_CANDIDATE",
                 market_data_provenance=_market_data_provenance(bars_by_code),
+                ranking_engine=engine_status,
             ).to_dict()
             active_signal = signal
             add_signal(state, signal)
@@ -314,4 +490,5 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
     save_json(paths["state"], state)
     save_json(paths["source_issues"], issue_payload)
     save_json(paths["dashboard"], dashboard)
+    save_json(paths["model_registry"], registry)
     return dashboard

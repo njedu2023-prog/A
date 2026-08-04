@@ -1,0 +1,38 @@
+{
+  "schema_version": "model_registry_v1",
+  "champion": {
+    "model_id": "transparent_shadow_champion_v2",
+    "kind": "BASELINE",
+    "status": "ACTIVE",
+    "artifact_path": null,
+    "artifact_sha256": null
+  },
+  "challenger": {
+    "model_id": null,
+    "status": "INSUFFICIENT_DATA",
+    "artifact_path": null,
+    "artifact_sha256": null
+  },
+  "promotion_readiness": {
+    "status": "INSUFFICIENT_DATA",
+    "mature_candidates": 0,
+    "fixed_rank_mature_counts": {
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "mature_decision_days": 0,
+    "required": {
+      "mature_candidates": 180,
+      "per_fixed_rank": 60,
+      "lockbox_decision_days": 126
+    },
+    "reasons": [
+      "mature_candidates_below_180",
+      "rank_1_mature_candidates_below_60",
+      "rank_2_mature_candidates_below_60",
+      "rank_3_mature_candidates_below_60",
+      "lockbox_decision_days_below_126"
+    ]
+  }
+}

@@ -26,6 +26,48 @@ function probability(value) {
   return `${(Number(value) * 100).toFixed(2)}%`;
 }
 
+function predictionOf(item) {
+  const raw = item?.prediction && typeof item.prediction === "object" ? item.prediction : {};
+  const metrics = item?.metrics || {};
+  return {
+    ...raw,
+    model_id: raw.model_id || item?.model?.selected_model_id || model?.engine?.selected_model_id || "透明基线",
+    fill_probability: raw.fill_probability ?? raw.p_fill ?? metrics.p_fill_0925,
+    conditional_net_return_mean: raw.conditional_net_return_mean ?? metrics.expected_net_return,
+    conditional_net_return_p10: raw.conditional_net_return_p10 ?? raw.conditional_net_return_q10 ?? metrics.conditional_net_return_p10 ?? metrics.conditional_net_return_q10 ?? metrics.net_return_q10,
+    conditional_net_return_p50: raw.conditional_net_return_p50 ?? raw.conditional_net_return_q50 ?? metrics.conditional_net_return_p50 ?? metrics.conditional_net_return_q50 ?? metrics.net_return_q50,
+    conditional_net_return_p90: raw.conditional_net_return_p90 ?? raw.conditional_net_return_q90 ?? metrics.conditional_net_return_p90 ?? metrics.conditional_net_return_q90 ?? metrics.net_return_q90,
+    exit_delay_probability: raw.exit_delay_probability ?? raw.p_exit_delay ?? metrics.p_exit_delay,
+    expected_exit_delay_days: raw.expected_exit_delay_days ?? raw.expected_delay_days ?? metrics.expected_delay_days,
+    promotion_probability: raw.promotion_probability ?? raw.p_promotion ?? metrics.p_promotion,
+    risk_adjusted_utility: raw.risk_adjusted_utility ?? raw.utility ?? metrics.risk_adjusted_utility ?? metrics.utility_score,
+    gate_decision: raw.gate_decision || metrics.gate_decision || (metrics.policy_trade_eligible === true ? "TRADE" : "NO_TRADE"),
+    gate_reasons: Array.isArray(raw.gate_reasons) ? raw.gate_reasons : Array.isArray(metrics.gate_reasons) ? metrics.gate_reasons : []
+  };
+}
+
+function returnForecast(item) {
+  const prediction = predictionOf(item);
+  const mean = prediction.conditional_net_return_mean;
+  const low = prediction.conditional_net_return_p10;
+  const high = prediction.conditional_net_return_p90;
+  if (!finite(mean)) return "—";
+  if (finite(low) && finite(high)) return `${pct(mean)} · [${pct(low)}, ${pct(high)}]`;
+  return pct(mean);
+}
+
+function shortModel(value) {
+  const text = String(value || "透明基线");
+  if (text === "transparent_shadow_champion_v2") return "透明冠军 V2";
+  if (text.startsWith("formal_quant_challenger_")) {
+    const prefix = "formal_quant_challenger_";
+    return `学习挑战者 ${text.slice(prefix.length, prefix.length + 8)}`;
+  }
+  return text
+    .replace("transparent_shadow_baseline_", "基线 ")
+    .replace("formal_transparent_champion_", "正式基线 ");
+}
+
 function price(value) {
   if (!finite(value)) return "—";
   return Number(value).toFixed(2);
@@ -113,15 +155,41 @@ function reasonText(reason) {
     "policy_gate=NO_TRADE": "正式门槛：不交易",
     "policy_gate=TRADE": "正式门槛：可交易",
     p_fill_below_threshold: "竞价成交概率不足",
+    fill_probability_below_threshold: "竞价成交估计不足",
     expected_net_return_not_positive: "预期净收益不为正",
+    conditional_net_return_not_positive: "条件净收益不为正",
+    return_lower_bound_not_positive: "收益下界不为正",
+    conditional_return_lcb_not_positive: "收益下界不为正",
     risk_adjusted_utility_not_positive: "风险效用不为正",
+    exit_delay_probability_too_high: "延迟退出风险过高",
+    exit_delay_risk_above_threshold: "延迟退出风险过高",
+    prediction_uncertainty_too_high: "预测不确定性过高",
     market_features_incomplete: "市场特征不完整",
+    insufficient_daily_bars: "D日前日线不足",
+    stale_market_features: "D日行情不完整",
+    invalid_candidate_facts: "候选冻结事实不完整",
+    cohort_ranking_fallback_borda: "数据不完整，按三榜共识排序",
     shadow_validation: "仅影子验证",
     shadow_validation_all_intersection_candidates: "全部交集候选仅做影子验证",
     not_a_broker_order: "不发送券商订单",
     previous_action_preserved_in_action_audit: "历史动作已留存审计"
   };
   return String(reason).split(";").map((part) => labels[part] || part).join("；");
+}
+
+function gateText(item) {
+  const prediction = predictionOf(item);
+  if (prediction.gate_decision === "TRADE") return "可交易";
+  const reasons = Array.isArray(prediction.gate_reasons) ? prediction.gate_reasons : [];
+  if (!reasons.length) return "不交易";
+  const first = reasonText(reasons[0]);
+  return `不交易 · ${first}${reasons.length > 1 ? ` +${reasons.length - 1}` : ""}`;
+}
+
+function gateTitle(item) {
+  const prediction = predictionOf(item);
+  const reasons = Array.isArray(prediction.gate_reasons) ? prediction.gate_reasons : [];
+  return reasons.length ? reasons.map(reasonText).join("；") : gateText(item);
 }
 
 function validate(data) {
@@ -135,6 +203,25 @@ function validate(data) {
       if (typeof item.return_date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(item.return_date)) throw new Error("收益行缺少归属日期");
       if (item.is_final && !finite(item.daily_return)) throw new Error("最终收益必须是数值");
       if (!item.is_final && item.daily_return !== null) throw new Error("未最终收益必须为null");
+    });
+  });
+  (data.days || []).forEach((day) => {
+    (day.candidates || []).forEach((candidate) => {
+      const prediction = predictionOf(candidate);
+      ["fill_probability", "exit_delay_probability", "promotion_probability"].forEach((field) => {
+        const value = prediction[field];
+        if (value !== null && value !== undefined && (!finite(value) || Number(value) < 0 || Number(value) > 1)) {
+          throw new Error(`模型字段 ${field} 超出范围`);
+        }
+      });
+      const quantiles = [
+        prediction.conditional_net_return_p10,
+        prediction.conditional_net_return_p50,
+        prediction.conditional_net_return_p90
+      ];
+      if (quantiles.every(finite) && !(Number(quantiles[0]) <= Number(quantiles[1]) && Number(quantiles[1]) <= Number(quantiles[2]))) {
+        throw new Error("条件净收益预测区间顺序错误");
+      }
     });
   });
 }
@@ -173,6 +260,8 @@ function fallbackPortfolioDaily() {
         stage_transition: candidate.stage_transition,
         industry: candidate.industry,
         d_close: candidate.d_close,
+        model: candidate.model || day.model || null,
+        prediction: candidate.prediction || predictionOf(candidate),
         t_day_validation: candidate.t_day_validation || slot.t_day_validation || {
           status: "PENDING",
           t_return: null,
@@ -207,6 +296,7 @@ function fallbackPortfolioDaily() {
       result: !allFinal ? "PENDING" : Number(portfolioReturn) > 0 ? "PROFIT" : Number(portfolioReturn) < 0 ? "LOSS" : "FLAT",
       is_final: allFinal,
       is_provisional: finalCandidates.length > 0 && !allFinal,
+      model: day.model || null,
       candidates
     };
   });
@@ -240,6 +330,11 @@ function renderStatus() {
   copy.append(node("h2", title, "status-title"));
   const meta = node("div", null, "status-meta");
   meta.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
+  const engine = model.engine || {};
+  meta.append(
+    node("span", engine.status_label || "基线运行 · 样本积累中", "engine-meta-text"),
+    node("span", `模型 · ${shortModel(engine.selected_model_id)}`, "engine-meta-text")
+  );
   const dates = run.source_dates || {};
   Object.entries(dates).forEach(([source, value]) => meta.append(node("span", `${source} · D ${value.D || "—"}`, "pill")));
   container.append(copy, meta);
@@ -528,35 +623,48 @@ function renderCandidates() {
     stateBadge.classList.add("candidate-state");
     const validationItem = ledgerItem || item;
     const tReturn = verifiedTReturn(validationItem);
+    const prediction = predictionOf(item);
+    const gate = node(
+      "span",
+      gateText(item),
+      `gate-text ${prediction.gate_decision === "TRADE" ? "trade" : "no-trade"}`
+    );
+    gate.setAttribute("aria-label", gateTitle(item));
     return [
-      {text: String(item.rank), align: "left"},
-      {text: item.symbol, align: "left", className: "code sticky-code"},
-      {text: item.name, align: "left", className: "name sticky-name"},
-      {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
-      {text: item.stage_transition || "—"},
-      {text: item.industry || "—", align: "left"},
-      {text: price(item.d_close)},
-      {text: tDayReturnText(validationItem), className: tone(tReturn)},
-      {text: tDayOutcomeText(validationItem, "is_promoted")},
-      {text: pct(item.model_score), className: tone(item.model_score)},
-      {text: probability(item.metrics?.p_fill_0925)},
-      {content: stateBadge, title: reasonText(item.action_reason)}
+      {text: String(item.rank), align: "left", className: "col-rank"},
+      {text: item.symbol, align: "left", className: "code sticky-code col-code"},
+      {text: item.name, align: "left", className: "name sticky-name col-name"},
+      {text: returnForecast(item), className: `col-return-range ${tone(prediction.conditional_net_return_mean)}`},
+      {text: item.stage_transition || "—", className: "col-stage"},
+      {text: probability(prediction.promotion_probability), className: "col-promotion"},
+      {text: item.industry || "—", align: "left", className: "col-industry"},
+      {text: price(item.d_close), className: "col-d-close"},
+      {text: tDayReturnText(validationItem), className: `col-t-return ${tone(tReturn)}`},
+      {text: tDayOutcomeText(validationItem, "is_promoted"), className: "col-promoted"},
+      {text: probability(prediction.fill_probability), className: "col-fill"},
+      {text: probability(prediction.exit_delay_probability), className: "col-delay"},
+      {text: pct(prediction.risk_adjusted_utility), className: `col-utility ${tone(prediction.risk_adjusted_utility)}`},
+      {content: gate, className: "col-gate", title: gateTitle(item)},
+      {content: stateBadge, className: "col-execution", title: reasonText(item.action_reason)}
     ];
   });
   const candidateTable = table([
-    {text: "排名", align: "left"},
-    {text: "代码", align: "left", className: "sticky-code"},
-    {text: "股票", align: "left", className: "sticky-name"},
-    "预期净收益",
-    "晋级目标",
-    {text: "行业板块", align: "left"},
-    "D收盘价",
-    "T日涨跌幅",
-    "是否晋级",
-    "风险效用",
-    "竞价成交概率",
-    "执行状态"
-  ], rows, "1100px", "汇集排序候选表");
+    {text: "排名", align: "left", className: "col-rank"},
+    {text: "代码", align: "left", className: "sticky-code col-code"},
+    {text: "股票", align: "left", className: "sticky-name col-name"},
+    {text: "条件净收益（10–90分位）", className: "col-return-range"},
+    {text: "晋级目标", className: "col-stage"},
+    {text: "晋级估计", className: "col-promotion"},
+    {text: "行业板块", align: "left", className: "col-industry"},
+    {text: "D收盘价", className: "col-d-close"},
+    {text: "T日涨跌幅", className: "col-t-return"},
+    {text: "是否晋级", className: "col-promoted"},
+    {text: "9:25成交估计", className: "col-fill"},
+    {text: "延迟风险", className: "col-delay"},
+    {text: "风险调整值", className: "col-utility"},
+    {text: "策略门槛", className: "col-gate"},
+    {text: "执行状态", className: "col-execution"}
+  ], rows, "1450px", "汇集排序候选表");
   candidateTable.classList.add("candidate-table");
   container.append(candidateTable);
 }
@@ -591,6 +699,7 @@ function renderDaily() {
     const summary = node("summary");
     const verifiedDate = day.return_date || day.planned_exit_date || "—";
     const returnValue = day.is_final === true && finite(day.portfolio_return) ? Number(day.portfolio_return) : null;
+    const batchModel = day.model?.selected_model_id || predictionOf(day.candidates?.[0]).model_id;
     summary.append(
       ledgerFact("信号日", day.decision_date || "—"),
       ledgerFact("9:25买入日", day.buy_date || "—"),
@@ -600,6 +709,7 @@ function renderDaily() {
       ledgerFact("盈利票", day.is_final === true || finalCount > 0 ? `${profitable} / ${count}` : "—"),
       ledgerFact("当日组合净收益", pct(returnValue), tone(returnValue)),
       ledgerFact("当日结果", resultText(day.result, day.is_final), tone(returnValue)),
+      ledgerFact("模型", shortModel(batchModel)),
       node("span", null, "ledger-toggle")
     );
     details.append(summary);
@@ -608,8 +718,20 @@ function renderDaily() {
     const childRows = candidates.map((item) => {
       const netReturn = item.is_final === true && finite(item.net_return) ? Number(item.net_return) : null;
       const tReturn = verifiedTReturn(item);
+      const prediction = predictionOf(item);
+      const gate = node(
+        "span",
+        gateText(item),
+        `gate-text ${prediction.gate_decision === "TRADE" ? "trade" : "no-trade"}`
+      );
+      gate.setAttribute("aria-label", gateTitle(item));
       return [
         {content: stockCell(item), align: "left", className: "sticky-stock"},
+        {text: returnForecast(item), className: `col-return-range ${tone(prediction.conditional_net_return_mean)}`},
+        {text: probability(prediction.fill_probability), className: "col-fill"},
+        {text: probability(prediction.exit_delay_probability), className: "col-delay"},
+        {text: pct(prediction.risk_adjusted_utility), className: `col-utility ${tone(prediction.risk_adjusted_utility)}`},
+        {content: gate, className: "col-gate", title: gateTitle(item)},
         {text: item.stage_transition || "—"},
         {text: item.industry || "—", align: "left"},
         {text: price(item.d_close)},
@@ -628,6 +750,11 @@ function renderDaily() {
       detailWrap.setAttribute("aria-label", `${day.decision_date || "该批次"}候选明细，可横向滑动查看全部字段`);
       const dailyTable = table([
         {text: "股票", align: "left", className: "sticky-stock"},
+        {text: "条件净收益（10–90分位）", className: "col-return-range"},
+        {text: "9:25成交估计", className: "col-fill"},
+        {text: "延迟风险", className: "col-delay"},
+        {text: "风险调整值", className: "col-utility"},
+        {text: "策略门槛", className: "col-gate"},
         "晋级目标",
         {text: "行业板块", align: "left"},
         "D收盘价",
@@ -638,7 +765,7 @@ function renderDaily() {
         "净收益",
         "结果",
         "状态"
-      ], childRows, "1130px", `${day.decision_date || "该批次"}候选验证明细`);
+      ], childRows, "1760px", `${day.decision_date || "该批次"}候选验证明细`);
       dailyTable.classList.add("daily-detail-table");
       detailWrap.append(dailyTable);
     } else {

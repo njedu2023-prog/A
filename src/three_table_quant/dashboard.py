@@ -26,6 +26,7 @@ NONFINAL_STATUSES = {
 ALLOWED_SLOT_STATUSES = FINAL_CASH_STATUSES | NONFINAL_STATUSES | {"CLOSED"}
 ALLOWED_PORTFOLIO_STATUSES = PORTFOLIO_FINAL_STATUSES | NONFINAL_STATUSES
 T_DAY_VALIDATION_STATUSES = {"PENDING", "UNVERIFIABLE", "VERIFIED"}
+GATE_DECISIONS = {"TRADE", "NO_TRADE"}
 
 
 def _finite(value: Any) -> bool:
@@ -105,6 +106,379 @@ def _validate_t_day_validation(payload: Any) -> None:
         raise ValueError("non-verified t_day_validation outcomes must remain null")
 
 
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, (list, tuple)):
+        return []
+    return [str(item) for item in value if str(item).strip()]
+
+
+def _signal_engine(signal: dict[str, Any]) -> dict[str, Any]:
+    raw = signal.get("ranking_engine")
+    payload = raw if isinstance(raw, dict) else {}
+    model_id = str(
+        payload.get("selected_model_id")
+        or payload.get("model_id")
+        or signal.get("model_version")
+        or "unknown_model"
+    )
+    return {
+        "engine_version": str(
+            payload.get("engine_version") or "legacy_ranking_engine_v1"
+        ),
+        "selected_model_id": model_id,
+        "selected_model_kind": str(
+            payload.get("selected_model_kind") or "transparent_baseline"
+        ),
+        "feature_schema_version": str(
+            payload.get("feature_schema_version") or "legacy_features_v1"
+        ),
+        "label_schema_version": str(
+            payload.get("label_schema_version") or "executable_labels_v1"
+        ),
+        "prediction_stage": str(payload.get("prediction_stage") or "D_PRIOR"),
+        "training_cutoff": payload.get("training_cutoff"),
+        "calibrated": bool(payload.get("calibrated", False)),
+        "fallback_active": bool(payload.get("fallback_active", False)),
+        "fallback_reason": payload.get("fallback_reason"),
+    }
+
+
+def _candidate_prediction(
+    signal: dict[str, Any],
+    candidate: dict[str, Any],
+) -> dict[str, Any]:
+    metrics = candidate.get("metrics")
+    metrics = metrics if isinstance(metrics, dict) else {}
+    raw = candidate.get("prediction")
+    if not isinstance(raw, dict):
+        raw = metrics.get("prediction")
+    raw = raw if isinstance(raw, dict) else {}
+    engine = _signal_engine(signal)
+
+    def first(*keys: str) -> Any:
+        for key in keys:
+            if key in raw:
+                return raw.get(key)
+            if key in metrics:
+                return metrics.get(key)
+        return None
+
+    eligible = metrics.get("policy_trade_eligible")
+    gate_decision = str(
+        first("gate_decision", "policy_gate")
+        or ("TRADE" if eligible is True else "NO_TRADE")
+    ).upper()
+    gate_reasons = _string_list(first("gate_reasons"))
+    if not gate_reasons and gate_decision == "NO_TRADE":
+        known = {
+            "p_fill_below_threshold",
+            "expected_net_return_not_positive",
+            "return_lower_bound_not_positive",
+            "conditional_return_lcb_not_positive",
+            "risk_adjusted_utility_not_positive",
+            "exit_delay_probability_too_high",
+            "exit_delay_risk_above_threshold",
+            "prediction_uncertainty_too_high",
+            "market_features_incomplete",
+            "insufficient_daily_bars",
+            "stale_market_features",
+            "invalid_candidate_facts",
+            "cohort_ranking_fallback_borda",
+        }
+        gate_reasons = [
+            item
+            for item in str(candidate.get("action_reason") or "").split(";")
+            if item in known
+        ]
+    return {
+        "model_id": str(first("model_id") or engine["selected_model_id"]),
+        "model_kind": str(
+            first("model_kind") or engine["selected_model_kind"]
+        ),
+        "feature_schema_version": str(
+            first("feature_schema_version")
+            or engine["feature_schema_version"]
+        ),
+        "prediction_stage": str(
+            first("prediction_stage") or engine["prediction_stage"]
+        ),
+        "as_of": iso_date(signal["decision_date"]),
+        "calibrated": bool(
+            first("calibrated")
+            if first("calibrated") is not None
+            else engine["calibrated"]
+        ),
+        "fill_probability": first(
+            "fill_probability",
+            "p_fill",
+            "p_fill_0925",
+        ),
+        "conditional_net_return_mean": first(
+            "conditional_net_return_mean",
+            "expected_net_return",
+        ),
+        "conditional_net_return_p10": first(
+            "conditional_net_return_p10",
+            "conditional_net_return_q10",
+            "net_return_q10",
+            "return_q10",
+        ),
+        "conditional_net_return_p50": first(
+            "conditional_net_return_p50",
+            "conditional_net_return_q50",
+            "net_return_q50",
+            "return_q50",
+        ),
+        "conditional_net_return_p90": first(
+            "conditional_net_return_p90",
+            "conditional_net_return_q90",
+            "net_return_q90",
+            "return_q90",
+        ),
+        "exit_delay_probability": first(
+            "exit_delay_probability",
+            "p_exit_delay",
+        ),
+        "expected_exit_delay_days": first(
+            "expected_exit_delay_days",
+            "expected_delay_days",
+        ),
+        "promotion_probability": first(
+            "promotion_probability",
+            "p_promotion",
+        ),
+        "expected_shortfall": first(
+            "expected_shortfall",
+            "cvar_loss_10pct",
+        ),
+        "uncertainty": first("uncertainty"),
+        "risk_adjusted_utility": first(
+            "risk_adjusted_utility",
+            "utility",
+            "utility_score",
+        ),
+        "feature_coverage": first("feature_coverage"),
+        "gate_decision": gate_decision,
+        "gate_reasons": gate_reasons,
+    }
+
+
+def _engine_summary(
+    state: dict[str, Any],
+    current_run: dict[str, Any],
+) -> dict[str, Any]:
+    latest_signal = max(
+        state.get("signals", []),
+        key=lambda item: str(item.get("decision_date") or ""),
+        default={},
+    )
+    frozen = _signal_engine(latest_signal) if latest_signal else {}
+    raw = current_run.get("ranking_engine")
+    payload = raw if isinstance(raw, dict) else {}
+    required_candidates = int(payload.get("required_mature_candidates", 180))
+    required_per_rank = int(payload.get("required_rank_samples", 60))
+    required_lockbox_days = int(payload.get("required_lockbox_days", 126))
+    mature_candidates = int(payload.get("mature_candidates", 0))
+    lockbox_days = int(payload.get("lockbox_days", 0))
+    rank_counts = payload.get("mature_rank_counts")
+    rank_counts = rank_counts if isinstance(rank_counts, dict) else {}
+    selected_model_id = str(
+        payload.get("selected_model_id")
+        or frozen.get("selected_model_id")
+        or "transparent_shadow_baseline_v1"
+    )
+    status = str(
+        payload.get("status")
+        or (
+            "CHALLENGER_ACTIVE"
+            if payload.get("selected_model_kind") == "learned_challenger"
+            else "BASELINE_ACTIVE"
+        )
+    )
+    return {
+        "engine_version": str(
+            payload.get("engine_version")
+            or frozen.get("engine_version")
+            or "formal_ranking_engine_v2"
+        ),
+        "selected_model_id": selected_model_id,
+        "selected_model_kind": str(
+            payload.get("selected_model_kind")
+            or frozen.get("selected_model_kind")
+            or "transparent_baseline"
+        ),
+        "feature_schema_version": str(
+            payload.get("feature_schema_version")
+            or frozen.get("feature_schema_version")
+            or "legacy_features_v1"
+        ),
+        "label_schema_version": str(
+            payload.get("label_schema_version")
+            or frozen.get("label_schema_version")
+            or "executable_labels_v1"
+        ),
+        "prediction_stage": str(
+            payload.get("prediction_stage")
+            or frozen.get("prediction_stage")
+            or "D_PRIOR"
+        ),
+        "status": status,
+        "status_label": str(
+            payload.get("status_label")
+            or (
+                "挑战者模型运行"
+                if status == "CHALLENGER_ACTIVE"
+                else "基线运行 · 样本积累中"
+            )
+        ),
+        "training_cutoff": payload.get(
+            "training_cutoff",
+            frozen.get("training_cutoff"),
+        ),
+        "calibrated": bool(
+            payload.get("calibrated", frozen.get("calibrated", False))
+        ),
+        "fallback_active": bool(
+            payload.get(
+                "fallback_active",
+                frozen.get("fallback_active", False),
+            )
+        ),
+        "fallback_reason": payload.get(
+            "fallback_reason",
+            frozen.get("fallback_reason"),
+        ),
+        "mature_candidates": mature_candidates,
+        "required_mature_candidates": required_candidates,
+        "mature_rank_counts": {
+            str(rank): int(rank_counts.get(str(rank), rank_counts.get(rank, 0)))
+            for rank in (1, 2, 3)
+        },
+        "required_rank_samples": required_per_rank,
+        "lockbox_days": lockbox_days,
+        "required_lockbox_days": required_lockbox_days,
+        "promotion_eligible": bool(payload.get("promotion_eligible", False)),
+        "promotion_reason": str(
+            payload.get("promotion_reason")
+            or "真实成熟样本尚未达到模型晋级门槛"
+        ),
+    }
+
+
+def _validate_prediction(payload: Any) -> None:
+    if not isinstance(payload, dict):
+        raise ValueError("candidate prediction must be an object")
+    for field in (
+        "model_id",
+        "model_kind",
+        "feature_schema_version",
+        "prediction_stage",
+        "as_of",
+    ):
+        if not isinstance(payload.get(field), str) or not payload[field].strip():
+            raise ValueError(f"candidate prediction {field} must be non-empty")
+    if payload["prediction_stage"] not in {"D_PRIOR", "T_AUCTION"}:
+        raise ValueError("candidate prediction stage is unsupported")
+    if payload.get("gate_decision") not in GATE_DECISIONS:
+        raise ValueError("candidate prediction gate_decision is unsupported")
+    reasons = payload.get("gate_reasons")
+    if not isinstance(reasons, list) or any(
+        not isinstance(item, str) or not item for item in reasons
+    ):
+        raise ValueError("candidate prediction gate_reasons must be strings")
+    if payload["gate_decision"] == "TRADE" and reasons:
+        raise ValueError("TRADE prediction cannot contain gate failure reasons")
+    if not isinstance(payload.get("calibrated"), bool):
+        raise ValueError("candidate prediction calibrated must be boolean")
+
+    probability_fields = (
+        "fill_probability",
+        "exit_delay_probability",
+        "promotion_probability",
+        "uncertainty",
+        "feature_coverage",
+    )
+    for field in probability_fields:
+        value = payload.get(field)
+        if value is not None and (
+            not _finite(value) or not 0.0 <= float(value) <= 1.0
+        ):
+            raise ValueError(f"candidate prediction {field} must be within [0, 1]")
+    for field in (
+        "conditional_net_return_mean",
+        "conditional_net_return_p10",
+        "conditional_net_return_p50",
+        "conditional_net_return_p90",
+        "expected_exit_delay_days",
+        "expected_shortfall",
+        "risk_adjusted_utility",
+    ):
+        value = payload.get(field)
+        if value is not None and not _finite(value):
+            raise ValueError(f"candidate prediction {field} must be finite or null")
+    if (
+        payload.get("expected_exit_delay_days") is not None
+        and float(payload["expected_exit_delay_days"]) < 0
+    ):
+        raise ValueError("candidate expected_exit_delay_days cannot be negative")
+    if (
+        payload.get("expected_shortfall") is not None
+        and float(payload["expected_shortfall"]) < 0
+    ):
+        raise ValueError("candidate expected_shortfall cannot be negative")
+    quantiles = [
+        payload.get("conditional_net_return_p10"),
+        payload.get("conditional_net_return_p50"),
+        payload.get("conditional_net_return_p90"),
+    ]
+    present = [item is not None for item in quantiles]
+    if any(present) and not all(present):
+        raise ValueError("candidate return prediction quantiles must be complete")
+    if all(present) and not (
+        float(quantiles[0]) <= float(quantiles[1]) <= float(quantiles[2])
+    ):
+        raise ValueError("candidate return prediction quantiles are unordered")
+
+
+def _validate_engine(payload: Any) -> None:
+    if not isinstance(payload, dict):
+        raise ValueError("dashboard engine must be an object")
+    for field in (
+        "engine_version",
+        "selected_model_id",
+        "selected_model_kind",
+        "feature_schema_version",
+        "label_schema_version",
+        "prediction_stage",
+        "status",
+        "status_label",
+        "promotion_reason",
+    ):
+        if not isinstance(payload.get(field), str) or not payload[field].strip():
+            raise ValueError(f"dashboard engine {field} must be non-empty")
+    for field in (
+        "mature_candidates",
+        "required_mature_candidates",
+        "required_rank_samples",
+        "lockbox_days",
+        "required_lockbox_days",
+    ):
+        value = payload.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            raise ValueError(f"dashboard engine {field} must be nonnegative")
+    rank_counts = payload.get("mature_rank_counts")
+    if not isinstance(rank_counts, dict) or set(rank_counts) != {"1", "2", "3"}:
+        raise ValueError("dashboard engine mature_rank_counts is incomplete")
+    if any(
+        not isinstance(value, int) or isinstance(value, bool) or value < 0
+        for value in rank_counts.values()
+    ):
+        raise ValueError("dashboard engine rank counts must be nonnegative")
+    for field in ("calibrated", "fallback_active", "promotion_eligible"):
+        if not isinstance(payload.get(field), bool):
+            raise ValueError(f"dashboard engine {field} must be boolean")
+
+
 def _portfolio_candidate(
     signal: dict[str, Any],
     candidate: dict[str, Any],
@@ -127,6 +501,8 @@ def _portfolio_candidate(
         "symbol": candidate["ts_code"],
         "name": candidate["name"],
         **_candidate_display_fields(candidate),
+        "model": _signal_engine(signal),
+        "prediction": _candidate_prediction(signal, candidate),
         "t_day_validation": _t_day_validation(trade),
         "status": status,
         "is_final": is_final,
@@ -306,6 +682,7 @@ def build_dashboard(
                 "buy_date": iso_date(signal["buy_date"]),
                 "planned_exit_date": iso_date(signal["exit_date"]),
                 "selection_status": signal["status"],
+                "model": _signal_engine(signal),
                 "source_snapshots": signal.get("source_snapshots", []),
                 "market_data_provenance": signal.get("market_data_provenance", {}),
                 "intersection_count": len(candidates),
@@ -315,6 +692,8 @@ def build_dashboard(
                         "symbol": item["ts_code"],
                         "name": item["name"],
                         **_candidate_display_fields(item),
+                        "model": _signal_engine(signal),
+                        "prediction": _candidate_prediction(signal, item),
                         "t_day_validation": _t_day_validation(
                             trades_by_key.get(
                                 (signal["decision_date"], item.get("rank"))
@@ -378,6 +757,7 @@ def build_dashboard(
                 "result": _result(portfolio_return, is_final),
                 "is_final": is_final,
                 "is_provisional": is_provisional,
+                "model": _signal_engine(signal),
                 "candidates": portfolio_candidates,
             }
         )
@@ -448,6 +828,7 @@ def build_dashboard(
             "entry": "T 09:25 opening call auction exact fill truth required",
             "exit": "T+1 11:00-11:05 five one-minute slices",
         },
+        "engine": _engine_summary(state, current_run),
         "current_run": current_run,
         "source_issues": issues,
         "available_months": months,
@@ -462,6 +843,7 @@ def build_dashboard(
 def validate_dashboard(payload: dict[str, Any]) -> None:
     if payload.get("schema_version") != "dashboard_v1":
         raise ValueError("dashboard schema mismatch")
+    _validate_engine(payload.get("engine"))
     tracked = payload["policy"]["tracked_ranks"]
     if tracked != [1, 2, 3]:
         raise ValueError("dashboard must track fixed ranks 1, 2, and 3")
@@ -492,6 +874,7 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 raise ValueError("candidate d_close must be positive when present")
             if candidate.get("action") != "SHADOW":
                 raise ValueError("every intersection candidate must remain SHADOW")
+            _validate_prediction(candidate.get("prediction"))
             _validate_t_day_validation(candidate.get("t_day_validation"))
             eligible = candidate.get("metrics", {}).get("policy_trade_eligible")
             if not isinstance(eligible, bool):
@@ -710,6 +1093,11 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 or not _same_number(detail.get("d_close"), candidate.get("d_close"))
             ):
                 raise ValueError("portfolio candidate display fields do not match ranked candidate")
+            _validate_prediction(detail.get("prediction"))
+            if detail.get("prediction") != candidate.get("prediction"):
+                raise ValueError(
+                    "portfolio candidate prediction does not match ranked candidate"
+                )
             _validate_t_day_validation(detail.get("t_day_validation"))
             if detail.get("t_day_validation") != candidate.get("t_day_validation"):
                 raise ValueError(

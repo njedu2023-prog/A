@@ -54,7 +54,8 @@ class Candidate:
     source_ranks: dict[str, int]
     source_values: dict[str, dict[str, Any]]
     features: dict[str, Any] = field(default_factory=dict)
-    metrics: dict[str, float | None] = field(default_factory=dict)
+    metrics: dict[str, Any] = field(default_factory=dict)
+    order_spec: dict[str, Any] = field(default_factory=dict)
     rank: int | None = None
     action: str = "NO_TRADE"
     action_reason: str = "not_scored"
@@ -75,6 +76,7 @@ class Signal:
     model_version: str
     status: str = "RANKED"
     market_data_provenance: dict[str, Any] = field(default_factory=dict)
+    ranking_engine: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)

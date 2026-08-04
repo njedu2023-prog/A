@@ -57,6 +57,7 @@ jobs:
           data/state.v1.json
           data/dashboard.v1.json
           data/source_issues.v1.json
+          data/model_registry.v1.json
           --branch main
           --expected-parent ${{ steps.checkout-parent.outputs.sha }}
       - name: Prepare Pages artifact

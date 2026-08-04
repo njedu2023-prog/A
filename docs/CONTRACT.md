@@ -16,6 +16,23 @@ intersection = codes(a_top10) ∩ codes(premium_top10) ∩ codes(decision_table)
 
 交集为零是合法结果。交集有几支就保留几支，每一支都进入独立影子账本并接受同一套9:25买入与T+1退出验证。固定第1/2/3名仍作为三个长期独立序列分别统计，不会限制第4名及以后进入影子验证，也不会发生名次补位。
 
+## D时点特征与正式排序输出
+
+`formal_features_v2` 采用显式白名单，不会把源行任意展开成特征。市场特征只允许使用日期不晚于D且最后一根恰好等于D的连续历史；至少需要21根有效日线。重复日期、乱序、未来K线、D日尾部缺失、价量字段不自洽均使市场特征失效。失效候选不会被删除，而会触发同日整组Borda共识降级和 `NO_TRADE`。
+
+正式预测契约为 `ranking_prediction_v2`，预测时点固定为 `D_PRIOR`。每个冻结候选必须保存：
+
+- `p_fill`、`expected_fill_ratio`；
+- `conditional_net_return_mean` 与 `conditional_net_return_q10/q50/q90`；
+- `p_exit_delay`、`expected_delay_days`；
+- 辅助目标 `p_promotion`；
+- `expected_shortfall`、`uncertainty`、`utility`；
+- `gate_decision`、`gate_reasons` 与 `ranking_fallback`。
+
+条件收益只在9:25实际成交的条件下定义，并且已经扣除与影子账本同口径的预估费用；未成交样本不能被错误标成条件收益0。10/50/90分位会在进入风险效用和页面前做确定性的单调投影。晋级概率只作独立辅助预测，不能直接充当最终收益排序目标。
+
+策略门槛同时要求市场特征完整、成交概率达标、条件净收益均值和第10分位严格为正、退出延迟风险不过高、风险效用严格为正。`gate_decision` 只表示正式策略是否可交易，候选的影子 `action` 始终为 `SHADOW`，不能把门槛不通过混写成没有影子记录。
+
 ## 日期链
 
 ```text
@@ -31,6 +48,8 @@ premium.target_date = decision.exit_date = T+1
 官方日历依据：[上交所2026年休市安排](https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml)。
 
 ## 9:25买入真值
+
+新信号在D日同步冻结 `shadow_order_spec_v1`。它保存买入日、9:25集合竞价阶段、买入方向、冻结D日涨停限价、按单票资金和费用预留可承受的最大整手数量，以及 `SHADOW_ONLY` 模式。该规格形成后不得随T日行情改写。
 
 集合竞价申报存在价格与时间队列。`data/execution_truth.v1.json` 的每个键为 `YYYYMMDD:000000.SH`，每条值必须是 `auction_execution_v2`，至少包含：
 
@@ -55,6 +74,8 @@ premium.target_date = decision.exit_date = T+1
 ```
 
 `ACTUAL` 只接受券商成交日志。`REPLAY` 和 `CONSERVATIVE` 若声称正成交，必须使用 `ORDERBOOK` 证据并额外提供 `queue_ahead_qty` 与 `executable_qty_at_order`，证明竞价同价队列确实轮到该申报。参与率、整手、资金上限、最小价位、限价和成交数量关系均会拒绝式校验。真实券商回报即使超出研究参与率也保留事实，但会记录越限诊断；非真实回报则直接拒绝。
+
+真值中的 `submitted_qty` 与 `limit_price` 还必须逐项匹配D日冻结订单规格。任何不一致都标记为 `BUY_UNVERIFIABLE` 和 `auction_truth_order_spec_mismatch`，不得用事后可成交数量反推或改写原订单。
 
 `filled_qty=0` 可以不含 `price`，但必须给出停牌、无集合竞价撮合、队列未轮到等配置允许的可靠原因。
 
@@ -86,6 +107,12 @@ premium.target_date = decision.exit_date = T+1
 - `CLOSED`：全部退出且费用后收益已结算。
 
 `null` 表示未知或不适用，绝不等同于0。
+
+## 训练标签与模型注册
+
+`training_dataset_v1` 只从已冻结信号和一一对应的影子交易构建，不再联网补特征。每行保留源仓库commit、内容哈希、特征时点与版本。未知标签保持 `null`；`BUY_UNFILLED` 的成交标签为0、策略收益为0，但条件收益仍为 `null`；`CLOSED` 才能产生费用后条件净收益和实际延迟日。T日晋级标签与是否成交独立记录。模型晋级样本计数只接受明确标记为 `formal_features_v2` 的冻结行；升级前的历史特征仍保留审计，但不会冒充V2训练样本。
+
+学习模型只接受 `model_artifact_v1` JSON，不加载pickle或可执行代码。训练截止日必须严格早于待排序D日；模型注册表中的相对路径与SHA-256必须通过校验，制品必须声明 `formal_features_v2` 且 `validation_passed=true`。任何路径越界、文件缺失、校验和变化、旧特征版本、未来字段、非法概率头或截止日穿越都失败关闭并回退透明冠军。
 
 ## 全部候选组合收益
 

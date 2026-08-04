@@ -1,135 +1,91 @@
 from __future__ import annotations
 
-import math
-import statistics
+import json
+from pathlib import Path
 from typing import Any
 
-from .domain import Candidate
-from .sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM, numeric_source_value
+from .domain import Candidate, normalize_date
+from .features import build_feature_snapshot
+from .ranking_engine import (
+    ArtifactValidationError,
+    LearnedChallenger,
+    rank_with_champion,
+    rank_with_learned,
+)
+from .sources import SOURCE_A, SOURCE_PREMIUM
 
 
-def _clip(value: float, low: float, high: float) -> float:
-    return max(low, min(high, value))
+def _load_resolved_artifact(
+    resolved_model: dict[str, Any] | None,
+    model_base_dir: str | Path | None,
+) -> tuple[Any, str | None]:
+    """Load a checksum-resolved JSON artifact from its contained repo path.
+
+    ``resolve_champion`` has already checked the artifact checksum.  This
+    second contained-path check keeps scoring safe when called directly and
+    avoids ever importing or unpickling executable model payloads.
+    """
+
+    if not isinstance(resolved_model, dict) or resolved_model.get("fallback") is True:
+        return None, None
+    model = resolved_model.get("model")
+    if not isinstance(model, dict) or str(model.get("kind") or "").upper() != "TRAINED":
+        return None, None
+    relative_path = Path(str(model.get("artifact_path") or ""))
+    if not relative_path.parts or relative_path.is_absolute() or ".." in relative_path.parts:
+        return None, "LEARNED_ARTIFACT_PATH_INVALID"
+    if model_base_dir is None:
+        return None, "LEARNED_ARTIFACT_BASE_DIR_UNAVAILABLE"
+    base = Path(model_base_dir).resolve()
+    resolved = (base / relative_path).resolve()
+    if resolved != base and base not in resolved.parents:
+        return None, "LEARNED_ARTIFACT_PATH_INVALID"
+    try:
+        if resolved.stat().st_size > 5 * 1024 * 1024:
+            return None, "LEARNED_ARTIFACT_TOO_LARGE"
+        with resolved.open("r", encoding="utf-8") as handle:
+            payload = json.load(handle)
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return None, "LEARNED_ARTIFACT_UNAVAILABLE"
+    if not isinstance(payload, dict):
+        return None, "LEARNED_ARTIFACT_INVALID"
+    return payload, None
 
 
-def _sigmoid(value: float) -> float:
-    return 1.0 / (1.0 + math.exp(-_clip(value, -30.0, 30.0)))
+def _candidate_decision_date(candidate: Candidate) -> str | None:
+    """Infer D from frozen source rows while keeping legacy unit tests valid."""
+
+    raw_values = [
+        candidate.source_values.get(SOURCE_A, {}).get("trade_date"),
+        candidate.source_values.get(SOURCE_PREMIUM, {}).get("trade_date"),
+    ]
+    parsed: set[str] = set()
+    for value in raw_values:
+        if value in (None, ""):
+            continue
+        try:
+            parsed.add(normalize_date(value, "candidate decision_date"))
+        except Exception:
+            return None
+    return next(iter(parsed)) if len(parsed) == 1 else None
 
 
-def _returns(closes: list[float]) -> list[float]:
-    return [closes[index] / closes[index - 1] - 1.0 for index in range(1, len(closes)) if closes[index - 1] > 0]
-
-
-def _trailing_return(closes: list[float], days: int) -> float | None:
-    if len(closes) <= days or closes[-days - 1] <= 0:
-        return None
-    return closes[-1] / closes[-days - 1] - 1.0
-
-
-def _max_drawdown(closes: list[float]) -> float | None:
-    if not closes:
-        return None
-    peak = closes[0]
-    worst = 0.0
-    for value in closes:
-        peak = max(peak, value)
-        if peak > 0:
-            worst = min(worst, value / peak - 1.0)
-    return worst
-
-
-def _cvar_loss(returns: list[float], fraction: float = 0.10) -> float | None:
-    if not returns:
-        return None
-    count = max(1, math.ceil(len(returns) * fraction))
-    tail = sorted(returns)[:count]
-    return max(0.0, -statistics.fmean(tail))
-
-
-def _source_strength(candidate: Candidate) -> float:
-    a_probability = numeric_source_value(candidate, SOURCE_A, "prob_final", "Probability", "prob")
-    premium_score = numeric_source_value(
+def build_features(
+    candidate: Candidate,
+    bars: list[Any],
+    table_sizes: dict[str, int],
+    *,
+    decision_date: str | None = None,
+    min_daily_bars: int = 21,
+) -> dict[str, Any]:
+    snapshot = build_feature_snapshot(
         candidate,
-        SOURCE_PREMIUM,
-        "premium_rank_score",
-        "premium_final_score",
-        "t_up_attack_score",
+        bars,
+        table_sizes,
+        decision_date=decision_date,
+        min_daily_bars=min_daily_bars,
     )
-    decision_ev = numeric_source_value(
-        candidate,
-        SOURCE_DECISION,
-        "decision_ev",
-        "predicted_net_return",
-        "decision_e_ret",
-    )
-    components: list[float] = []
-    if a_probability is not None:
-        components.append(_clip(a_probability, 0.0, 1.0))
-    if premium_score is not None:
-        components.append(_clip(premium_score / 100.0 if premium_score > 1 else premium_score, 0.0, 1.0))
-    if decision_ev is not None:
-        components.append(_sigmoid(decision_ev * 25.0))
-    return statistics.fmean(components) if components else 0.5
-
-
-def _rank_consensus(candidate: Candidate, table_sizes: dict[str, int]) -> tuple[float, float]:
-    percentiles: list[float] = []
-    for source_id, rank in candidate.source_ranks.items():
-        size = max(1, table_sizes.get(source_id, rank))
-        percentiles.append(1.0 if size == 1 else 1.0 - (rank - 1) / (size - 1))
-    if not percentiles:
-        return 0.0, 1.0
-    disagreement = statistics.pstdev(percentiles) if len(percentiles) > 1 else 0.0
-    return statistics.fmean(percentiles), _clip(disagreement * 2.0, 0.0, 1.0)
-
-
-def build_features(candidate: Candidate, bars: list[Any], table_sizes: dict[str, int]) -> dict[str, Any]:
-    closes = [float(bar.close) for bar in bars if float(bar.close) > 0]
-    returns = _returns(closes)
-    trailing = closes[-21:] if closes else []
-    amounts = [float(bar.amount) for bar in bars[-20:] if float(bar.amount) > 0]
-    volumes = [float(bar.volume) for bar in bars[-20:] if float(bar.volume) > 0]
-    turnovers = [float(bar.turnover) for bar in bars[-20:] if getattr(bar, "turnover", None) is not None]
-    providers = sorted({str(getattr(bar, "provider", "UNSPECIFIED")).upper() for bar in bars})
-    adjustments = sorted(
-        {str(getattr(bar, "price_adjustment", "UNSPECIFIED")).upper() for bar in bars}
-    )
-    consensus, disagreement = _rank_consensus(candidate, table_sizes)
-    return {
-        "ret_5d": _trailing_return(closes, 5),
-        "ret_20d": _trailing_return(closes, 20),
-        "volatility_20d": statistics.pstdev(returns[-20:]) if len(returns) >= 2 else None,
-        "cvar_loss_10pct": _cvar_loss(returns[-60:]),
-        "max_drawdown_20d": _max_drawdown(trailing),
-        "avg_amount_20d": statistics.fmean(amounts) if amounts else None,
-        # Some public daily feeds expose raw volume but not daily amount.  A
-        # cross-sectional volume proxy is still useful for ranking liquidity;
-        # execution itself never uses this proxy and continues to require
-        # self-consistent minute amount and volume.
-        "avg_volume_20d": statistics.fmean(volumes) if volumes else None,
-        "avg_turnover_20d": statistics.fmean(turnovers) if turnovers else None,
-        "rank_consensus": consensus,
-        "rank_disagreement": disagreement,
-        "source_strength": _source_strength(candidate),
-        "bar_count": float(len(bars)),
-        "market_data_providers": providers,
-        "daily_price_adjustments": adjustments,
-    }
-
-
-def _zscore(values: list[float | None]) -> list[float]:
-    valid = [value for value in values if value is not None and math.isfinite(value)]
-    if len(valid) < 2:
-        return [0.0 for _ in values]
-    center = statistics.median(valid)
-    deviations = [abs(value - center) for value in valid]
-    mad = statistics.median(deviations)
-    scale = 1.4826 * mad
-    if scale < 1e-12:
-        scale = statistics.pstdev(valid)
-    if scale < 1e-12:
-        return [0.0 for _ in values]
-    return [0.0 if value is None else _clip((value - center) / scale, -3.0, 3.0) for value in values]
+    return snapshot.to_dict()
 
 
 def estimate_round_trip_rate(execution: dict[str, Any]) -> float:
@@ -161,121 +117,164 @@ def score_candidates(
     bars_by_code: dict[str, list[Any]],
     table_sizes: dict[str, int],
     config: dict[str, Any],
+    decision_date: str | None = None,
+    resolved_model: dict[str, Any] | None = None,
+    artifact: Any = None,
+    model_base_dir: str | Path | None = None,
 ) -> list[Candidate]:
+    """Apply the V2 formal output contract while preserving legacy metrics.
+
+    All strict-intersection candidates remain SHADOW observations.  The policy
+    gate is a separate diagnostic and never creates a broker order.
+    """
+
     if not candidates:
         return []
-    for candidate in candidates:
-        candidate.features = build_features(candidate, bars_by_code.get(candidate.ts_code, []), table_sizes)
-
-    feature_names = [
-        "ret_5d",
-        "ret_20d",
-        "volatility_20d",
-        "cvar_loss_10pct",
-        "max_drawdown_20d",
-        "avg_amount_20d",
-        "rank_consensus",
-        "source_strength",
-    ]
-    zscores = {
-        name: _zscore([candidate.features.get(name) for candidate in candidates]) for name in feature_names
-    }
     ranking = config["ranking"]
     execution = config["execution"]
-    cost_rate = estimate_round_trip_rate(execution)
-    for index, candidate in enumerate(candidates):
-        features = candidate.features
-        missing_flags = [
-            features.get("ret_5d") is None,
-            features.get("ret_20d") is None,
-            features.get("volatility_20d") is None,
-            features.get("cvar_loss_10pct") is None,
-            features.get("avg_amount_20d") is None and features.get("avg_volume_20d") is None,
-        ]
-        missing_fraction = sum(missing_flags) / len(missing_flags)
-        momentum_z = 0.45 * zscores["ret_5d"][index] + 0.55 * zscores["ret_20d"][index]
-        volatility_z = zscores["volatility_20d"][index]
-        liquidity_value = features.get("avg_amount_20d") or features.get("avg_volume_20d")
-        liquidity_log = math.log10(max(float(liquidity_value or 1.0), 1.0))
-        liquidity_logs = [
-            math.log10(
-                max(
-                    float(
-                        item.features.get("avg_amount_20d")
-                        or item.features.get("avg_volume_20d")
-                        or 1.0
-                    ),
-                    1.0,
-                )
-            )
-            for item in candidates
-        ]
-        liquidity_z = _zscore(liquidity_logs)[index]
-        consensus_z = zscores["rank_consensus"][index]
-        strength_z = zscores["source_strength"][index]
-        p_fill = _clip(_sigmoid(-0.35 + 0.32 * liquidity_z - 0.22 * volatility_z + 0.15 * consensus_z), 0.05, 0.95)
-        expected_gross = 0.0028 * momentum_z + 0.0012 * consensus_z + 0.0008 * strength_z
-        expected_net = expected_gross - cost_rate
-        cvar_loss = float(features.get("cvar_loss_10pct") or 0.04)
-        drawdown = abs(float(features.get("max_drawdown_20d") or -0.10))
-        p_exit_delay = _clip(_sigmoid(-2.2 - 0.45 * liquidity_z + 0.35 * volatility_z + 2.0 * drawdown), 0.01, 0.90)
-        uncertainty = _clip(
-            0.55 * missing_fraction + 0.45 * float(features.get("rank_disagreement") or 0.0),
-            0.0,
-            1.0,
+    min_daily_bars = int(ranking.get("min_daily_bars", 21))
+    effective_dates: set[str] = set()
+    for candidate in candidates:
+        effective_date = decision_date or _candidate_decision_date(candidate)
+        if effective_date is not None:
+            effective_dates.add(effective_date)
+        candidate.features = build_features(
+            candidate,
+            bars_by_code.get(candidate.ts_code, []),
+            table_sizes,
+            decision_date=effective_date,
+            min_daily_bars=min_daily_bars,
         )
-        utility = p_fill * (
-            expected_net
-            - float(ranking["cvar_weight"]) * cvar_loss
-            - float(ranking["exit_delay_weight"]) * p_exit_delay
-            - float(ranking["uncertainty_weight"]) * uncertainty
-        )
-        candidate.metrics = {
-            "p_fill_0925": p_fill,
-            "expected_gross_return": expected_gross,
-            "expected_net_return": expected_net,
-            "cvar_loss_10pct": cvar_loss,
-            "p_exit_delay": p_exit_delay,
-            "uncertainty": uncertainty,
-            "estimated_round_trip_rate": cost_rate,
-            "utility_score": utility,
-            "missing_fraction": missing_fraction,
-        }
 
-    candidates.sort(
-        key=lambda item: (
-            -float(item.metrics.get("utility_score") or -999.0),
-            -float(item.features.get("rank_consensus") or 0.0),
-            item.ts_code,
+    cost_rate = estimate_round_trip_rate(execution)
+    cohort_date = next(iter(effective_dates)) if len(effective_dates) == 1 else None
+    resolution_fallback = False
+    resolution_reason: str | None = None
+    metadata = resolved_model or {}
+    resolved_payload = metadata.get("model") if isinstance(metadata.get("model"), dict) else metadata
+    resolved_payload = resolved_payload if isinstance(resolved_payload, dict) else {}
+    resolved_fallback = metadata.get("fallback") is True
+    resolved_kind = str(resolved_payload.get("kind") or "").upper()
+    expected_model_id = str(resolved_payload.get("model_id") or "").strip() or None
+    artifact_load_reason: str | None = None
+    if artifact is None and resolved_kind == "TRAINED" and not resolved_fallback:
+        artifact, artifact_load_reason = _load_resolved_artifact(
+            resolved_model,
+            model_base_dir,
         )
+    use_learned = artifact is not None and (
+        resolved_model is None or (not resolved_fallback and resolved_kind == "TRAINED")
     )
-    for rank, candidate in enumerate(candidates, start=1):
+    if resolved_fallback:
+        resolution_fallback = True
+        resolution_reason = str(metadata.get("fallback_reason") or "RESOLVED_MODEL_FALLBACK")
+    elif resolved_kind == "TRAINED" and artifact is None:
+        resolution_fallback = True
+        resolution_reason = artifact_load_reason or "LEARNED_ARTIFACT_UNAVAILABLE"
+    elif artifact is not None and resolved_model is not None and resolved_kind != "TRAINED":
+        resolution_fallback = True
+        resolution_reason = "RESOLVED_MODEL_NOT_TRAINED"
+
+    ranked: list[tuple[Candidate, Any]]
+    if use_learned:
+        try:
+            challenger = LearnedChallenger(
+                artifact,
+                ranking,
+                estimated_round_trip_rate=cost_rate,
+                expected_model_id=expected_model_id,
+            )
+            if cohort_date is None:
+                raise ArtifactValidationError("learned inference requires one aligned decision_date")
+            ranked = rank_with_learned(
+                candidates,
+                ranking,
+                challenger,
+                decision_date=cohort_date,
+            )
+        except (ArtifactValidationError, OSError, ValueError) as exc:
+            resolution_fallback = True
+            resolution_reason = f"LEARNED_ARTIFACT_REJECTED:{exc}"
+            ranked = rank_with_champion(
+                candidates,
+                ranking,
+                estimated_round_trip_rate=cost_rate,
+            )
+    else:
+        ranked = rank_with_champion(
+            candidates,
+            ranking,
+            estimated_round_trip_rate=cost_rate,
+        )
+    result: list[Candidate] = []
+    for rank, (candidate, prediction) in enumerate(ranked, start=1):
         candidate.rank = rank
-        metrics = candidate.metrics
-        reasons: list[str] = []
-        if float(metrics["p_fill_0925"]) < float(ranking["min_fill_probability"]):
-            reasons.append("p_fill_below_threshold")
-        if float(metrics["expected_net_return"]) < float(ranking["min_expected_net_return"]):
-            reasons.append("expected_net_return_not_positive")
-        if float(metrics["utility_score"]) < float(ranking["min_utility_score"]):
-            reasons.append("risk_adjusted_utility_not_positive")
-        if float(metrics["missing_fraction"]) > float(ranking["max_missing_fraction"]):
-            reasons.append("market_features_incomplete")
-        metrics["policy_trade_eligible"] = not reasons
-        # Every member of the strict three-table intersection is observed.
-        # Policy eligibility remains an independent diagnostic and never
-        # creates a broker order in this shadow-only system.
+        prediction_payload = prediction.to_dict()
+        historical_cvar = candidate.features.get("cvar_loss_10pct")
+        # Explicit None checks are intentional: a genuine zero tail loss,
+        # drawdown or utility is data, not a missing-value sentinel.
+        cvar_loss = (
+            prediction.expected_shortfall
+            if historical_cvar is None
+            else float(historical_cvar)
+        )
+        coverage = float(candidate.features.get("feature_coverage", 0.0))
+        missing_fraction = max(0.0, min(1.0, 1.0 - coverage))
+        eligible = prediction.gate_decision == "TRADE"
+        candidate.metrics = {
+            # Backward-compatible keys consumed by the current dashboard.
+            "p_fill_0925": prediction.p_fill,
+            "expected_gross_return": prediction.conditional_net_return_mean + cost_rate,
+            "expected_net_return": prediction.conditional_net_return_mean,
+            "cvar_loss_10pct": cvar_loss,
+            "p_exit_delay": prediction.p_exit_delay,
+            "uncertainty": prediction.uncertainty,
+            "estimated_round_trip_rate": cost_rate,
+            "utility_score": prediction.utility,
+            "missing_fraction": missing_fraction,
+            "policy_trade_eligible": eligible,
+            # Formal V2 output heads.
+            "prediction": prediction_payload,
+            "model_id": prediction.model_id,
+            "model_stage": prediction.model_stage,
+            "feature_schema_version": prediction.feature_schema_version,
+            "prediction_schema_version": prediction.schema_version,
+            "expected_fill_ratio": prediction.expected_fill_ratio,
+            "conditional_net_return_mean": prediction.conditional_net_return_mean,
+            "conditional_net_return_q10": prediction.conditional_net_return_q10,
+            "conditional_net_return_q50": prediction.conditional_net_return_q50,
+            "conditional_net_return_q90": prediction.conditional_net_return_q90,
+            "expected_shortfall_10pct": prediction.expected_shortfall,
+            "expected_delay_days": prediction.expected_delay_days,
+            "p_promotion": prediction.p_promotion,
+            "gate_decision": prediction.gate_decision,
+            "gate_reasons": list(prediction.gate_reasons),
+            "ranking_fallback": prediction.ranking_fallback,
+            "model_resolution_fallback": resolution_fallback,
+            "model_resolution_reason": resolution_reason,
+        }
         candidate.action = "SHADOW"
-        if reasons:
-            candidate.action_reason = (
-                "shadow_validation_all_intersection_candidates;"
-                "policy_gate=NO_TRADE;"
-                + ";".join(reasons)
-                + ";not_a_broker_order"
-            )
-        else:
-            candidate.action_reason = (
-                "shadow_validation_all_intersection_candidates;"
-                "policy_gate=TRADE;not_a_broker_order"
-            )
-    return candidates
+        candidate.policy_decision = {
+            "trade_eligible": eligible,
+            "gate_decision": prediction.gate_decision,
+            "gate_reasons": list(prediction.gate_reasons),
+            "model_id": prediction.model_id,
+            "broker_order_created": False,
+        }
+        gate = "TRADE" if eligible else "NO_TRADE"
+        reason_parts = [
+            "shadow_validation_all_intersection_candidates",
+            f"policy_gate={gate}",
+            *prediction.gate_reasons,
+            "not_a_broker_order",
+        ]
+        candidate.action_reason = ";".join(dict.fromkeys(reason_parts))
+        result.append(candidate)
+    return result
+
+
+__all__ = [
+    "build_features",
+    "estimate_round_trip_rate",
+    "score_candidates",
+]

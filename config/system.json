@@ -18,15 +18,30 @@
     "decision_index_path": "outputs/decision/report_index.json"
   },
   "ranking": {
-    "version": "transparent_shadow_baseline_v1",
+    "version": "transparent_shadow_champion_v2",
+    "engine_version": "formal_ranking_engine_v2",
+    "feature_schema_version": "formal_features_v2",
+    "label_schema_version": "training_dataset_v1",
+    "prediction_schema_version": "ranking_prediction_v2",
+    "prediction_stage": "D_PRIOR",
     "min_daily_bars": 21,
     "min_fill_probability": 0.40,
     "min_expected_net_return": 0.0,
+    "min_return_lcb": 0.0,
     "min_utility_score": 0.0,
+    "max_exit_delay_probability": 0.50,
     "max_missing_fraction": 0.34,
     "cvar_weight": 0.25,
     "exit_delay_weight": 0.005,
-    "uncertainty_weight": 0.003
+    "uncertainty_weight": 0.003,
+    "model_promotion": {
+      "minimum_mature_candidates": 180,
+      "minimum_per_fixed_rank": 60,
+      "minimum_lockbox_days": 126,
+      "embargo_trading_days": 2,
+      "minimum_train_days": 60,
+      "validation_days": 20
+    }
   },
   "execution": {
     "mode": "shadow_only",
@@ -66,6 +81,7 @@
     "state": "data/state.v1.json",
     "dashboard": "data/dashboard.v1.json",
     "source_issues": "data/source_issues.v1.json",
-    "execution_truth": "data/execution_truth.v1.json"
+    "execution_truth": "data/execution_truth.v1.json",
+    "model_registry": "data/model_registry.v1.json"
   }
 }

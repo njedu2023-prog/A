@@ -63,6 +63,83 @@ def make_trade(
 
 
 class DashboardContractTests(unittest.TestCase):
+    def test_formal_engine_and_frozen_prediction_reach_both_tables(self) -> None:
+        item = make_signal("20260803", "20260804", "20260805")
+        item["model_version"] = "transparent_shadow_champion_v2"
+        item["ranking_engine"] = {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "calibrated": False,
+        }
+        item["candidates"][0]["metrics"].update(
+            {
+                "prediction": {
+                    "model_id": "transparent_shadow_champion_v2",
+                    "model_stage": "CHAMPION_BASELINE",
+                    "feature_schema_version": "formal_features_v2",
+                    "p_fill": 0.42,
+                    "conditional_net_return_mean": 0.01,
+                    "conditional_net_return_q10": -0.02,
+                    "conditional_net_return_q50": 0.01,
+                    "conditional_net_return_q90": 0.04,
+                    "p_exit_delay": 0.12,
+                    "expected_delay_days": 1.4,
+                    "p_promotion": 0.31,
+                    "expected_shortfall": 0.03,
+                    "uncertainty": 0.22,
+                    "utility": -0.01,
+                    "gate_decision": "NO_TRADE",
+                    "gate_reasons": ["conditional_return_lcb_not_positive"],
+                },
+                "policy_trade_eligible": False,
+            }
+        )
+        engine = {
+            **item["ranking_engine"],
+            "status": "BASELINE_ACTIVE",
+            "status_label": "基线运行 · 样本积累中",
+            "fallback_active": False,
+            "fallback_reason": None,
+            "mature_candidates": 0,
+            "required_mature_candidates": 180,
+            "mature_rank_counts": {"1": 0, "2": 0, "3": 0},
+            "required_rank_samples": 60,
+            "lockbox_days": 0,
+            "required_lockbox_days": 126,
+            "promotion_eligible": False,
+            "promotion_reason": "真实成熟样本尚未达到模型晋级门槛",
+        }
+        payload = build_dashboard(
+            {"signals": [item], "trades": [make_trade(item)]},
+            [],
+            "2026-08-05T12:00:00+08:00",
+            {"status": "RANKED", "ranking_engine": engine},
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+        ranked = payload["days"][0]["candidates"][0]["prediction"]
+        historical = payload["portfolio_daily"][0]["candidates"][0][
+            "prediction"
+        ]
+        self.assertEqual(ranked, historical)
+        self.assertEqual(ranked["fill_probability"], 0.42)
+        self.assertEqual(ranked["conditional_net_return_p10"], -0.02)
+        self.assertEqual(ranked["gate_decision"], "NO_TRADE")
+        self.assertEqual(
+            payload["engine"]["selected_model_id"],
+            "transparent_shadow_champion_v2",
+        )
+
+        payload["portfolio_daily"][0]["candidates"][0]["prediction"][
+            "conditional_net_return_p10"
+        ] = 0.05
+        with self.assertRaisesRegex(ValueError, "quantiles"):
+            validate_dashboard(payload)
+
     def test_candidate_promotion_and_industry_reach_both_detail_tables(self) -> None:
         item = make_signal("20260803", "20260804", "20260805")
         item["candidates"][0]["source_values"] = {

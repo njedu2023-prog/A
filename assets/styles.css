@@ -121,6 +121,14 @@ main {
   border-radius: 0;
   background: transparent;
 }
+.engine-meta-text {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 2px;
+  color: #34443b;
+  font-weight: 620;
+  white-space: nowrap;
+}
 .panel-head {
   min-height: 58px;
   padding: 13px 16px 10px;
@@ -269,18 +277,37 @@ td.name { color: var(--ink); font-weight: 570; }
 }
 .candidate-table th { height: 30px; }
 .candidate-table { table-layout: fixed; }
-.candidate-table th:nth-child(1),
-.candidate-table td:nth-child(1) { width: 54px; }
-.candidate-table th:nth-child(2),
-.candidate-table td:nth-child(2) { width: 108px; }
-.candidate-table th:nth-child(3),
-.candidate-table td:nth-child(3) { width: 116px; }
-.candidate-table th:nth-child(4),
-.candidate-table td:nth-child(4) { width: 66px; }
-.candidate-table th:nth-child(5),
-.candidate-table td:nth-child(5) { width: 110px; }
-.candidate-table th:nth-child(6),
-.candidate-table td:nth-child(6) { width: 82px; }
+.candidate-table .col-rank { width: 52px; }
+.candidate-table .col-code { width: 104px; }
+.candidate-table .col-name { width: 108px; }
+.candidate-table .col-return-range,
+.daily-detail-table .col-return-range { width: 190px; }
+.candidate-table .col-stage { width: 72px; }
+.candidate-table .col-promotion { width: 78px; }
+.candidate-table .col-industry { width: 104px; }
+.candidate-table .col-d-close { width: 76px; }
+.candidate-table .col-t-return { width: 82px; }
+.candidate-table .col-promoted { width: 72px; }
+.candidate-table .col-fill,
+.daily-detail-table .col-fill { width: 94px; }
+.candidate-table .col-delay,
+.daily-detail-table .col-delay { width: 78px; }
+.candidate-table .col-utility,
+.daily-detail-table .col-utility { width: 88px; }
+.candidate-table .col-gate,
+.daily-detail-table .col-gate { width: 170px; }
+.candidate-table .col-execution { width: 96px; }
+.gate-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: 620;
+  text-overflow: ellipsis;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.gate-text.trade { color: var(--green-deep); }
+.gate-text.no-trade { color: #6c5540; }
 
 .daily-ledger { border-top: 1px solid var(--line-soft); }
 .ledger-day + .ledger-day { border-top: 1px solid var(--line); }
@@ -288,7 +315,7 @@ td.name { color: var(--ink); font-weight: 570; }
   list-style: none;
   cursor: pointer;
   display: grid;
-  grid-template-columns: repeat(8, minmax(74px, 1fr)) 34px;
+  grid-template-columns: repeat(9, minmax(72px, 1fr)) 34px;
   gap: 8px;
   align-items: center;
   min-width: 900px;

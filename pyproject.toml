@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "three-table-quant"
-version = "0.1.0"
-description = "Strict three-table A-share intersection ranking and T+1 shadow validation"
+version = "0.2.0"
+description = "Formal three-table A-share ranking and T+1 shadow validation engine"
 readme = "README.md"
 requires-python = ">=3.11"
 license = {text = "Proprietary research use"}
