@@ -190,7 +190,7 @@ function renderStatus() {
   container.replaceChildren();
   container.className = `status-card ${run.status === "INPUT_BLOCKED" ? "error" : "ok"}`;
   const copy = node("div");
-  copy.append(node("p", "CURRENT RUN", "eyebrow"), node("h2", run.message || "暂无运行结论", "status-title"));
+  copy.append(node("h2", run.message || "暂无运行结论", "status-title"));
   const meta = node("div", null, "status-meta");
   meta.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
   const dates = run.source_dates || {};
@@ -458,6 +458,19 @@ function latestPortfolioIndex() {
   return new Map((entry?.candidates || []).map((item) => [item.candidate_id || item.symbol, item]));
 }
 
+function candidateSource(item) {
+  const ranks = item.source_ranks || {};
+  const sources = [
+    ["Top10", "a_top10"],
+    ["Premium", "premium_top10"],
+    ["Decision", "decision_table"]
+  ];
+  return {
+    text: sources.map(([label]) => label).join(" · "),
+    title: sources.map(([label, key]) => `${label}第${ranks[key] ?? "—"}名`).join("；")
+  };
+}
+
 function renderCandidates() {
   const container = $("candidates");
   container.replaceChildren();
@@ -474,10 +487,12 @@ function renderCandidates() {
     const ledgerStatus = ledgerItem?.status || "PENDING";
     const stateBadge = badge(ledgerStatus, reasonText(item.action_reason));
     stateBadge.classList.add("candidate-state");
+    const source = candidateSource(item);
     return [
       {text: String(item.rank), align: "left"},
       {text: item.symbol, align: "left"},
       {text: item.name, align: "left", className: "name"},
+      {text: source.text, align: "left", className: "candidate-source", title: source.title},
       {text: pct(item.model_score), className: tone(item.model_score)},
       {text: probability(item.metrics?.p_fill_0925)},
       {text: pct(item.metrics?.expected_net_return), className: tone(item.metrics?.expected_net_return)},
@@ -485,16 +500,19 @@ function renderCandidates() {
       {content: stateBadge, title: reasonText(item.action_reason)}
     ];
   });
-  container.append(table([
+  const candidateTable = table([
     {text: "排名", align: "left"},
     {text: "代码", align: "left"},
     {text: "股票", align: "left"},
+    {text: "来源", align: "left"},
     "风险效用",
     "P_fill",
     "预期净收益",
     "账本",
     "执行状态"
-  ], rows, "760px"));
+  ], rows, "900px");
+  candidateTable.classList.add("candidate-table");
+  container.append(candidateTable);
 }
 
 function ledgerFact(label, value, className) {
@@ -569,39 +587,12 @@ function renderDaily() {
   });
 }
 
-function renderIssues() {
-  const container = $("issues");
-  container.replaceChildren();
-  const issues = model.source_issues || [];
-  if (!issues.length) {
-    container.append(node("div", "本次未发现源契约问题。", "empty"));
-    return;
-  }
-  const list = node("div", null, "issues-list");
-  issues.forEach((item) => {
-    const details = node("details", null, "issue");
-    const summary = node("summary");
-    summary.append(
-      badge(item.severity === "error" ? "INPUT_BLOCKED" : "WARNING"),
-      node("span", item.code, "issue-code"),
-      node("span", `${item.source_id} · ${item.message}`, "issue-preview"),
-      node("span", "›", "issue-chevron")
-    );
-    const body = node("div", item.message, "issue-body");
-    if (item.details && Object.keys(item.details).length) body.append(node("pre", JSON.stringify(item.details, null, 2), "muted"));
-    details.append(summary, body);
-    list.append(details);
-  });
-  container.append(list);
-}
-
 function render() {
   renderStatus();
   renderRankCards();
   renderChart();
   renderCandidates();
   renderDaily();
-  renderIssues();
 }
 
 function availableMonths() {

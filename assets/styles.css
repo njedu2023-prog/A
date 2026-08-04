@@ -53,15 +53,7 @@ h2 {
   font-weight: 560;
   letter-spacing: -.02em;
 }
-.intro { margin: 0 0 4px; color: #58635d; font-size: 12px; }
 .updated { margin: 0; color: var(--subtle); font-size: 11px; }
-.eyebrow {
-  margin-bottom: 5px;
-  color: var(--green);
-  font-size: 9px;
-  font-weight: 720;
-  letter-spacing: .17em;
-}
 .muted { color: var(--muted); }
 .month-picker {
   display: grid;
@@ -234,6 +226,13 @@ td.name { font-weight: 570; }
 .positive { color: var(--red); }
 .negative { color: var(--green-deep); }
 .candidate-state { max-width: 88px; }
+.candidate-table th,
+.candidate-table td {
+  height: 34px;
+  padding: 5px 8px;
+}
+.candidate-table th { height: 30px; }
+.candidate-source { color: #58635d; }
 
 .daily-ledger { border-top: 1px solid var(--line-soft); }
 .ledger-day + .ledger-day { border-top: 1px solid var(--line); }
@@ -286,31 +285,7 @@ td.name { font-weight: 570; }
 @keyframes reveal { from { opacity: .25; transform: translateY(-2px); } }
 .stock-cell { display: flex; align-items: baseline; gap: 6px; }
 .stock-cell strong { font-weight: 580; }
-.stock-cell span { color: var(--muted); font-size: 10px; }
-
-.issues-list { padding: 0 16px 10px; }
-.issue {
-  margin: 0;
-  border-top: 1px solid var(--line-soft);
-}
-.issue:first-child { border-top: 0; }
-.issue summary {
-  list-style: none;
-  cursor: pointer;
-  padding: 8px 0;
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
-  gap: 8px;
-  align-items: center;
-}
-.issue summary::-webkit-details-marker { display: none; }
-.issue-code { color: #4c5751; font-size: 10px; font-weight: 620; }
-.issue-source { color: var(--subtle); font-size: 9px; }
-.issue-preview { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
-.issue-chevron { color: var(--subtle); font-size: 12px; transition: transform .15s ease; }
-.issue[open] .issue-chevron { transform: rotate(90deg); }
-.issue-body { padding: 0 0 9px 19px; color: #626d66; font-size: 10px; }
-.issue-body pre { margin: 5px 0 0; overflow-x: auto; font: 9px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre-wrap; }
+.stock-cell span { color: var(--ink); font-size: 10px; }
 
 footer {
   max-width: 1380px;
@@ -359,7 +334,6 @@ h2 {
   font-size: 19px !important;
 }
 
-.eyebrow,
 .rank-card > .card-label,
 .metric-row,
 .ledger-fact small {
