@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-04T23:00:31+08:00",
+  "generated_at": "2026-08-04T23:31:23+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -263,6 +263,14 @@
           "stage_transition": "3→4",
           "industry": "IT服务Ⅱ",
           "d_close": 18.37,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 20.21,
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
           "rank": 1,
           "model_score": -0.007396989489934219,
           "action": "SHADOW",
@@ -317,6 +325,14 @@
           "stage_transition": "3→4",
           "industry": "电力",
           "d_close": 6.56,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 7.22,
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
           "rank": 2,
           "model_score": -0.008457021820107297,
           "action": "SHADOW",
@@ -371,6 +387,14 @@
           "stage_transition": "2→3",
           "industry": "IT服务Ⅱ",
           "d_close": 3.48,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 3.83,
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
           "rank": 3,
           "model_score": -0.016027210505004715,
           "action": "SHADOW",
@@ -427,7 +451,13 @@
           "buy": null,
           "exit": null,
           "pnl": null,
-          "diagnostics": {}
+          "diagnostics": {},
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          }
         },
         "2": {
           "candidate_id": "20260804:000595.SZ",
@@ -436,7 +466,13 @@
           "buy": null,
           "exit": null,
           "pnl": null,
-          "diagnostics": {}
+          "diagnostics": {},
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          }
         },
         "3": {
           "candidate_id": "20260804:002421.SZ",
@@ -445,7 +481,13 @@
           "buy": null,
           "exit": null,
           "pnl": null,
-          "diagnostics": {}
+          "diagnostics": {},
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          }
         }
       }
     }
@@ -502,6 +544,14 @@
           "stage_transition": "3→4",
           "industry": "IT服务Ⅱ",
           "d_close": 18.37,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 20.21,
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
           "status": "PENDING_BUY",
           "is_final": false,
           "buy_price": null,
@@ -518,6 +568,14 @@
           "stage_transition": "3→4",
           "industry": "电力",
           "d_close": 6.56,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 7.22,
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
           "status": "PENDING_BUY",
           "is_final": false,
           "buy_price": null,
@@ -534,6 +592,14 @@
           "stage_transition": "2→3",
           "industry": "IT服务Ⅱ",
           "d_close": 3.48,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 3.83,
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
           "status": "PENDING_BUY",
           "is_final": false,
           "buy_price": null,

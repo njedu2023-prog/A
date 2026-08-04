@@ -1420,7 +1420,27 @@
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {}
+      "diagnostics": {},
+      "t_day_validation": {
+        "status": "PENDING",
+        "trade_date": "20260805",
+        "verified_at": null,
+        "t_close": null,
+        "t_return": null,
+        "t_return_source": null,
+        "reference_close": null,
+        "high": null,
+        "limit_up_price": 20.21,
+        "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "touched_limit_up": null,
+        "is_limit_up": null,
+        "is_promoted": null,
+        "stage_transition": "3→4",
+        "d_close": 18.37,
+        "provider": null,
+        "price_adjustment": null,
+        "reason": "waiting_for_t_close"
+      }
     },
     {
       "trade_id": "20260804:R2",
@@ -1439,7 +1459,27 @@
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {}
+      "diagnostics": {},
+      "t_day_validation": {
+        "status": "PENDING",
+        "trade_date": "20260805",
+        "verified_at": null,
+        "t_close": null,
+        "t_return": null,
+        "t_return_source": null,
+        "reference_close": null,
+        "high": null,
+        "limit_up_price": 7.22,
+        "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "touched_limit_up": null,
+        "is_limit_up": null,
+        "is_promoted": null,
+        "stage_transition": "3→4",
+        "d_close": 6.56,
+        "provider": null,
+        "price_adjustment": null,
+        "reason": "waiting_for_t_close"
+      }
     },
     {
       "trade_id": "20260804:R3",
@@ -1458,7 +1498,27 @@
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {}
+      "diagnostics": {},
+      "t_day_validation": {
+        "status": "PENDING",
+        "trade_date": "20260805",
+        "verified_at": null,
+        "t_close": null,
+        "t_return": null,
+        "t_return_source": null,
+        "reference_close": null,
+        "high": null,
+        "limit_up_price": 3.83,
+        "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "touched_limit_up": null,
+        "is_limit_up": null,
+        "is_promoted": null,
+        "stage_transition": "2→3",
+        "d_close": 3.48,
+        "provider": null,
+        "price_adjustment": null,
+        "reason": "waiting_for_t_close"
+      }
     }
   ]
 }
