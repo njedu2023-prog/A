@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-04T21:20:50+08:00",
+  "generated_at": "2026-08-04T21:31:34+08:00",
   "issues": [
     {
       "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
@@ -105,13 +105,13 @@
             "frozen_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
             "live_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
             "frozen_repository_commit_sha": "7bc8d81fd74a992b8d78def7b1296238875a644d",
-            "live_repository_commit_sha": "b27a3d68d6b62a68c7519114a7752453196c9a1f"
+            "live_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16"
           },
           "premium_top10": {
             "frozen_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
             "live_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
             "frozen_repository_commit_sha": "7bc8d81fd74a992b8d78def7b1296238875a644d",
-            "live_repository_commit_sha": "b27a3d68d6b62a68c7519114a7752453196c9a1f"
+            "live_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16"
           }
         }
       }
