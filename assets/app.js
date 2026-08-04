@@ -285,7 +285,7 @@ function renderRankCards() {
     isProvisional: metrics.is_provisional === true
   };
   const historyCard = node("article", null, "rank-card portfolio-card");
-  historyCard.append(node("span", "全部候选 · 历史累计总收益", "card-label"), node("strong", pct(history.value), tone(history.value)));
+  historyCard.append(node("span", "全部候选 · 历史累计总收益", "card-label top-rank-label"), node("strong", pct(history.value), tone(history.value)));
   addMetricRow(historyCard, "组合口径", "全部交集候选等额");
   addMetricRow(historyCard, "统计状态", verificationLabel(history));
   addMetricRow(historyCard, "最终 / 未完成", `${history.finalDays} / ${history.pendingDays}`);
@@ -297,7 +297,7 @@ function renderRankCards() {
   const monthValue = finite(monthMetric.cumulative_return) ? Number(monthMetric.cumulative_return) : computed.value;
   const monthFinalDays = Number(monthMetric.final_days ?? computed.finalDays);
   const monthCard = node("article", null, "rank-card portfolio-card month");
-  monthCard.append(node("span", `全部候选 · ${month || "所选月"}累计总收益`, "card-label"), node("strong", pct(monthValue), tone(monthValue)));
+  monthCard.append(node("span", `全部候选 · ${month || "所选月"}累计总收益`, "card-label top-rank-label"), node("strong", pct(monthValue), tone(monthValue)));
   addMetricRow(monthCard, "组合口径", "每日等额 · 按退出日");
   addMetricRow(monthCard, "统计状态", verificationLabel({...computed, finalDays: monthFinalDays}));
   addMetricRow(monthCard, "最终 / 未完成", `${monthFinalDays} / ${computed.pendingDays}`);
