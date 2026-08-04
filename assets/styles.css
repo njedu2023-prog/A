@@ -284,13 +284,13 @@ td.name { color: var(--ink); font-weight: 570; }
 .ledger-toggle {
   width: 26px;
   height: 26px;
-  border: 1px solid #d6dcd8;
+  border: 1.5px solid #bcc6c0;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: #59635d;
+  color: #3f4c45;
   font-size: 17px;
-  font-weight: 300;
+  font-weight: 650;
 }
 .ledger-toggle::before { content: "+"; }
 .ledger-day[open] .ledger-toggle::before { content: "−"; }
