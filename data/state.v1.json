@@ -1400,6 +1400,77 @@
           }
         }
       }
+    },
+    {
+      "signal_id": "20260805-363e41a64426",
+      "decision_date": "20260805",
+      "buy_date": "20260806",
+      "exit_date": "20260807",
+      "generated_at": "2026-08-05T22:22:23+08:00",
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/7545ae0f571782ddb52971f4dafd1b072e9f622e/outputs/learning/pred_top10_20260805.csv",
+          "decision_date": "20260805",
+          "content_sha256": "aaa2ad949bf5c76b2a0550a82671f33f4a8b4b0b9f2fee55b02e8c15e580ba1c",
+          "repository_commit_sha": "7545ae0f571782ddb52971f4dafd1b072e9f622e",
+          "generated_at": "2026-08-05T13:15:08Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/6df88a06743ef3cab61b7f81e487a3eda539ba0f/outputs/premium/premium_top10_20260805.csv",
+          "decision_date": "20260805",
+          "content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
+          "repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
+          "generated_at": "2026-08-05T11:36:44Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/6df88a06743ef3cab61b7f81e487a3eda539ba0f/outputs/decision/action_plan_20260806.json",
+          "decision_date": "20260805",
+          "content_sha256": "f6dd7e9924fa5054a3b16f4c6c4abfabae006e42be7bfb70ff8795d61f23f602",
+          "repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
+          "generated_at": "2026-08-05T11:34:47+00:00",
+          "row_count": 10
+        }
+      ],
+      "candidates": [],
+      "model_version": "transparent_shadow_champion_v2",
+      "status": "NO_CANDIDATE",
+      "market_data_provenance": {
+        "daily_features": {}
+      },
+      "ranking_engine": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_schema_version": "ranking_prediction_v2",
+        "prediction_stage": "D_PRIOR",
+        "status": "BASELINE_ACTIVE",
+        "status_label": "基线运行 · 样本积累中",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null,
+        "mature_candidates": 0,
+        "required_mature_candidates": 180,
+        "mature_rank_counts": {
+          "1": 0,
+          "2": 0,
+          "3": 0
+        },
+        "required_rank_samples": 60,
+        "lockbox_days": 0,
+        "required_lockbox_days": 126,
+        "promotion_eligible": false,
+        "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
+        "training_row_count": 0,
+        "excluded_feature_row_count": 3
+      }
     }
   ],
   "trades": [
@@ -1431,24 +1502,24 @@
         }
       },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260805",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-05T22:22:17+08:00",
+        "t_close": 18.85,
+        "t_return": 0.026099999999999998,
+        "t_return_source": "PROVIDER_PCT_CHANGE",
+        "reference_close": 18.37,
+        "high": 19.8,
         "limit_up_price": 20.21,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": false,
+        "is_limit_up": false,
+        "is_promoted": false,
         "stage_transition": "3→4",
         "d_close": 18.37,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "EASTMONEY",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     },
     {
@@ -1479,24 +1550,24 @@
         }
       },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260805",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-05T22:22:17+08:00",
+        "t_close": 6.67,
+        "t_return": 0.0168,
+        "t_return_source": "PROVIDER_PCT_CHANGE",
+        "reference_close": 6.56,
+        "high": 7.22,
         "limit_up_price": 7.22,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": true,
+        "is_limit_up": false,
+        "is_promoted": false,
         "stage_transition": "3→4",
         "d_close": 6.56,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "EASTMONEY",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     },
     {
@@ -1527,24 +1598,24 @@
         }
       },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260805",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-05T22:22:17+08:00",
+        "t_close": 3.53,
+        "t_return": 0.0144,
+        "t_return_source": "PROVIDER_PCT_CHANGE",
+        "reference_close": 3.48,
+        "high": 3.68,
         "limit_up_price": 3.83,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": false,
+        "is_limit_up": false,
+        "is_promoted": false,
         "stage_transition": "2→3",
         "d_close": 3.48,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "EASTMONEY",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     }
   ]

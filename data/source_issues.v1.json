@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-05T14:01:59+08:00",
+  "generated_at": "2026-08-05T22:22:32+08:00",
   "issues": [
     {
       "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
@@ -49,11 +49,11 @@
       "details": {
         "row_count": 10,
         "non_null_counts": {
-          "decision_p_fill": 4,
-          "decision_e_ret": 4,
-          "decision_ev": 4,
-          "decision_cost": 4,
-          "decision_risk_penalty": 4
+          "decision_p_fill": 9,
+          "decision_e_ret": 9,
+          "decision_ev": 9,
+          "decision_cost": 9,
+          "decision_risk_penalty": 9
         }
       }
     },
@@ -68,54 +68,6 @@
           "SHADOW_ONLY"
         ],
         "row_count": 10
-      }
-    },
-    {
-      "code": "SOURCE_REVISION_AFTER_FREEZE",
-      "severity": "warning",
-      "source_id": "aggregate",
-      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
-      "details": {
-        "frozen_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "live_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "changed_sources": {
-          "decision_table": {
-            "frozen_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
-            "live_content_sha256": "f254c560112a218565b63fb9e739bc4a4b922dd1a837624e32d1ff94ab4a45f5",
-            "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "d8549379426600ca4d5d2971048a7d4aed440949"
-          },
-          "premium_top10": {
-            "frozen_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
-            "live_content_sha256": "5cedb7e127dde70a98d62be0a5b6dfcd0190e5e23b2374a31c19951e59506b19",
-            "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "d8549379426600ca4d5d2971048a7d4aed440949"
-          }
-        }
-      }
-    },
-    {
-      "code": "MARKET_DATA_PROVIDER_FALLBACK",
-      "severity": "warning",
-      "source_id": "market_data",
-      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
-      "details": {
-        "primary_provider": "EASTMONEY",
-        "fallback_provider": "TENCENT",
-        "affected_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "persisted_with_frozen_signal": true
       }
     }
   ]

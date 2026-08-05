@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-05T14:01:59+08:00",
+  "generated_at": "2026-08-05T22:22:32+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -42,8 +42,12 @@
     "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126"
   },
   "current_run": {
-    "status": "RANKED",
-    "message": "D日信号已冻结；保留3支候选且不事后改写",
+    "status": "NO_CANDIDATE",
+    "message": "D日名单筛选已执行；三表严格交集0支，合法空选且不补票",
+    "completed": true,
+    "completed_at": "2026-08-05T22:22:32+08:00",
+    "decision_date": "2026-08-05",
+    "outcome": "COMPLETED_ZERO_INTERSECTION",
     "source_table_counts": {
       "a_top10": 10,
       "premium_top10": 10,
@@ -51,22 +55,22 @@
     },
     "source_dates": {
       "a_top10": {
-        "D": "20260804",
-        "T": "20260805",
+        "D": "20260805",
+        "T": "20260806",
         "T1": null
       },
       "premium_top10": {
-        "D": "20260804",
-        "T": "20260805",
-        "T1": "20260806"
+        "D": "20260805",
+        "T": "20260806",
+        "T1": "20260807"
       },
       "decision_table": {
-        "D": "20260804",
-        "T": "20260805",
-        "T1": "20260806"
+        "D": "20260805",
+        "T": "20260806",
+        "T1": "20260807"
       }
     },
-    "intersection_count": 3,
+    "intersection_count": 0,
     "ranking_engine": {
       "engine_version": "formal_ranking_engine_v2",
       "selected_model_id": "transparent_shadow_champion_v2",
@@ -145,11 +149,11 @@
       "details": {
         "row_count": 10,
         "non_null_counts": {
-          "decision_p_fill": 4,
-          "decision_e_ret": 4,
-          "decision_ev": 4,
-          "decision_cost": 4,
-          "decision_risk_penalty": 4
+          "decision_p_fill": 9,
+          "decision_e_ret": 9,
+          "decision_ev": 9,
+          "decision_cost": 9,
+          "decision_risk_penalty": 9
         }
       }
     },
@@ -165,54 +169,6 @@
         ],
         "row_count": 10
       }
-    },
-    {
-      "code": "SOURCE_REVISION_AFTER_FREEZE",
-      "severity": "warning",
-      "source_id": "aggregate",
-      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
-      "details": {
-        "frozen_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "live_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "changed_sources": {
-          "decision_table": {
-            "frozen_content_sha256": "7401931c95624264fc17c089cc924ca9b235513a96c77a48e8bf294796d4c44e",
-            "live_content_sha256": "f254c560112a218565b63fb9e739bc4a4b922dd1a837624e32d1ff94ab4a45f5",
-            "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "d8549379426600ca4d5d2971048a7d4aed440949"
-          },
-          "premium_top10": {
-            "frozen_content_sha256": "ecee4ad718cf1ef4b569685f0972cab02d81d7be99fc3be527913a1b26033fcd",
-            "live_content_sha256": "5cedb7e127dde70a98d62be0a5b6dfcd0190e5e23b2374a31c19951e59506b19",
-            "frozen_repository_commit_sha": "eb05fa18bb09936d5823e2a9b192b100806eeb16",
-            "live_repository_commit_sha": "d8549379426600ca4d5d2971048a7d4aed440949"
-          }
-        }
-      }
-    },
-    {
-      "code": "MARKET_DATA_PROVIDER_FALLBACK",
-      "severity": "warning",
-      "source_id": "market_data",
-      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
-      "details": {
-        "primary_provider": "EASTMONEY",
-        "fallback_provider": "TENCENT",
-        "affected_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "persisted_with_frozen_signal": true
-      }
     }
   ],
   "available_months": [
@@ -220,35 +176,35 @@
   ],
   "rank_metrics": {
     "1": {
-      "cumulative_return": null,
-      "final_days": 0,
+      "cumulative_return": 0.0,
+      "final_days": 1,
       "pending_days": 1,
-      "is_provisional": false,
+      "is_provisional": true,
       "closed_trades": 0,
       "win_rate": null
     },
     "2": {
-      "cumulative_return": null,
-      "final_days": 0,
+      "cumulative_return": 0.0,
+      "final_days": 1,
       "pending_days": 1,
-      "is_provisional": false,
+      "is_provisional": true,
       "closed_trades": 0,
       "win_rate": null
     },
     "3": {
-      "cumulative_return": null,
-      "final_days": 0,
+      "cumulative_return": 0.0,
+      "final_days": 1,
       "pending_days": 1,
-      "is_provisional": false,
+      "is_provisional": true,
       "closed_trades": 0,
       "win_rate": null
     }
   },
   "portfolio_metrics": {
-    "cumulative_return": null,
-    "final_days": 0,
+    "cumulative_return": 0.0,
+    "final_days": 1,
     "pending_days": 1,
-    "is_provisional": false,
+    "is_provisional": true,
     "history": [
       {
         "date": "2026-08-06",
@@ -264,14 +220,29 @@
         "result": "PENDING",
         "is_final": false,
         "is_provisional": false
+      },
+      {
+        "date": "2026-08-07",
+        "decision_date": "2026-08-05",
+        "planned_exit_date": "2026-08-07",
+        "return_date": "2026-08-07",
+        "candidate_count": 0,
+        "final_count": 0,
+        "pending_count": 0,
+        "profitable_count": 0,
+        "portfolio_return": 0.0,
+        "equity_index": 1.0,
+        "result": "FLAT",
+        "is_final": true,
+        "is_provisional": false
       }
     ],
     "by_month": {
       "2026-08": {
-        "cumulative_return": null,
-        "final_days": 0,
+        "cumulative_return": 0.0,
+        "final_days": 1,
         "pending_days": 1,
-        "is_provisional": false
+        "is_provisional": true
       }
     }
   },
@@ -402,10 +373,10 @@
             ]
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.026099999999999998,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "rank": 1,
           "model_score": -0.007396989489934219,
@@ -502,10 +473,10 @@
             ]
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.0168,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "rank": 2,
           "model_score": -0.008457021820107297,
@@ -600,10 +571,10 @@
             ]
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.0144,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "rank": 3,
           "model_score": -0.016027210505004715,
@@ -672,10 +643,10 @@
             }
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.026099999999999998,
+            "is_limit_up": false,
+            "is_promoted": false
           }
         },
         "2": {
@@ -696,10 +667,10 @@
             }
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.0168,
+            "is_limit_up": false,
+            "is_promoted": false
           }
         },
         "3": {
@@ -720,11 +691,92 @@
             }
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.0144,
+            "is_limit_up": false,
+            "is_promoted": false
           }
+        }
+      }
+    },
+    {
+      "decision_date": "2026-08-05",
+      "buy_date": "2026-08-06",
+      "planned_exit_date": "2026-08-07",
+      "selection_status": "NO_CANDIDATE",
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/7545ae0f571782ddb52971f4dafd1b072e9f622e/outputs/learning/pred_top10_20260805.csv",
+          "decision_date": "20260805",
+          "content_sha256": "aaa2ad949bf5c76b2a0550a82671f33f4a8b4b0b9f2fee55b02e8c15e580ba1c",
+          "repository_commit_sha": "7545ae0f571782ddb52971f4dafd1b072e9f622e",
+          "generated_at": "2026-08-05T13:15:08Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/6df88a06743ef3cab61b7f81e487a3eda539ba0f/outputs/premium/premium_top10_20260805.csv",
+          "decision_date": "20260805",
+          "content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
+          "repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
+          "generated_at": "2026-08-05T11:36:44Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/6df88a06743ef3cab61b7f81e487a3eda539ba0f/outputs/decision/action_plan_20260806.json",
+          "decision_date": "20260805",
+          "content_sha256": "f6dd7e9924fa5054a3b16f4c6c4abfabae006e42be7bfb70ff8795d61f23f602",
+          "repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
+          "generated_at": "2026-08-05T11:34:47+00:00",
+          "row_count": 10
+        }
+      ],
+      "market_data_provenance": {
+        "daily_features": {}
+      },
+      "intersection_count": 0,
+      "candidates": [],
+      "rank_slots": {
+        "1": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        },
+        "2": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        },
+        "3": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
         }
       }
     }
@@ -753,6 +805,33 @@
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
+          "equity_index": 1.0
+        }
+      }
+    },
+    {
+      "date": "2026-08-07",
+      "decision_date": "2026-08-05",
+      "ranks": {
+        "1": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-07",
+          "equity_index": 1.0
+        },
+        "2": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-07",
+          "equity_index": 1.0
+        },
+        "3": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-07",
           "equity_index": 1.0
         }
       }
@@ -833,10 +912,10 @@
             ]
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.026099999999999998,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "status": "BUY_UNVERIFIABLE",
           "is_final": false,
@@ -895,10 +974,10 @@
             ]
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.0168,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "status": "BUY_UNVERIFIABLE",
           "is_final": false,
@@ -955,10 +1034,10 @@
             ]
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.0144,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "status": "BUY_UNVERIFIABLE",
           "is_final": false,
@@ -969,6 +1048,33 @@
           "return_date": "2026-08-06"
         }
       ]
+    },
+    {
+      "decision_date": "2026-08-05",
+      "buy_date": "2026-08-06",
+      "planned_exit_date": "2026-08-07",
+      "return_date": "2026-08-07",
+      "candidate_count": 0,
+      "final_count": 0,
+      "pending_count": 0,
+      "profitable_count": 0,
+      "portfolio_return": 0.0,
+      "result": "FLAT",
+      "is_final": true,
+      "is_provisional": false,
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "candidates": []
     }
   ]
 }
