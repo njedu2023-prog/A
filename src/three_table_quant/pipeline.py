@@ -8,7 +8,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from .dashboard import build_dashboard, validate_dashboard
-from .domain import Signal, SourceIssue
+from .domain import Signal, SourceIssue, iso_date
 from .execution_policy import build_order_spec
 from .http import HttpClient
 from .ledger import (
@@ -355,6 +355,10 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
     current_run: dict[str, Any] = {
         "status": "INPUT_BLOCKED" if any(item.severity == "error" for item in source_issues) else "READY",
         "message": "源数据契约阻断；禁止跨日拼接或回退旧榜单" if any(item.severity == "error" for item in source_issues) else "三源日期链已对齐",
+        "completed": False,
+        "completed_at": None,
+        "decision_date": None,
+        "outcome": "INPUT_BLOCKED" if any(item.severity == "error" for item in source_issues) else "READY",
         "source_table_counts": {table.source_id: len(table.rows) for table in tables},
         "source_dates": {
             table.source_id: {
@@ -375,6 +379,7 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
         decision_date = tables[0].decision_date
         buy_date = tables[0].buy_date
         exit_date = by_id["premium_top10"].exit_date
+        current_run["decision_date"] = iso_date(decision_date)
         existing_signal = next(
             (item for item in state["signals"] if item.get("decision_date") == decision_date),
             None,
@@ -392,6 +397,8 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
             active_signal = existing_signal
             frozen_codes = {item["ts_code"] for item in existing_signal.get("candidates", [])}
             live_codes = {item.ts_code for item in candidates}
+            current_run["live_intersection_count"] = len(live_codes)
+            current_run["intersection_count"] = len(frozen_codes)
             changed_sources = source_snapshot_changes(
                 existing_signal.get("source_snapshots", []),
                 _source_snapshots(tables),
@@ -463,17 +470,27 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
             current_run["message"] = (
                 f"三表严格交集实际保留{len(scored)}支并完成重新排序"
                 if scored
-                else "三表交集为0；合法空选且不补票"
+                else "D日名单筛选已执行；三表严格交集0支，合法空选且不补票"
             )
         # This is intentionally independent of add_signal(): a frozen legacy
         # signal can be missing rank 4+ shadow trades and must be repaired
         # idempotently before any settlement attempt.
         _ensure_all_candidate_shadow_ledger(state, list(config["tracked_ranks"]))
         settle_trades(state, truth, market, config["execution"])
+        if current_run["status"] in {"RANKED", "NO_CANDIDATE"}:
+            current_run["completed"] = True
+            if current_run["status"] == "NO_CANDIDATE":
+                current_run["outcome"] = "COMPLETED_ZERO_INTERSECTION"
+            elif existing_signal is not None:
+                current_run["outcome"] = "COMPLETED_FROZEN_SIGNAL"
+            else:
+                current_run["outcome"] = "COMPLETED_RANKED"
 
     _append_market_fallback_issue(source_issues, market)
     _append_frozen_market_fallback_issue(source_issues, active_signal)
     generated_at = _now()
+    if current_run["completed"]:
+        current_run["completed_at"] = generated_at
     issue_payload = {
         "schema_version": "source_issues_v1",
         "generated_at": generated_at,

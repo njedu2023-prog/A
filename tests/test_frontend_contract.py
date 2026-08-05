@@ -82,7 +82,23 @@ class FrontendContractTests(unittest.TestCase):
     def test_static_assets_are_cache_busted_for_v2(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
         self.assertIn("styles.css?v=20260805-2", source)
-        self.assertIn("app.js?v=20260805-2", source)
+        self.assertIn("app.js?v=20260805-3", source)
+
+    def test_zero_candidate_run_is_explicitly_visible_as_completed(self) -> None:
+        source = Path("assets/app.js").read_text(encoding="utf-8")
+        self.assertIn("D日名单筛选已执行", source)
+        self.assertIn("严格交集0支", source)
+        self.assertIn("本次执行 ${formatUpdatedAt(run.completed_at)}", source)
+        self.assertIn('ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选")', source)
+        self.assertIn('count ? resultText(day.result, day.is_final) : "合法空选"', source)
+
+    def test_workflow_has_only_the_evening_schedule(self) -> None:
+        source = Path(".github/workflows/daily-shadow.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertNotIn('cron: "20 3 * * 1-5"', source)
+        self.assertEqual(source.count("cron:"), 1)
+        self.assertIn('cron: "30 13 * * 1-5"', source)
 
     def test_status_title_is_rendered_once(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")

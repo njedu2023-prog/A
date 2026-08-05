@@ -17,7 +17,6 @@ on:
       - "tests/**"
       - "pyproject.toml"
   schedule:
-    - cron: "20 3 * * 1-5"   # 11:20 Asia/Shanghai: settle available T+1 exits
     - cron: "30 13 * * 1-5"  # 21:30 Asia/Shanghai: freeze aligned D signal
 
 permissions:

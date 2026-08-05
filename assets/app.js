@@ -323,13 +323,18 @@ function renderStatus() {
   container.replaceChildren();
   container.className = `status-card ${run.status === "INPUT_BLOCKED" ? "error" : "ok"}`;
   const copy = node("div");
-  const latestDecisionDate = model.days?.at(-1)?.decision_date;
-  const title = run.status === "RANKED" && latestDecisionDate
-    ? `D日信号已冻结：${latestDecisionDate}`
-    : run.message || "暂无运行结论";
+  const latestDecisionDate = run.decision_date || model.days?.at(-1)?.decision_date;
+  const title = run.completed === true && run.status === "NO_CANDIDATE" && latestDecisionDate
+    ? `D日名单筛选已执行：${latestDecisionDate} · 严格交集0支`
+    : run.completed === true && run.status === "RANKED" && latestDecisionDate
+      ? `D日信号已冻结：${latestDecisionDate}`
+      : run.message || "暂无运行结论";
   copy.append(node("h2", title, "status-title"));
   const meta = node("div", null, "status-meta");
   meta.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
+  if (run.completed_at) {
+    meta.append(node("span", `本次执行 ${formatUpdatedAt(run.completed_at)}`, "engine-meta-text"));
+  }
   const engine = model.engine || {};
   meta.append(
     node("span", engine.status_label || "基线运行 · 样本积累中", "engine-meta-text"),
@@ -612,7 +617,13 @@ function renderCandidates() {
   container.replaceChildren();
   const day = selectedDays().at(-1);
   if (!day || !day.candidates?.length) {
-    container.append(node("div", day ? "所选月最新一日三表有效交集为0，不补票。" : "所选月份尚无冻结信号。", "empty"));
+    container.append(node(
+      "div",
+      day
+        ? `D日 ${day.decision_date} 名单筛选已执行：三表严格交集0支，合法空选且不补票。`
+        : "所选月份尚无冻结信号。",
+      "empty"
+    ));
     return;
   }
   const ledger = latestPortfolioIndex();
@@ -705,10 +716,10 @@ function renderDaily() {
       ledgerFact("9:25买入日", day.buy_date || "—"),
       ledgerFact("T+1验证日", verifiedDate),
       ledgerFact("股票", `${count} 支`),
-      ledgerFact("已验证", `${finalCount} / ${count}`),
-      ledgerFact("盈利票", day.is_final === true || finalCount > 0 ? `${profitable} / ${count}` : "—"),
+      ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选"),
+      ledgerFact("盈利票", count && (day.is_final === true || finalCount > 0) ? `${profitable} / ${count}` : "—"),
       ledgerFact("当日组合净收益", pct(returnValue), tone(returnValue)),
-      ledgerFact("当日结果", resultText(day.result, day.is_final), tone(returnValue)),
+      ledgerFact("当日结果", count ? resultText(day.result, day.is_final) : "合法空选", tone(returnValue)),
       ledgerFact("模型", shortModel(batchModel)),
       node("span", null, "ledger-toggle")
     );

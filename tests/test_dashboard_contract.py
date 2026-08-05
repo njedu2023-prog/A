@@ -506,6 +506,42 @@ class DashboardContractTests(unittest.TestCase):
         self.assertEqual(daily["return_date"], "2026-08-05")
         self.assertEqual(payload["portfolio_metrics"]["cumulative_return"], 0.0)
 
+    def test_completed_zero_intersection_run_is_auditable(self) -> None:
+        item = make_signal(
+            "20260803",
+            "20260804",
+            "20260805",
+            candidate_count=0,
+        )
+        current_run = {
+            "status": "NO_CANDIDATE",
+            "completed": True,
+            "completed_at": "2026-08-03T21:35:00+08:00",
+            "decision_date": "2026-08-03",
+            "intersection_count": 0,
+            "outcome": "COMPLETED_ZERO_INTERSECTION",
+        }
+        payload = build_dashboard(
+            {"signals": [item], "trades": []},
+            [],
+            current_run["completed_at"],
+            current_run,
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+        self.assertTrue(payload["current_run"]["completed"])
+        self.assertEqual(
+            payload["current_run"]["outcome"],
+            "COMPLETED_ZERO_INTERSECTION",
+        )
+
+        payload["current_run"]["intersection_count"] = 1
+        with self.assertRaisesRegex(
+            ValueError,
+            "current_run intersection count",
+        ):
+            validate_dashboard(payload)
+
     def test_validator_rejects_partial_portfolio_return_fabrication(self) -> None:
         item = make_signal(
             "20260803",

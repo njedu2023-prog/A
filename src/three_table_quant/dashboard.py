@@ -924,6 +924,34 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 if not slot.get("buy") or int(exit_payload.get("remaining_qty") or 0) <= 0:
                     raise ValueError("EXIT_DELAYED slot must retain an open quantity")
 
+    current_run = payload.get("current_run")
+    if not isinstance(current_run, dict):
+        raise ValueError("current_run must be an object")
+    if "completed" in current_run:
+        completed = current_run.get("completed")
+        if not isinstance(completed, bool):
+            raise ValueError("current_run.completed must be boolean")
+        if completed:
+            decision_date = current_run.get("decision_date")
+            completed_at = current_run.get("completed_at")
+            outcome = current_run.get("outcome")
+            if not isinstance(completed_at, str) or "T" not in completed_at:
+                raise ValueError("completed current_run requires completed_at")
+            if decision_date not in days_by_decision_date:
+                raise ValueError("completed current_run must reference a dashboard day")
+            day = days_by_decision_date[decision_date]
+            if current_run.get("status") != day.get("selection_status"):
+                raise ValueError("current_run status must match the completed day")
+            if current_run.get("intersection_count") != day.get("intersection_count"):
+                raise ValueError("current_run intersection count must match the completed day")
+            if day["intersection_count"] == 0:
+                if outcome != "COMPLETED_ZERO_INTERSECTION":
+                    raise ValueError("zero intersection requires completed-zero outcome")
+            elif outcome not in {"COMPLETED_RANKED", "COMPLETED_FROZEN_SIGNAL"}:
+                raise ValueError("ranked run requires a completed ranking outcome")
+        elif current_run.get("completed_at") is not None:
+            raise ValueError("incomplete current_run cannot have completed_at")
+
     seen_rank_decision_dates: set[str] = set()
     for row in payload["rank_daily"]:
         if row.get("decision_date") in seen_rank_decision_dates:
