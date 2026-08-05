@@ -1415,12 +1415,21 @@
       "model_score": -0.007396989489934219,
       "policy_trade_eligible": false,
       "execution_mode": "SHADOW_ONLY",
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_exact_auction_truth",
+      "status": "BUY_UNVERIFIABLE",
+      "reason": "exact_0925_auction_fill_required",
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_proxy": {
+          "price": 19.0,
+          "date": "20260805",
+          "provider": "EASTMONEY",
+          "price_adjustment": "QFQ",
+          "counts_as_fill": false,
+          "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+        }
+      },
       "t_day_validation": {
         "status": "PENDING",
         "trade_date": "20260805",
@@ -1454,12 +1463,21 @@
       "model_score": -0.008457021820107297,
       "policy_trade_eligible": false,
       "execution_mode": "SHADOW_ONLY",
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_exact_auction_truth",
+      "status": "BUY_UNVERIFIABLE",
+      "reason": "exact_0925_auction_fill_required",
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_proxy": {
+          "price": 7.11,
+          "date": "20260805",
+          "provider": "EASTMONEY",
+          "price_adjustment": "QFQ",
+          "counts_as_fill": false,
+          "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+        }
+      },
       "t_day_validation": {
         "status": "PENDING",
         "trade_date": "20260805",
@@ -1493,12 +1511,21 @@
       "model_score": -0.016027210505004715,
       "policy_trade_eligible": false,
       "execution_mode": "SHADOW_ONLY",
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_exact_auction_truth",
+      "status": "BUY_UNVERIFIABLE",
+      "reason": "exact_0925_auction_fill_required",
       "buy": null,
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_proxy": {
+          "price": 3.56,
+          "date": "20260805",
+          "provider": "EASTMONEY",
+          "price_adjustment": "QFQ",
+          "counts_as_fill": false,
+          "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+        }
+      },
       "t_day_validation": {
         "status": "PENDING",
         "trade_date": "20260805",

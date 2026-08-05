@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-05T04:30:22+08:00",
+  "generated_at": "2026-08-05T14:01:59+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -202,7 +202,7 @@
       "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "Eastmoney 行情不可用或已跳闸；3 支股票已聚合切换至腾讯只读行情",
+      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
       "details": {
         "primary_provider": "EASTMONEY",
         "fallback_provider": "TENCENT",
@@ -211,13 +211,7 @@
           "000815.SZ",
           "002421.SZ"
         ],
-        "request_types": [
-          "daily"
-        ],
-        "event_count": 6,
-        "successful_event_count": 6,
-        "failed_event_count": 0,
-        "circuit_open": true
+        "persisted_with_frozen_signal": true
       }
     }
   ],
@@ -662,12 +656,21 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260804:000815.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_exact_auction_truth",
+          "status": "BUY_UNVERIFIABLE",
+          "reason": "exact_0925_auction_fill_required",
           "buy": null,
           "exit": null,
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_proxy": {
+              "price": 19.0,
+              "date": "20260805",
+              "provider": "EASTMONEY",
+              "price_adjustment": "QFQ",
+              "counts_as_fill": false,
+              "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+            }
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -677,12 +680,21 @@
         },
         "2": {
           "candidate_id": "20260804:000595.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_exact_auction_truth",
+          "status": "BUY_UNVERIFIABLE",
+          "reason": "exact_0925_auction_fill_required",
           "buy": null,
           "exit": null,
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_proxy": {
+              "price": 7.11,
+              "date": "20260805",
+              "provider": "EASTMONEY",
+              "price_adjustment": "QFQ",
+              "counts_as_fill": false,
+              "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+            }
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -692,12 +704,21 @@
         },
         "3": {
           "candidate_id": "20260804:002421.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_exact_auction_truth",
+          "status": "BUY_UNVERIFIABLE",
+          "reason": "exact_0925_auction_fill_required",
           "buy": null,
           "exit": null,
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_proxy": {
+              "price": 3.56,
+              "date": "20260805",
+              "provider": "EASTMONEY",
+              "price_adjustment": "QFQ",
+              "counts_as_fill": false,
+              "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+            }
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -714,21 +735,21 @@
       "decision_date": "2026-08-04",
       "ranks": {
         "1": {
-          "state": "PENDING_BUY",
+          "state": "BUY_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
           "equity_index": 1.0
         },
         "2": {
-          "state": "PENDING_BUY",
+          "state": "BUY_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
           "equity_index": 1.0
         },
         "3": {
-          "state": "PENDING_BUY",
+          "state": "BUY_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
@@ -817,7 +838,7 @@
             "is_limit_up": null,
             "is_promoted": null
           },
-          "status": "PENDING_BUY",
+          "status": "BUY_UNVERIFIABLE",
           "is_final": false,
           "buy_price": null,
           "exit_price": null,
@@ -879,7 +900,7 @@
             "is_limit_up": null,
             "is_promoted": null
           },
-          "status": "PENDING_BUY",
+          "status": "BUY_UNVERIFIABLE",
           "is_final": false,
           "buy_price": null,
           "exit_price": null,
@@ -939,7 +960,7 @@
             "is_limit_up": null,
             "is_promoted": null
           },
-          "status": "PENDING_BUY",
+          "status": "BUY_UNVERIFIABLE",
           "is_final": false,
           "buy_price": null,
           "exit_price": null,
