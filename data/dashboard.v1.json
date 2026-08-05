@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-05T23:20:06+08:00",
+  "generated_at": "2026-08-05T23:35:29+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -45,7 +45,7 @@
     "status": "NO_CANDIDATE",
     "message": "D日信号已冻结；保留0支候选且不事后改写",
     "completed": true,
-    "completed_at": "2026-08-05T23:20:06+08:00",
+    "completed_at": "2026-08-05T23:35:29+08:00",
     "decision_date": "2026-08-05",
     "outcome": "COMPLETED_ZERO_INTERSECTION",
     "source_table_counts": {
@@ -172,25 +172,27 @@
       }
     },
     {
-      "code": "MARKET_DATA_PROVIDER_FALLBACK",
+      "code": "SOURCE_REVISION_AFTER_FREEZE",
       "severity": "warning",
-      "source_id": "market_data",
-      "message": "Eastmoney 行情不可用或已跳闸；3 支股票已聚合切换至腾讯只读行情",
+      "source_id": "aggregate",
+      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
       "details": {
-        "primary_provider": "EASTMONEY",
-        "fallback_provider": "TENCENT",
-        "affected_codes": [
-          "000595.SZ",
-          "000815.SZ",
-          "002421.SZ"
-        ],
-        "request_types": [
-          "raw_daily"
-        ],
-        "event_count": 3,
-        "successful_event_count": 3,
-        "failed_event_count": 0,
-        "circuit_open": true
+        "frozen_codes": [],
+        "live_codes": [],
+        "changed_sources": {
+          "decision_table": {
+            "frozen_content_sha256": "f6dd7e9924fa5054a3b16f4c6c4abfabae006e42be7bfb70ff8795d61f23f602",
+            "live_content_sha256": "274784990eb839eb4c089a36944cb2416dcaf7657cd2de1d4d78c0fe0e7387ac",
+            "frozen_repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
+            "live_repository_commit_sha": "b8689754d222bed17dae0aba9b1951891418d73b"
+          },
+          "premium_top10": {
+            "frozen_content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
+            "live_content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
+            "frozen_repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
+            "live_repository_commit_sha": "b8689754d222bed17dae0aba9b1951891418d73b"
+          }
+        }
       }
     }
   ],
