@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-05T22:22:32+08:00",
+  "generated_at": "2026-08-05T23:20:06+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -12,7 +12,7 @@
     ],
     "allow_backfill": false,
     "execution_mode": "SHADOW_ONLY",
-    "entry": "T 09:25 opening call auction exact fill truth required",
+    "entry": "T exact-date unadjusted daily open counted as shadow fill",
     "exit": "T+1 11:00-11:05 five one-minute slices"
   },
   "engine": {
@@ -43,9 +43,9 @@
   },
   "current_run": {
     "status": "NO_CANDIDATE",
-    "message": "D日名单筛选已执行；三表严格交集0支，合法空选且不补票",
+    "message": "D日信号已冻结；保留0支候选且不事后改写",
     "completed": true,
-    "completed_at": "2026-08-05T22:22:32+08:00",
+    "completed_at": "2026-08-05T23:20:06+08:00",
     "decision_date": "2026-08-05",
     "outcome": "COMPLETED_ZERO_INTERSECTION",
     "source_table_counts": {
@@ -99,7 +99,8 @@
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
       "training_row_count": 0,
       "excluded_feature_row_count": 3
-    }
+    },
+    "live_intersection_count": 0
   },
   "source_issues": [
     {
@@ -168,6 +169,28 @@
           "SHADOW_ONLY"
         ],
         "row_count": 10
+      }
+    },
+    {
+      "code": "MARKET_DATA_PROVIDER_FALLBACK",
+      "severity": "warning",
+      "source_id": "market_data",
+      "message": "Eastmoney 行情不可用或已跳闸；3 支股票已聚合切换至腾讯只读行情",
+      "details": {
+        "primary_provider": "EASTMONEY",
+        "fallback_provider": "TENCENT",
+        "affected_codes": [
+          "000595.SZ",
+          "000815.SZ",
+          "002421.SZ"
+        ],
+        "request_types": [
+          "raw_daily"
+        ],
+        "event_count": 3,
+        "successful_event_count": 3,
+        "failed_event_count": 0,
+        "circuit_open": true
       }
     }
   ],
@@ -627,19 +650,38 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260804:000815.SZ",
-          "status": "BUY_UNVERIFIABLE",
-          "reason": "exact_0925_auction_fill_required",
-          "buy": null,
+          "status": "OPEN",
+          "reason": "waiting_for_t1_exit",
+          "buy": {
+            "at": "2026-08-05T09:25:00+08:00",
+            "submitted_qty": 4900,
+            "filled_qty": 4900,
+            "avg_price": 19.0,
+            "amount": 93100.0,
+            "fees": 28.860999999999997,
+            "limit_price": 20.21,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 4900,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": null,
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
           "exit": null,
           "pnl": null,
           "diagnostics": {
-            "daily_open_proxy": {
+            "daily_open_fill": {
               "price": 19.0,
               "date": "20260805",
-              "provider": "EASTMONEY",
-              "price_adjustment": "QFQ",
-              "counts_as_fill": false,
-              "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_LIMIT_PRICE_MIGRATION"
             }
           },
           "t_day_validation": {
@@ -651,19 +693,38 @@
         },
         "2": {
           "candidate_id": "20260804:000595.SZ",
-          "status": "BUY_UNVERIFIABLE",
-          "reason": "exact_0925_auction_fill_required",
-          "buy": null,
+          "status": "OPEN",
+          "reason": "waiting_for_t1_exit",
+          "buy": {
+            "at": "2026-08-05T09:25:00+08:00",
+            "submitted_qty": 13800,
+            "filled_qty": 13800,
+            "avg_price": 7.11,
+            "amount": 98118.0,
+            "fees": 30.416579999999996,
+            "limit_price": 7.22,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 13800,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": null,
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
           "exit": null,
           "pnl": null,
           "diagnostics": {
-            "daily_open_proxy": {
+            "daily_open_fill": {
               "price": 7.11,
               "date": "20260805",
-              "provider": "EASTMONEY",
-              "price_adjustment": "QFQ",
-              "counts_as_fill": false,
-              "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_LIMIT_PRICE_MIGRATION"
             }
           },
           "t_day_validation": {
@@ -675,19 +736,38 @@
         },
         "3": {
           "candidate_id": "20260804:002421.SZ",
-          "status": "BUY_UNVERIFIABLE",
-          "reason": "exact_0925_auction_fill_required",
-          "buy": null,
+          "status": "OPEN",
+          "reason": "waiting_for_t1_exit",
+          "buy": {
+            "at": "2026-08-05T09:25:00+08:00",
+            "submitted_qty": 26100,
+            "filled_qty": 26100,
+            "avg_price": 3.56,
+            "amount": 92916.0,
+            "fees": 28.803959999999996,
+            "limit_price": 3.83,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 26100,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": null,
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
           "exit": null,
           "pnl": null,
           "diagnostics": {
-            "daily_open_proxy": {
+            "daily_open_fill": {
               "price": 3.56,
               "date": "20260805",
-              "provider": "EASTMONEY",
-              "price_adjustment": "QFQ",
-              "counts_as_fill": false,
-              "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price"
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_LIMIT_PRICE_MIGRATION"
             }
           },
           "t_day_validation": {
@@ -787,21 +867,21 @@
       "decision_date": "2026-08-04",
       "ranks": {
         "1": {
-          "state": "BUY_UNVERIFIABLE",
+          "state": "OPEN",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
           "equity_index": 1.0
         },
         "2": {
-          "state": "BUY_UNVERIFIABLE",
+          "state": "OPEN",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
           "equity_index": 1.0
         },
         "3": {
-          "state": "BUY_UNVERIFIABLE",
+          "state": "OPEN",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-06",
@@ -917,9 +997,9 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "BUY_UNVERIFIABLE",
+          "status": "OPEN",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 19.0,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -979,9 +1059,9 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "BUY_UNVERIFIABLE",
+          "status": "OPEN",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 7.11,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -1039,9 +1119,9 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "BUY_UNVERIFIABLE",
+          "status": "OPEN",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 3.56,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",

@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-05T22:22:32+08:00",
+  "generated_at": "2026-08-05T23:20:06+08:00",
   "issues": [
     {
       "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
@@ -68,6 +68,28 @@
           "SHADOW_ONLY"
         ],
         "row_count": 10
+      }
+    },
+    {
+      "code": "MARKET_DATA_PROVIDER_FALLBACK",
+      "severity": "warning",
+      "source_id": "market_data",
+      "message": "Eastmoney 行情不可用或已跳闸；3 支股票已聚合切换至腾讯只读行情",
+      "details": {
+        "primary_provider": "EASTMONEY",
+        "fallback_provider": "TENCENT",
+        "affected_codes": [
+          "000595.SZ",
+          "000815.SZ",
+          "002421.SZ"
+        ],
+        "request_types": [
+          "raw_daily"
+        ],
+        "event_count": 3,
+        "successful_event_count": 3,
+        "failed_event_count": 0,
+        "circuit_open": true
       }
     }
   ]
