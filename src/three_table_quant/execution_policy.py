@@ -20,7 +20,7 @@ def _reserved_cash(quantity: int, limit_price: float, execution: dict[str, Any])
     return amount + commission + transfer
 
 
-def _maximum_lot_quantity(limit_price: float, execution: dict[str, Any]) -> int:
+def maximum_lot_quantity(limit_price: float, execution: dict[str, Any]) -> int:
     capital = float(execution["slot_capital_cny"])
     lot = int(execution["lot_size"])
     if not math.isfinite(limit_price) or limit_price <= 0:
@@ -49,7 +49,7 @@ def build_order_spec(
     if limit_price is None:
         raise ContractError("candidate has no frozen exchange limit price")
     price = float(limit_price)
-    quantity = _maximum_lot_quantity(price, execution)
+    quantity = maximum_lot_quantity(price, execution)
     return {
         "schema_version": ORDER_SPEC_SCHEMA,
         "decision_date": normalize_date(decision_date, "order decision_date"),
@@ -110,5 +110,6 @@ def validate_truth_against_order_spec(
 __all__ = [
     "ORDER_SPEC_SCHEMA",
     "build_order_spec",
+    "maximum_lot_quantity",
     "validate_truth_against_order_spec",
 ]

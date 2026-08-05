@@ -10,8 +10,7 @@ from zoneinfo import ZoneInfo
 from .calendar import TradingCalendar, parse_calendar_date
 from .candidate_facts import candidate_validation_inputs
 from .domain import AuctionTruth, ContractError, normalize_date
-from .execution_policy import validate_truth_against_order_spec
-from .market import daily_bar_on
+from .execution_policy import maximum_lot_quantity, validate_truth_against_order_spec
 
 
 STATE_SCHEMA = "three_table_state_v1"
@@ -151,7 +150,7 @@ def ensure_shadow_trades(
             "execution_mode": "SHADOW_ONLY",
             "order_spec": candidate.get("order_spec") or None,
             "status": "PENDING_BUY",
-            "reason": "waiting_for_exact_auction_truth",
+            "reason": "waiting_for_t_daily_open",
             "buy": None,
             "exit": None,
             "pnl": None,
@@ -420,6 +419,10 @@ def _settle_entry(
     provider: Any,
     execution: dict[str, Any],
 ) -> None:
+    if bool(execution.get("daily_open_counts_as_fill", False)):
+        _settle_entry_at_daily_open(trade, provider, execution)
+        return
+
     key = _truth_key(trade["buy_date"], trade["ts_code"])
     record = (truth.get("auctions") or {}).get(key)
     if record is not None:
@@ -504,22 +507,166 @@ def _settle_entry(
         }
         return
 
+    trade["status"] = "BUY_UNVERIFIABLE"
+    trade["reason"] = "exact_0925_auction_fill_required"
+
+
+def _settle_entry_at_daily_open(
+    trade: dict[str, Any],
+    provider: Any,
+    execution: dict[str, Any],
+) -> None:
+    """Book the exact-date unadjusted T-day open as the shadow fill price."""
+
+    diagnostics = trade.setdefault("diagnostics", {})
     try:
-        proxy = daily_bar_on(provider, trade["ts_code"], trade["buy_date"])
+        bar = provider.raw_daily_bar(trade["ts_code"], trade["buy_date"])
     except Exception as exc:
-        trade["diagnostics"]["auction_proxy_error"] = str(exc)
-        return
-    if proxy is not None:
-        trade["diagnostics"]["daily_open_proxy"] = {
-            "price": proxy.open,
-            "date": proxy.date,
-            "provider": getattr(proxy, "provider", "UNSPECIFIED"),
-            "price_adjustment": getattr(proxy, "price_adjustment", "UNSPECIFIED"),
-            "counts_as_fill": False,
-            "reason": "daily open may be the first continuous-auction trade when opening auction has no clearing price",
-        }
+        diagnostics["daily_open_fill_error"] = str(exc)
         trade["status"] = "BUY_UNVERIFIABLE"
-        trade["reason"] = "exact_0925_auction_fill_required"
+        trade["reason"] = "exact_t_daily_open_unavailable"
+        return
+
+    adjustment = str(getattr(bar, "price_adjustment", "")).upper()
+    try:
+        open_price = float(bar.open)
+    except (TypeError, ValueError):
+        open_price = float("nan")
+    if (
+        str(getattr(bar, "date", "")) != str(trade["buy_date"])
+        or adjustment != "NONE"
+        or not math.isfinite(open_price)
+        or open_price <= 0
+    ):
+        diagnostics["daily_open_fill_error"] = (
+            "daily open fill requires the exact buy date, "
+            "price_adjustment=NONE, and a positive finite open"
+        )
+        trade["status"] = "BUY_UNVERIFIABLE"
+        trade["reason"] = "exact_t_daily_open_invalid"
+        return
+
+    order_spec = trade.get("order_spec")
+    frozen_qty = order_spec.get("submitted_qty") if isinstance(order_spec, dict) else None
+    quantity_policy = "FROZEN_ORDER_SPEC"
+    if (
+        isinstance(frozen_qty, bool)
+        or not isinstance(frozen_qty, int)
+        or frozen_qty <= 0
+    ):
+        frozen_limit = (trade.get("t_day_validation") or {}).get("limit_up_price")
+        try:
+            limit_price = float(frozen_limit)
+        except (TypeError, ValueError):
+            limit_price = float("nan")
+        if not math.isfinite(limit_price) or limit_price <= 0:
+            diagnostics["daily_open_fill_error"] = (
+                "legacy trade has no frozen order quantity or frozen limit price"
+            )
+            trade["status"] = "BUY_UNVERIFIABLE"
+            trade["reason"] = "frozen_shadow_quantity_unavailable"
+            return
+        frozen_qty = maximum_lot_quantity(limit_price, execution)
+        quantity_policy = "FROZEN_LIMIT_PRICE_MIGRATION"
+    else:
+        try:
+            limit_price = float(order_spec.get("limit_price"))
+        except (TypeError, ValueError):
+            limit_price = float("nan")
+        if not math.isfinite(limit_price) or limit_price <= 0:
+            diagnostics["daily_open_fill_error"] = (
+                "frozen order specification has no valid limit price"
+            )
+            trade["status"] = "BUY_UNVERIFIABLE"
+            trade["reason"] = "frozen_shadow_limit_unavailable"
+            return
+
+    tick = float(execution.get("price_tick", 0.01))
+    if open_price > limit_price + tick / 2.0:
+        diagnostics.pop("daily_open_proxy", None)
+        diagnostics.pop("auction_truth_error", None)
+        diagnostics.pop("auction_order_spec_error", None)
+        diagnostics["daily_open_fill"] = {
+            "price": open_price,
+            "date": str(trade["buy_date"]),
+            "provider": str(
+                getattr(bar, "provider", "UNSPECIFIED") or "UNSPECIFIED"
+            ),
+            "price_adjustment": adjustment,
+            "counts_as_fill": False,
+            "policy": "T_DAILY_UNADJUSTED_OPEN",
+            "quantity_policy": quantity_policy,
+            "reason": "daily_open_above_frozen_limit",
+        }
+        trade["status"] = "BUY_UNFILLED"
+        trade["reason"] = "daily_open_above_frozen_limit"
+        trade["buy"] = {
+            "at": None,
+            "submitted_qty": int(frozen_qty),
+            "filled_qty": 0,
+            "avg_price": None,
+            "amount": 0.0,
+            "fees": 0.0,
+            "limit_price": limit_price,
+            "source": "DAILY_OPEN_POLICY",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_adjustment": adjustment,
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN",
+        }
+        return
+    quantity = int(frozen_qty)
+    amount = open_price * quantity
+    fees = _buy_fees(amount, execution)
+    buy_date = str(trade["buy_date"])
+    event_at = (
+        f"{buy_date[:4]}-{buy_date[4:6]}-{buy_date[6:8]}"
+        f"T{str(execution.get('auction_time', '09:25'))}:00+08:00"
+    )
+    source = str(getattr(bar, "provider", "UNSPECIFIED") or "UNSPECIFIED")
+    diagnostics.pop("auction_proxy_error", None)
+    diagnostics.pop("daily_open_proxy", None)
+    diagnostics.pop("daily_open_fill_error", None)
+    diagnostics.pop("auction_truth_error", None)
+    diagnostics.pop("auction_order_spec_error", None)
+    diagnostics["daily_open_fill"] = {
+        "price": open_price,
+        "date": buy_date,
+        "provider": source,
+        "price_adjustment": adjustment,
+        "counts_as_fill": True,
+        "policy": "T_DAILY_UNADJUSTED_OPEN",
+        "quantity_policy": quantity_policy,
+    }
+    trade["status"] = "OPEN"
+    trade["reason"] = "waiting_for_t1_exit"
+    trade["buy"] = {
+        "at": event_at,
+        "submitted_qty": quantity,
+        "filled_qty": quantity,
+        "avg_price": open_price,
+        "amount": amount,
+        "fees": fees,
+        "limit_price": (
+            order_spec.get("limit_price")
+            if isinstance(order_spec, dict)
+            else limit_price
+        ),
+        "auction_matched_qty": None,
+        "queue_ahead_qty": None,
+        "executable_qty_at_order": quantity,
+        "participation_rate": None,
+        "source": source,
+        "data_tier": "DAILY_BAR",
+        "label_quality": "SHADOW_OPEN_ASSUMPTION",
+        "price_limit_source": (
+            order_spec.get("price_limit_source")
+            if isinstance(order_spec, dict)
+            else None
+        ),
+        "price_adjustment": adjustment,
+        "price_policy": "T_DAILY_UNADJUSTED_OPEN",
+    }
 
 
 def _close_trade(trade: dict[str, Any], execution: dict[str, Any], attempt_date: str, delay_days: int) -> None:

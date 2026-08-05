@@ -265,6 +265,33 @@ class FeatureContractTests(unittest.TestCase):
 
 
 class RankingEngineTests(unittest.TestCase):
+    def test_open_fill_assumption_fixes_fill_to_one_and_removes_fill_gate(self) -> None:
+        item = make_candidate("000001.SZ")
+        features = build_feature_snapshot(
+            item,
+            daily_bars(),
+            TABLE_SIZES,
+            decision_date="20260804",
+        ).to_dict()
+        ranking = {**CONFIG["ranking"], "assume_open_fill": True}
+        prediction = TransparentChampionV2(
+            ranking,
+            estimated_round_trip_rate=0.00162,
+        ).predict(features, missing_fraction=0.0)
+
+        self.assertEqual(prediction.p_fill, 1.0)
+        self.assertEqual(prediction.expected_fill_ratio, 1.0)
+        self.assertNotIn("p_fill_below_threshold", prediction.gate_reasons)
+        expected_utility = (
+            prediction.conditional_net_return_mean
+            - ranking["cvar_weight"] * prediction.expected_shortfall
+            - ranking["exit_delay_weight"]
+            * prediction.p_exit_delay
+            * prediction.expected_delay_days
+            - ranking["uncertainty_weight"] * prediction.uncertainty
+        )
+        self.assertAlmostEqual(prediction.utility, expected_utility)
+
     def test_champion_emits_all_formal_heads_and_promotion_is_auxiliary(self) -> None:
         item = make_candidate("000001.SZ")
         features = build_feature_snapshot(

@@ -825,7 +825,7 @@ def build_dashboard(
             "tracked_ranks": tracked_ranks,
             "allow_backfill": False,
             "execution_mode": "SHADOW_ONLY",
-            "entry": "T 09:25 opening call auction exact fill truth required",
+            "entry": "T exact-date unadjusted daily open counted as shadow fill",
             "exit": "T+1 11:00-11:05 five one-minute slices",
         },
         "engine": _engine_summary(state, current_run),

@@ -40,6 +40,10 @@ EXECUTION = {
     "one_price_bar_is_locked_without_limit": True,
     "trading_calendar_path": "data/trading_calendar_2026.json",
 }
+OPEN_FILL_EXECUTION = {
+    **EXECUTION,
+    "daily_open_counts_as_fill": True,
+}
 
 
 class FakeMarket:
@@ -470,7 +474,7 @@ class LedgerDashboardTests(unittest.TestCase):
         self.assertEqual(len(candidate["action_audit"]), 1)
         self.assertIn("policy_gate=TRADE", candidate["action_reason"])
 
-    def test_daily_open_proxy_never_becomes_fill(self) -> None:
+    def test_legacy_exact_truth_mode_never_invents_a_fill(self) -> None:
         state = empty_state()
         item = signal()
         state["signals"].append(item)
@@ -479,7 +483,169 @@ class LedgerDashboardTests(unittest.TestCase):
         trade = state["trades"][0]
         self.assertEqual(trade["status"], "BUY_UNVERIFIABLE")
         self.assertIsNone(trade["buy"])
-        self.assertFalse(trade["diagnostics"]["daily_open_proxy"]["counts_as_fill"])
+
+    def test_unadjusted_daily_open_becomes_full_shadow_fill(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item, limit_up=11.0)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                10.0,
+                10.2,
+                10.3,
+                9.8,
+                1000,
+                1000000,
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+            )
+        )
+
+        settle_trades(
+            state,
+            {"auctions": {}},
+            market,
+            OPEN_FILL_EXECUTION,
+            asof_date="20260804",
+        )
+
+        trade = state["trades"][0]
+        self.assertEqual(trade["status"], "OPEN")
+        self.assertEqual(trade["buy"]["avg_price"], 10.0)
+        self.assertEqual(trade["buy"]["submitted_qty"], 9000)
+        self.assertEqual(trade["buy"]["filled_qty"], 9000)
+        self.assertEqual(
+            trade["buy"]["price_policy"],
+            "T_DAILY_UNADJUSTED_OPEN",
+        )
+        self.assertEqual(
+            trade["diagnostics"]["daily_open_fill"]["quantity_policy"],
+            "FROZEN_LIMIT_PRICE_MIGRATION",
+        )
+        self.assertTrue(
+            trade["diagnostics"]["daily_open_fill"]["counts_as_fill"]
+        )
+
+    def test_legacy_unverifiable_trade_retries_open_and_closes(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item, limit_up=11.0)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                10.0,
+                10.2,
+                10.3,
+                9.8,
+                1000,
+                1000000,
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+            )
+        )
+        settle_trades(
+            state,
+            {"auctions": {}},
+            market,
+            EXECUTION,
+            asof_date="20260804",
+        )
+        self.assertEqual(state["trades"][0]["status"], "BUY_UNVERIFIABLE")
+
+        settle_trades(
+            state,
+            {"auctions": {}},
+            market,
+            OPEN_FILL_EXECUTION,
+            asof_date="20260805",
+        )
+        trade = state["trades"][0]
+        self.assertEqual(trade["status"], "CLOSED")
+        self.assertEqual(trade["buy"]["avg_price"], 10.0)
+        self.assertIsInstance(trade["pnl"]["net_return_on_allocated"], float)
+
+    def test_adjusted_or_wrong_date_open_cannot_become_fill(self) -> None:
+        for bar in (
+            Bar(
+                "20260804",
+                None,
+                10.0,
+                10.2,
+                10.3,
+                9.8,
+                1000,
+                1000000,
+                provider="TEST_QFQ",
+                price_adjustment="QFQ",
+            ),
+            Bar(
+                "20260803",
+                None,
+                10.0,
+                10.2,
+                10.3,
+                9.8,
+                1000,
+                1000000,
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+            ),
+        ):
+            with self.subTest(bar=bar):
+                state = empty_state()
+                item = signal()
+                add_t_day_facts(item, limit_up=11.0)
+                state["signals"].append(item)
+                ensure_shadow_trades(state, item, [1, 2, 3])
+                settle_trades(
+                    state,
+                    {"auctions": {}},
+                    RawOutcomeMarket(bar),
+                    OPEN_FILL_EXECUTION,
+                    asof_date="20260804",
+                )
+                trade = state["trades"][0]
+                self.assertEqual(trade["status"], "BUY_UNVERIFIABLE")
+                self.assertIsNone(trade["buy"])
+
+    def test_open_above_frozen_limit_is_unfilled(self) -> None:
+        state = empty_state()
+        item = signal()
+        add_t_day_facts(item, limit_up=11.0)
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        market = RawOutcomeMarket(
+            Bar(
+                "20260804",
+                None,
+                11.1,
+                11.2,
+                11.3,
+                11.0,
+                1000,
+                1000000,
+                provider="TEST_RAW",
+                price_adjustment="NONE",
+            )
+        )
+        settle_trades(
+            state,
+            {"auctions": {}},
+            market,
+            OPEN_FILL_EXECUTION,
+            asof_date="20260804",
+        )
+        trade = state["trades"][0]
+        self.assertEqual(trade["status"], "BUY_UNFILLED")
+        self.assertEqual(trade["buy"]["filled_qty"], 0)
+        self.assertIsNone(trade["buy"]["avg_price"])
 
     def test_exact_auction_truth_and_five_minutes_close_trade(self) -> None:
         state = empty_state()

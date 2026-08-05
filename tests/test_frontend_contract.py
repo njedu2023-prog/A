@@ -67,7 +67,7 @@ class FrontendContractTests(unittest.TestCase):
         for heading in (
             "条件净收益（10–90分位）",
             "晋级估计",
-            "9:25成交估计",
+            "开盘成交",
             "延迟风险",
             "风险调整值",
             "策略门槛",
@@ -79,10 +79,26 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("gateText(item)", source)
         self.assertIn("predictionOf(item)", source)
 
-    def test_static_assets_are_cache_busted_for_v2(self) -> None:
+    def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
         self.assertIn("styles.css?v=20260805-2", source)
-        self.assertIn("app.js?v=20260805-3", source)
+        self.assertIn("app.js?v=20260805-4", source)
+
+    def test_open_fill_and_compact_gate_copy_are_visible(self) -> None:
+        source = Path("assets/app.js").read_text(encoding="utf-8")
+        for text in (
+            "开盘买入日",
+            "开盘成交",
+            "开盘价",
+            "成交率低",
+            "收益≤0",
+            "下界≤0",
+            "效用≤0",
+        ):
+            self.assertIn(text, source)
+        self.assertIn('if (prediction.gate_decision === "TRADE") return "通过";', source)
+        self.assertIn('if (!reasons.length) return "未过";', source)
+        self.assertNotIn("不交易 · ${first}", source)
 
     def test_zero_candidate_run_is_explicitly_visible_as_completed(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")

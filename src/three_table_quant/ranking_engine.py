@@ -130,6 +130,10 @@ def _finalize_prediction(
     q10, q50, q90 = ordered
     p_fill = _clip(float(p_fill), 0.0, 1.0)
     expected_fill_ratio = _clip(float(expected_fill_ratio), 0.0, 1.0)
+    assume_open_fill = bool(ranking.get("assume_open_fill", False))
+    if assume_open_fill:
+        p_fill = 1.0
+        expected_fill_ratio = 1.0
     p_exit_delay = _clip(float(p_exit_delay), 0.0, 1.0)
     p_promotion = _clip(float(p_promotion), 0.0, 1.0)
     uncertainty = _clip(float(uncertainty), 0.0, 1.0)
@@ -155,7 +159,10 @@ def _finalize_prediction(
         reasons.append("market_features_incomplete")
     if missing_fraction > float(ranking.get("max_missing_fraction", 0.34)):
         reasons.append("market_features_incomplete")
-    if p_fill < float(ranking.get("min_fill_probability", 0.40)):
+    if (
+        not assume_open_fill
+        and p_fill < float(ranking.get("min_fill_probability", 0.40))
+    ):
         reasons.append("p_fill_below_threshold")
     if conditional_mean <= float(ranking.get("min_expected_net_return", 0.0)):
         reasons.append("expected_net_return_not_positive")
@@ -301,16 +308,25 @@ class TransparentChampionV2:
         historical_cvar = historical_cvar_raw if historical_cvar_raw is not None else 0.04
 
         source_fill, fill_dispersion = self._source_fill_prior(features)
-        fill_logit = (
-            -0.55
-            + 0.48 * liquidity
-            + 0.75 * (rank_consensus - 0.5)
-            - 3.0 * _clip(volatility, 0.0, 0.20)
-            - 1.8 * _clip(downside_volatility, 0.0, 0.20)
-            + 0.30 * (source_fill - 0.5)
-        )
-        p_fill = _clip(_sigmoid(fill_logit), 0.03, 0.97)
-        expected_fill_ratio = _clip(p_fill * (0.75 + 0.15 * max(liquidity, -1.0)), 0.01, 1.0)
+        if bool(self.ranking.get("assume_open_fill", False)):
+            p_fill = 1.0
+            expected_fill_ratio = 1.0
+            fill_dispersion = 0.0
+        else:
+            fill_logit = (
+                -0.55
+                + 0.48 * liquidity
+                + 0.75 * (rank_consensus - 0.5)
+                - 3.0 * _clip(volatility, 0.0, 0.20)
+                - 1.8 * _clip(downside_volatility, 0.0, 0.20)
+                + 0.30 * (source_fill - 0.5)
+            )
+            p_fill = _clip(_sigmoid(fill_logit), 0.03, 0.97)
+            expected_fill_ratio = _clip(
+                p_fill * (0.75 + 0.15 * max(liquidity, -1.0)),
+                0.01,
+                1.0,
+            )
 
         return_prior, return_dispersion = self._source_return_prior(features)
         ret_5d = _clip(_value(features, "ret_5d", 0.0), -0.40, 0.60)
@@ -600,6 +616,9 @@ class LearnedChallenger:
 
         self.ranking = ranking_config
         self.model_id = model_id
+        self.assume_open_fill = (
+            payload.get("entry_fill_policy") == "T_DAILY_OPEN_FULL_FILL"
+        )
         self.feature_schema_version = FEATURE_SCHEMA_VERSION
         self.trained_through = trained_through
         self.feature_order = feature_order
@@ -655,7 +674,11 @@ class LearnedChallenger:
             raise ArtifactValidationError("trained_through must be strictly earlier than decision_date")
 
         vector = self._vector(features)
-        p_fill = _sigmoid(self._raw_head("fill", vector))
+        p_fill = (
+            1.0
+            if self.assume_open_fill
+            else _sigmoid(self._raw_head("fill", vector))
+        )
         conditional_mean = self._raw_head("return_mean", vector)
         q10 = self._raw_head("return_q10", vector)
         q50 = self._raw_head("return_q50", vector)
@@ -688,7 +711,7 @@ class LearnedChallenger:
             model_stage="LEARNED_CHALLENGER",
             prediction_status="SCORED",
             p_fill=p_fill,
-            expected_fill_ratio=p_fill,
+            expected_fill_ratio=1.0 if self.assume_open_fill else p_fill,
             conditional_mean=conditional_mean,
             q10=q10,
             q50=q50,

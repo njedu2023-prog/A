@@ -14,7 +14,7 @@ Premium CSV 若出现重复表头，仅在每行重复值一致（数值等价�
 intersection = codes(a_top10) ∩ codes(premium_top10) ∩ codes(decision_table)
 ```
 
-交集为零是合法结果。交集有几支就保留几支，每一支都进入独立影子账本并接受同一套9:25买入与T+1退出验证。固定第1/2/3名仍作为三个长期独立序列分别统计，不会限制第4名及以后进入影子验证，也不会发生名次补位。
+交集为零是合法结果。交集有几支就保留几支，每一支都进入独立影子账本并接受同一套T日开盘买入与T+1退出验证。固定第1/2/3名仍作为三个长期独立序列分别统计，不会限制第4名及以后进入影子验证，也不会发生名次补位。
 
 ## D时点特征与正式排序输出
 
@@ -22,16 +22,16 @@ intersection = codes(a_top10) ∩ codes(premium_top10) ∩ codes(decision_table)
 
 正式预测契约为 `ranking_prediction_v2`，预测时点固定为 `D_PRIOR`。每个冻结候选必须保存：
 
-- `p_fill`、`expected_fill_ratio`；
+- 兼容字段 `p_fill`、`expected_fill_ratio`（开盘成交口径下固定为1）；
 - `conditional_net_return_mean` 与 `conditional_net_return_q10/q50/q90`；
 - `p_exit_delay`、`expected_delay_days`；
 - 辅助目标 `p_promotion`；
 - `expected_shortfall`、`uncertainty`、`utility`；
 - `gate_decision`、`gate_reasons` 与 `ranking_fallback`。
 
-条件收益只在9:25实际成交的条件下定义，并且已经扣除与影子账本同口径的预估费用；未成交样本不能被错误标成条件收益0。10/50/90分位会在进入风险效用和页面前做确定性的单调投影。晋级概率只作独立辅助预测，不能直接充当最终收益排序目标。
+收益预测以T日未复权开盘价成交为统一前提，并且已经扣除与影子账本同口径的预估费用。10/50/90分位会在进入风险效用和页面前做确定性的单调投影。晋级概率只作独立辅助预测，不能直接充当最终收益排序目标。
 
-策略门槛同时要求市场特征完整、成交概率达标、条件净收益均值和第10分位严格为正、退出延迟风险不过高、风险效用严格为正。`gate_decision` 只表示正式策略是否可交易，候选的影子 `action` 始终为 `SHADOW`，不能把门槛不通过混写成没有影子记录。
+策略门槛同时要求市场特征完整、净收益均值和第10分位严格为正、退出延迟风险不过高、风险效用严格为正；成交概率不再参与门槛。`gate_decision` 只表示正式策略是否可交易，候选的影子 `action` 始终为 `SHADOW`，不能把门槛不通过混写成没有影子记录。
 
 ## 日期链
 
@@ -47,45 +47,19 @@ premium.target_date = decision.exit_date = T+1
 
 官方日历依据：[上交所2026年休市安排](https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml)。
 
-## 9:25买入真值
+## T日开盘买入
 
-新信号在D日同步冻结 `shadow_order_spec_v1`。它保存买入日、9:25集合竞价阶段、买入方向、冻结D日涨停限价、按单票资金和费用预留可承受的最大整手数量，以及 `SHADOW_ONLY` 模式。该规格形成后不得随T日行情改写。
+新信号在D日同步冻结 `shadow_order_spec_v1`。它保存买入日、买入方向、冻结D日涨停限价、按单票资金和费用预留可承受的最大整手数量，以及 `SHADOW_ONLY` 模式。该规格形成后不得随T日行情改写。
 
-集合竞价申报存在价格与时间队列。`data/execution_truth.v1.json` 的每个键为 `YYYYMMDD:000000.SH`，每条值必须是 `auction_execution_v2`，至少包含：
+T日入场价只读取日期严格等于买入日、`price_adjustment=NONE` 且开盘价为有限正数的未复权日线。通过校验后，D日冻结的申报数量按该开盘价全额计入影子成交，`data_tier=DAILY_BAR`、`label_quality=SHADOW_OPEN_ASSUMPTION`。历史信号若没有冻结订单规格，则按其已冻结的涨停限价、单票资金、整手与买入费用上限恢复申报数量，并记录迁移数量口径；不得用事后开盘价扩大仓位。
 
-```json
-{
-  "schema_version": "auction_execution_v2",
-  "trade_date": "20260805",
-  "ts_code": "000000.SZ",
-  "event_at": "2026-08-05T09:25:00+08:00",
-  "phase": "OPENING_CALL_AUCTION",
-  "source": "BROKER_EXECUTION",
-  "data_tier": "BROKER_LOG",
-  "label_quality": "ACTUAL",
-  "quantity_unit": "SHARES",
-  "submitted_qty": 1000,
-  "filled_qty": 1000,
-  "limit_price": 10.00,
-  "price": 10.00,
-  "auction_matched_qty": 200000,
-  "price_limit_source": "BROKER_ORDER_RECORD"
-}
-```
-
-`ACTUAL` 只接受券商成交日志。`REPLAY` 和 `CONSERVATIVE` 若声称正成交，必须使用 `ORDERBOOK` 证据并额外提供 `queue_ahead_qty` 与 `executable_qty_at_order`，证明竞价同价队列确实轮到该申报。参与率、整手、资金上限、最小价位、限价和成交数量关系均会拒绝式校验。真实券商回报即使超出研究参与率也保留事实，但会记录越限诊断；非真实回报则直接拒绝。
-
-真值中的 `submitted_qty` 与 `limit_price` 还必须逐项匹配D日冻结订单规格。任何不一致都标记为 `BUY_UNVERIFIABLE` 和 `auction_truth_order_spec_mismatch`，不得用事后可成交数量反推或改写原订单。
-
-`filled_qty=0` 可以不含 `price`，但必须给出停牌、无集合竞价撮合、队列未轮到等配置允许的可靠原因。
-
-日线 `open` 可能来自9:30后的首笔连续竞价，所以只保存为 `daily_open_proxy` 诊断，`counts_as_fill=false`。缺失真值时状态为 `BUY_UNVERIFIABLE`，收益保持 `null`，不会显示为0%。
+`data/execution_truth.v1.json` 继续保留券商成交日志或逐笔回放的审计证据，但不覆盖本系统统一的开盘价影子入场口径。未复权日线缺失、日期错误、复权口径错误或开盘价非法时状态为 `BUY_UNVERIFIABLE`，收益保持 `null`，不会显示为0%。
 
 ## T日收盘验证
 
 每支实际交集候选都保存冻结的 `晋级目标`（目前只接受 `2→3` 或 `3→4`）、D收盘价、涨停机制百分比与预计涨停价。Decision 的 `d_close` 是主值，Premium 的 `close_T` 是独立交叉校验值；两者价差超过0.005、非有限正数，或预计涨停价与D收盘价及涨停机制不一致时，输入契约阻断。
 
-页面显示的 `T日涨跌幅 / 是否晋级` 与9:25是否成交相互独立：即使候选最终未成交，也必须验证股票在T日的真实表现。北京时间T日15:10之前不得请求或写入收盘真值，页面统一显示“待验证”；15:10之后及后续日期可重试，证据不足时显示“待补证”，不能写成“否”。
+页面显示的 `T日涨跌幅 / 是否晋级` 与开盘成交状态相互独立。北京时间T日15:10之前不得请求或写入收盘真值，页面统一显示“待验证”；15:10之后及后续日期可重试，证据不足时显示“待补证”，不能写成“否”。
 
 验证只接受日期严格等于T且 `price_adjustment=NONE` 的无复权日线。`T日涨跌幅` 优先使用供应商正式涨跌幅并与 `T收盘价 / 冻结D收盘价 - 1` 交叉校验；供应商未提供时使用后者。账本内部以T日收盘价在半个最小价位内等于冻结涨停价判定收盘涨停，盘中触及后开板不会被视为晋级；页面不再重复展示“是否涨停”。`是否晋级` 只有在合法晋级目标存在且T日收盘涨停时为“是”。最终真值一经写入即保持幂等，不因后续供应商数据修订而静默改写。
 
@@ -98,9 +72,9 @@ premium.target_date = decision.exit_date = T+1
 ## 状态语义
 
 - `NOT_AVAILABLE`：该日不存在这个固定名次。
-- `PENDING_BUY`：T尚未到达或真值尚未入库。
-- `BUY_UNVERIFIABLE`：只有代理价，不能判成交。
-- `BUY_UNFILLED`：精确真值确认未成交，现金收益为0。
+- `PENDING_BUY`：T尚未到达。
+- `BUY_UNVERIFIABLE`：T日未复权开盘价尚不可验证。
+- `BUY_UNFILLED`：开盘价高于冻结买入限价，或旧版精确真值确认未成交；现金收益为0。
 - `OPEN`：已成交，等待T+1。
 - `EXIT_UNVERIFIABLE`：退出数据不足，收益未知。
 - `EXIT_DELAYED`：按规则仅部分退出，持仓仍存在。
@@ -110,7 +84,7 @@ premium.target_date = decision.exit_date = T+1
 
 ## 训练标签与模型注册
 
-`training_dataset_v1` 只从已冻结信号和一一对应的影子交易构建，不再联网补特征。每行保留源仓库commit、内容哈希、特征时点与版本。未知标签保持 `null`；`BUY_UNFILLED` 的成交标签为0、策略收益为0，但条件收益仍为 `null`；`CLOSED` 才能产生费用后条件净收益和实际延迟日。T日晋级标签与是否成交独立记录。模型晋级样本计数只接受明确标记为 `formal_features_v2` 的冻结行；升级前的历史特征仍保留审计，但不会冒充V2训练样本。
+`training_dataset_v1` 只从已冻结信号和一一对应的影子交易构建，不再联网补特征。每行保留源仓库commit、内容哈希、特征时点与版本。新口径下合法开盘价的成交标签固定为1；兼容旧状态时未知标签保持 `null`、`BUY_UNFILLED` 仍为0；`CLOSED` 才能产生费用后净收益和实际延迟日。成交头仅为旧模型结构兼容，不参与生产排序或门槛。T日晋级标签与买入状态独立记录。模型晋级样本计数只接受明确标记为 `formal_features_v2` 的冻结行；升级前的历史特征仍保留审计，但不会冒充V2训练样本。
 
 学习模型只接受 `model_artifact_v1` JSON，不加载pickle或可执行代码。训练截止日必须严格早于待排序D日；模型注册表中的相对路径与SHA-256必须通过校验，制品必须声明 `formal_features_v2` 且 `validation_passed=true`。任何路径越界、文件缺失、校验和变化、旧特征版本、未来字段、非法概率头或截止日穿越都失败关闭并回退透明冠军。
 

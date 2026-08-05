@@ -84,9 +84,9 @@ function statusText(status) {
     NO_CANDIDATE: "三表交集为0",
     INPUT_BLOCKED: "输入阻断",
     NOT_AVAILABLE: "无该名次",
-    PENDING_BUY: "待9:25竞价",
-    BUY_UNVERIFIABLE: "竞价待核验",
-    BUY_UNFILLED: "竞价未成交",
+    PENDING_BUY: "待开盘",
+    BUY_UNVERIFIABLE: "开盘价待补",
+    BUY_UNFILLED: "开盘未成交",
     OPEN: "持仓待退出",
     EXIT_UNVERIFIABLE: "退出待核验",
     EXIT_DELAYED: "延迟退出",
@@ -179,17 +179,48 @@ function reasonText(reason) {
 
 function gateText(item) {
   const prediction = predictionOf(item);
-  if (prediction.gate_decision === "TRADE") return "可交易";
+  if (prediction.gate_decision === "TRADE") return "通过";
   const reasons = Array.isArray(prediction.gate_reasons) ? prediction.gate_reasons : [];
-  if (!reasons.length) return "不交易";
-  const first = reasonText(reasons[0]);
-  return `不交易 · ${first}${reasons.length > 1 ? ` +${reasons.length - 1}` : ""}`;
+  if (!reasons.length) return "未过";
+  const labels = {
+    p_fill_below_threshold: "成交率低",
+    fill_probability_below_threshold: "成交率低",
+    expected_net_return_not_positive: "收益≤0",
+    conditional_net_return_not_positive: "收益≤0",
+    return_lower_bound_not_positive: "下界≤0",
+    conditional_return_lcb_not_positive: "下界≤0",
+    risk_adjusted_utility_not_positive: "效用≤0",
+    exit_delay_probability_too_high: "延迟风险高",
+    exit_delay_risk_above_threshold: "延迟风险高",
+    prediction_uncertainty_too_high: "不确定性高",
+    market_features_incomplete: "数据不全",
+    insufficient_daily_bars: "数据不全",
+    stale_market_features: "数据不全",
+    invalid_candidate_facts: "数据不全",
+    cohort_ranking_fallback_borda: "共识排序"
+  };
+  const first = labels[reasons[0]] || reasonText(reasons[0]);
+  return `${first}${reasons.length > 1 ? ` +${reasons.length - 1}` : ""}`;
 }
 
 function gateTitle(item) {
   const prediction = predictionOf(item);
   const reasons = Array.isArray(prediction.gate_reasons) ? prediction.gate_reasons : [];
   return reasons.length ? reasons.map(reasonText).join("；") : gateText(item);
+}
+
+function entryStateText(item) {
+  const status = String(item?.status || item?.ledger_status || "PENDING_BUY");
+  if (
+    finite(item?.buy_price)
+    || finite(item?.buy?.avg_price)
+    || ["OPEN", "EXIT_UNVERIFIABLE", "EXIT_DELAYED", "CLOSED"].includes(status)
+  ) {
+    return "已成交";
+  }
+  if (status === "BUY_UNVERIFIABLE") return "待补价";
+  if (status === "BUY_UNFILLED") return "未成交";
+  return "待开盘";
 }
 
 function validate(data) {
@@ -652,7 +683,7 @@ function renderCandidates() {
       {text: price(item.d_close), className: "col-d-close"},
       {text: tDayReturnText(validationItem), className: `col-t-return ${tone(tReturn)}`},
       {text: tDayOutcomeText(validationItem, "is_promoted"), className: "col-promoted"},
-      {text: probability(prediction.fill_probability), className: "col-fill"},
+      {text: entryStateText(ledgerItem), className: "col-fill"},
       {text: probability(prediction.exit_delay_probability), className: "col-delay"},
       {text: pct(prediction.risk_adjusted_utility), className: `col-utility ${tone(prediction.risk_adjusted_utility)}`},
       {content: gate, className: "col-gate", title: gateTitle(item)},
@@ -670,7 +701,7 @@ function renderCandidates() {
     {text: "D收盘价", className: "col-d-close"},
     {text: "T日涨跌幅", className: "col-t-return"},
     {text: "是否晋级", className: "col-promoted"},
-    {text: "9:25成交估计", className: "col-fill"},
+    {text: "开盘成交", className: "col-fill"},
     {text: "延迟风险", className: "col-delay"},
     {text: "风险调整值", className: "col-utility"},
     {text: "策略门槛", className: "col-gate"},
@@ -713,7 +744,7 @@ function renderDaily() {
     const batchModel = day.model?.selected_model_id || predictionOf(day.candidates?.[0]).model_id;
     summary.append(
       ledgerFact("信号日", day.decision_date || "—"),
-      ledgerFact("9:25买入日", day.buy_date || "—"),
+      ledgerFact("开盘买入日", day.buy_date || "—"),
       ledgerFact("T+1验证日", verifiedDate),
       ledgerFact("股票", `${count} 支`),
       ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选"),
@@ -739,7 +770,7 @@ function renderDaily() {
       return [
         {content: stockCell(item), align: "left", className: "sticky-stock"},
         {text: returnForecast(item), className: `col-return-range ${tone(prediction.conditional_net_return_mean)}`},
-        {text: probability(prediction.fill_probability), className: "col-fill"},
+        {text: entryStateText(item), className: "col-fill"},
         {text: probability(prediction.exit_delay_probability), className: "col-delay"},
         {text: pct(prediction.risk_adjusted_utility), className: `col-utility ${tone(prediction.risk_adjusted_utility)}`},
         {content: gate, className: "col-gate", title: gateTitle(item)},
@@ -762,7 +793,7 @@ function renderDaily() {
       const dailyTable = table([
         {text: "股票", align: "left", className: "sticky-stock"},
         {text: "条件净收益（10–90分位）", className: "col-return-range"},
-        {text: "9:25成交估计", className: "col-fill"},
+        {text: "开盘成交", className: "col-fill"},
         {text: "延迟风险", className: "col-delay"},
         {text: "风险调整值", className: "col-utility"},
         {text: "策略门槛", className: "col-gate"},
@@ -771,7 +802,7 @@ function renderDaily() {
         "D收盘价",
         "T日涨跌幅",
         "是否晋级",
-        "9:25入场价",
+        "开盘价",
         "T+1退出价",
         "净收益",
         "结果",

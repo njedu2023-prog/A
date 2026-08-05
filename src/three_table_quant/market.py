@@ -107,9 +107,9 @@ def _json_payload(raw: bytes, provider: str) -> dict[str, Any]:
 class EastmoneyMarketData:
     """Public-data adapter used only for shadow research.
 
-    Daily open is retained as a clearly labelled proxy when a licensed auction
-    execution feed is unavailable. The adapter never upgrades a proxy to an
-    official fill.
+    Forward-adjusted daily bars remain feature inputs. Exact-date unadjusted
+    daily bars provide the configured shadow entry and T-day verification
+    prices; they are never represented as broker fills.
     """
 
     endpoint = "https://push2his.eastmoney.com/api/qt/stock/kline/get"

@@ -67,7 +67,6 @@ FEATURE_ALLOWLIST = (
 )
 
 PROBABILITY_TARGETS = {
-    "fill": "fill",
     "delay": "exit_delayed",
     "promotion": "promotion",
 }
@@ -388,7 +387,15 @@ def _fit_heads(
     if reasons:
         return None, counts, reasons
     heads: dict[str, Any] = {}
-    for head in ("fill", "delay", "promotion"):
+    heads["fill"] = {
+        "type": "l2_logistic",
+        "link": "logistic",
+        "intercept": 30.0,
+        "coefficients": [0.0 for _ in feature_order],
+        "policy": "FIXED_T_DAILY_OPEN_FULL_FILL",
+    }
+    counts["fill"] = len(_target_rows(rows, "fill")[1])
+    for head in ("delay", "promotion"):
         selected, labels = datasets[head]
         matrix = transform_rows(selected, feature_order, normalization)
         heads[head] = _fit_logistic(matrix, labels)
@@ -538,6 +545,7 @@ def train_challenger(
         "schema": MODEL_ARTIFACT_SCHEMA,
         "schema_version": MODEL_ARTIFACT_SCHEMA,
         "model_id": f"formal_quant_challenger_{trained_through}_{identity}",
+        "entry_fill_policy": "T_DAILY_OPEN_FULL_FILL",
         "feature_schema": schema,
         "feature_schema_version": schema,
         "trained_through": trained_through,
@@ -634,7 +642,11 @@ def predict_artifact(
         )
     quantiles = sorted((raw["q10"], raw["q50"], raw["q90"]))
     return {
-        "p_fill": _sigmoid(raw["fill"]),
+        "p_fill": (
+            1.0
+            if artifact.get("entry_fill_policy") == "T_DAILY_OPEN_FULL_FILL"
+            else _sigmoid(raw["fill"])
+        ),
         "p_exit_delay": _sigmoid(raw["delay"]),
         "p_promotion": _sigmoid(raw["promotion"]),
         "conditional_net_return_mean": raw["return_mean"],
@@ -727,7 +739,6 @@ def walk_forward_oof_report(
         trading_days=trading_days,
     )
     probability_pairs: dict[str, list[tuple[float, int]]] = {
-        "fill": [],
         "delay": [],
         "promotion": [],
     }
@@ -758,6 +769,7 @@ def walk_forward_oof_report(
             "feature_order": list(feature_order),
             "normalization": normalization,
             "heads": heads,
+            "entry_fill_policy": "T_DAILY_OPEN_FULL_FILL",
             "validation_passed": True,
         }
         used_folds += 1
@@ -771,7 +783,7 @@ def walk_forward_oof_report(
                         (float(prediction[f"p_{'exit_delay' if head == 'delay' else head}"]), int(observed))
                     )
             actual = _finite(row["labels"].get("policy_net_return"))
-            expected = prediction["p_fill"] * prediction["conditional_net_return_mean"]
+            expected = prediction["conditional_net_return_mean"]
             if actual is not None and expected > 0.0:
                 selected_by_day[normalize_date(row["decision_date"], "decision_date")].append(actual)
     daily_returns = [

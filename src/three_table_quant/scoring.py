@@ -91,10 +91,11 @@ def build_features(
 def estimate_round_trip_rate(execution: dict[str, Any]) -> float:
     """Estimate costs on the same basis used by the shadow ledger.
 
-    Entry starts from an *actual* 09:25 fill, so there is no second synthetic
-    entry-slippage deduction.  The buy is one order and the planned exit is one
-    child order per configured minute; minimum commissions therefore matter at
-    the slot level instead of being approximated by ``2 * commission_rate``.
+    Entry starts from the configured T-day unadjusted open, so there is no
+    second synthetic entry-slippage deduction.  The buy is one order and the
+    planned exit is one child order per configured minute; minimum commissions
+    therefore matter at the slot level instead of being approximated by
+    ``2 * commission_rate``.
     """
 
     capital = max(float(execution["slot_capital_cny"]), 1.0)

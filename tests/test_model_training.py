@@ -156,7 +156,7 @@ class ModelTrainingTests(unittest.TestCase):
             validation_passed=True,
         )
 
-    def test_small_or_one_class_samples_are_not_eligible(self) -> None:
+    def test_small_samples_are_rejected_but_one_class_fill_is_compatible(self) -> None:
         pending = rows_for_days(1)
         for item in pending:
             item["labels"]["is_mature"] = False
@@ -168,9 +168,19 @@ class ModelTrainingTests(unittest.TestCase):
 
         one_class = rows_for_days(126, force_fill=1)
         result = train_challenger(one_class)
-        self.assertEqual(result["status"], "NOT_ELIGIBLE")
-        self.assertIsNone(result["artifact"])
-        self.assertIn("fill_requires_two_classes", result["reasons"])
+        self.assertEqual(result["status"], "TRAINED_UNVALIDATED")
+        self.assertEqual(
+            result["artifact"]["entry_fill_policy"],
+            "T_DAILY_OPEN_FULL_FILL",
+        )
+        self.assertEqual(
+            predict_artifact(
+                result["artifact"],
+                one_class[0]["features"],
+                require_validated=False,
+            )["p_fill"],
+            1.0,
+        )
 
         wrong_schema = rows_for_days(126)
         for item in wrong_schema:
@@ -186,6 +196,10 @@ class ModelTrainingTests(unittest.TestCase):
         self.assertEqual(artifact["schema"], MODEL_ARTIFACT_SCHEMA)
         self.assertEqual(artifact["feature_schema"], FEATURE_SCHEMA_VERSION)
         self.assertTrue(artifact["validation_passed"])
+        self.assertEqual(
+            artifact["entry_fill_policy"],
+            "T_DAILY_OPEN_FULL_FILL",
+        )
         self.assertEqual(
             len(artifact["feature_order"]),
             len(artifact["normalization"]["median"]),
@@ -246,10 +260,12 @@ class ModelTrainingTests(unittest.TestCase):
         for key in ("p_fill", "p_exit_delay", "p_promotion"):
             self.assertGreaterEqual(prediction[key], 0.0)
             self.assertLessEqual(prediction[key], 1.0)
+        self.assertEqual(prediction["p_fill"], 1.0)
         self.assertGreater(prediction["expected_delay_days"], 0.0)
 
     def test_artifact_is_consumed_by_formal_ranking_engine(self) -> None:
         ranking = {
+            "assume_open_fill": True,
             "min_fill_probability": 0.40,
             "min_expected_net_return": 0.0,
             "min_return_lcb": 0.0,
@@ -303,7 +319,8 @@ class ModelTrainingTests(unittest.TestCase):
         self.assertEqual(report["fold_count"], 4)
         self.assertGreater(report["used_fold_count"], 0)
         self.assertGreater(report["prediction_count"], 0)
-        for head in ("fill", "delay", "promotion"):
+        self.assertNotIn("fill", report["probability_metrics"])
+        for head in ("delay", "promotion"):
             metrics = report["probability_metrics"][head]
             self.assertGreater(metrics["count"], 0)
             self.assertIsNotNone(metrics["brier"])

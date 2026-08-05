@@ -42,7 +42,24 @@ from .training_dataset import build_training_dataset
 
 def load_config(path: str | Path) -> dict[str, Any]:
     with Path(path).open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        config = json.load(handle)
+    ranking_policy = config.get("ranking", {}).get("assume_open_fill")
+    execution_policy = config.get("execution", {}).get(
+        "daily_open_counts_as_fill"
+    )
+    if not isinstance(ranking_policy, bool) or not isinstance(
+        execution_policy,
+        bool,
+    ):
+        raise ValueError(
+            "open-fill policy requires boolean ranking.assume_open_fill "
+            "and execution.daily_open_counts_as_fill"
+        )
+    if ranking_policy is not execution_policy:
+        raise ValueError(
+            "ranking and execution open-fill policies must match"
+        )
+    return config
 
 
 def _now() -> str:
