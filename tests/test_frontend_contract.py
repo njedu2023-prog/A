@@ -116,6 +116,26 @@ class FrontendContractTests(unittest.TestCase):
         self.assertEqual(source.count("cron:"), 1)
         self.assertIn('cron: "30 13 * * 1-5"', source)
 
+    def test_workflow_keeps_one_curated_pages_publication_path(self) -> None:
+        source = Path(".github/workflows/daily-shadow.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("python scripts/verify_pages_source.py", source)
+        self.assertEqual(source.count("actions/configure-pages"), 1)
+        self.assertEqual(source.count("actions/upload-pages-artifact"), 1)
+        self.assertEqual(source.count("actions/deploy-pages"), 1)
+        self.assertIn("pages: write", source)
+        self.assertIn("id-token: write", source)
+
+        artifact_block = source.split("- name: Prepare Pages artifact", 1)[1]
+        artifact_block = artifact_block.split("- name: Configure GitHub Pages", 1)[0]
+        self.assertIn("data/dashboard.v1.json", artifact_block)
+        self.assertIn("data/source_issues.v1.json", artifact_block)
+        self.assertNotIn("data/state.v1.json", artifact_block)
+        self.assertNotIn("data/execution_truth.v1.json", artifact_block)
+        self.assertNotIn("data/model_registry.v1.json", artifact_block)
+        self.assertNotIn("cp -R data", artifact_block)
+
     def test_status_title_is_rendered_once(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")
         block = re.search(

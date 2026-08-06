@@ -38,6 +38,10 @@ jobs:
       - name: Capture checked-out parent
         id: checkout-parent
         run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Verify Pages uses the controlled Actions source
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/verify_pages_source.py
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
