@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-06T21:00:42+08:00",
+  "generated_at": "2026-08-06T22:35:36+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -43,11 +43,11 @@
   },
   "current_run": {
     "status": "RANKED",
-    "message": "三表严格交集实际保留1支并完成重新排序",
+    "message": "D日信号已冻结；保留1支候选且不事后改写",
     "completed": true,
-    "completed_at": "2026-08-06T21:00:42+08:00",
+    "completed_at": "2026-08-06T22:35:36+08:00",
     "decision_date": "2026-08-06",
-    "outcome": "COMPLETED_RANKED",
+    "outcome": "COMPLETED_FROZEN_SIGNAL",
     "source_table_counts": {
       "a_top10": 10,
       "premium_top10": 10,
@@ -97,9 +97,10 @@
       "required_lockbox_days": 126,
       "promotion_eligible": false,
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
-      "training_row_count": 0,
+      "training_row_count": 1,
       "excluded_feature_row_count": 3
-    }
+    },
+    "live_intersection_count": 1
   },
   "source_issues": [
     {
@@ -155,23 +156,39 @@
       }
     },
     {
+      "code": "SOURCE_REVISION_AFTER_FREEZE",
+      "severity": "warning",
+      "source_id": "aggregate",
+      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
+      "details": {
+        "frozen_codes": [
+          "002428.SZ"
+        ],
+        "live_codes": [
+          "002428.SZ"
+        ],
+        "changed_sources": {
+          "a_top10": {
+            "frozen_content_sha256": "d301c6781d440ab81554db81c51ef045075511dfb88d81d714fef74a067716a5",
+            "live_content_sha256": "dc54f294db4ea71d629dc2da25a4ec6a1aad84e2bf68a4c21ab126d957792f88",
+            "frozen_repository_commit_sha": "9ceab33cceda0e67717f102d8ae64491e38152e1",
+            "live_repository_commit_sha": "75bfe28f1f93b253ce2e868a4dd74ab74314cf03"
+          }
+        }
+      }
+    },
+    {
       "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "Eastmoney 行情不可用或已跳闸；1 支股票已聚合切换至腾讯只读行情",
+      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
       "details": {
         "primary_provider": "EASTMONEY",
         "fallback_provider": "TENCENT",
         "affected_codes": [
           "002428.SZ"
         ],
-        "request_types": [
-          "daily"
-        ],
-        "event_count": 1,
-        "successful_event_count": 1,
-        "failed_event_count": 0,
-        "circuit_open": true
+        "persisted_with_frozen_signal": true
       }
     }
   ],
