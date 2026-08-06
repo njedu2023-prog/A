@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-05T23:35:29+08:00",
+  "generated_at": "2026-08-06T21:00:42+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -42,12 +42,12 @@
     "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126"
   },
   "current_run": {
-    "status": "NO_CANDIDATE",
-    "message": "D日信号已冻结；保留0支候选且不事后改写",
+    "status": "RANKED",
+    "message": "三表严格交集实际保留1支并完成重新排序",
     "completed": true,
-    "completed_at": "2026-08-05T23:35:29+08:00",
-    "decision_date": "2026-08-05",
-    "outcome": "COMPLETED_ZERO_INTERSECTION",
+    "completed_at": "2026-08-06T21:00:42+08:00",
+    "decision_date": "2026-08-06",
+    "outcome": "COMPLETED_RANKED",
     "source_table_counts": {
       "a_top10": 10,
       "premium_top10": 10,
@@ -55,22 +55,22 @@
     },
     "source_dates": {
       "a_top10": {
-        "D": "20260805",
-        "T": "20260806",
+        "D": "20260806",
+        "T": "20260807",
         "T1": null
       },
       "premium_top10": {
-        "D": "20260805",
-        "T": "20260806",
-        "T1": "20260807"
+        "D": "20260806",
+        "T": "20260807",
+        "T1": "20260810"
       },
       "decision_table": {
-        "D": "20260805",
-        "T": "20260806",
-        "T1": "20260807"
+        "D": "20260806",
+        "T": "20260807",
+        "T1": "20260810"
       }
     },
-    "intersection_count": 0,
+    "intersection_count": 1,
     "ranking_engine": {
       "engine_version": "formal_ranking_engine_v2",
       "selected_model_id": "transparent_shadow_champion_v2",
@@ -99,8 +99,7 @@
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
       "training_row_count": 0,
       "excluded_feature_row_count": 3
-    },
-    "live_intersection_count": 0
+    }
   },
   "source_issues": [
     {
@@ -143,22 +142,6 @@
       }
     },
     {
-      "code": "DECISION_AUXILIARY_COVERAGE_INCOMPLETE",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision辅助模型字段存在缺失；实际展示成员继续参与交集，缺失值不作为数值特征",
-      "details": {
-        "row_count": 10,
-        "non_null_counts": {
-          "decision_p_fill": 9,
-          "decision_e_ret": 9,
-          "decision_ev": 9,
-          "decision_cost": 9,
-          "decision_risk_penalty": 9
-        }
-      }
-    },
-    {
       "code": "DECISION_NO_FORMAL_BUY",
       "severity": "warning",
       "source_id": "decision_table",
@@ -172,27 +155,23 @@
       }
     },
     {
-      "code": "SOURCE_REVISION_AFTER_FREEZE",
+      "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
-      "source_id": "aggregate",
-      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
+      "source_id": "market_data",
+      "message": "Eastmoney 行情不可用或已跳闸；1 支股票已聚合切换至腾讯只读行情",
       "details": {
-        "frozen_codes": [],
-        "live_codes": [],
-        "changed_sources": {
-          "decision_table": {
-            "frozen_content_sha256": "f6dd7e9924fa5054a3b16f4c6c4abfabae006e42be7bfb70ff8795d61f23f602",
-            "live_content_sha256": "274784990eb839eb4c089a36944cb2416dcaf7657cd2de1d4d78c0fe0e7387ac",
-            "frozen_repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
-            "live_repository_commit_sha": "b8689754d222bed17dae0aba9b1951891418d73b"
-          },
-          "premium_top10": {
-            "frozen_content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
-            "live_content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
-            "frozen_repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
-            "live_repository_commit_sha": "b8689754d222bed17dae0aba9b1951891418d73b"
-          }
-        }
+        "primary_provider": "EASTMONEY",
+        "fallback_provider": "TENCENT",
+        "affected_codes": [
+          "002428.SZ"
+        ],
+        "request_types": [
+          "daily"
+        ],
+        "event_count": 1,
+        "successful_event_count": 1,
+        "failed_event_count": 0,
+        "circuit_open": true
       }
     }
   ],
@@ -201,33 +180,33 @@
   ],
   "rank_metrics": {
     "1": {
-      "cumulative_return": 0.0,
-      "final_days": 1,
+      "cumulative_return": -0.03630475210000006,
+      "final_days": 2,
       "pending_days": 1,
       "is_provisional": true,
-      "closed_trades": 0,
-      "win_rate": null
+      "closed_trades": 1,
+      "win_rate": 0.0
     },
     "2": {
-      "cumulative_return": 0.0,
-      "final_days": 1,
-      "pending_days": 1,
-      "is_provisional": true,
-      "closed_trades": 0,
-      "win_rate": null
+      "cumulative_return": -0.11748457280000002,
+      "final_days": 3,
+      "pending_days": 0,
+      "is_provisional": false,
+      "closed_trades": 1,
+      "win_rate": 0.0
     },
     "3": {
-      "cumulative_return": 0.0,
-      "final_days": 1,
-      "pending_days": 1,
-      "is_provisional": true,
-      "closed_trades": 0,
-      "win_rate": null
+      "cumulative_return": -0.03494317590000007,
+      "final_days": 3,
+      "pending_days": 0,
+      "is_provisional": false,
+      "closed_trades": 1,
+      "win_rate": 0.0
     }
   },
   "portfolio_metrics": {
-    "cumulative_return": 0.0,
-    "final_days": 1,
+    "cumulative_return": -0.06291083360000005,
+    "final_days": 2,
     "pending_days": 1,
     "is_provisional": true,
     "history": [
@@ -235,15 +214,15 @@
         "date": "2026-08-06",
         "decision_date": "2026-08-04",
         "planned_exit_date": "2026-08-06",
-        "return_date": null,
+        "return_date": "2026-08-06",
         "candidate_count": 3,
-        "final_count": 0,
-        "pending_count": 3,
+        "final_count": 3,
+        "pending_count": 0,
         "profitable_count": 0,
-        "portfolio_return": null,
-        "equity_index": null,
-        "result": "PENDING",
-        "is_final": false,
+        "portfolio_return": -0.06291083360000004,
+        "equity_index": 0.9370891664,
+        "result": "LOSS",
+        "is_final": true,
         "is_provisional": false
       },
       {
@@ -256,16 +235,31 @@
         "pending_count": 0,
         "profitable_count": 0,
         "portfolio_return": 0.0,
-        "equity_index": 1.0,
+        "equity_index": 0.9370891664,
         "result": "FLAT",
         "is_final": true,
+        "is_provisional": false
+      },
+      {
+        "date": "2026-08-10",
+        "decision_date": "2026-08-06",
+        "planned_exit_date": "2026-08-10",
+        "return_date": null,
+        "candidate_count": 1,
+        "final_count": 0,
+        "pending_count": 1,
+        "profitable_count": 0,
+        "portfolio_return": null,
+        "equity_index": null,
+        "result": "PENDING",
+        "is_final": false,
         "is_provisional": false
       }
     ],
     "by_month": {
       "2026-08": {
-        "cumulative_return": 0.0,
-        "final_days": 1,
+        "cumulative_return": -0.06291083360000005,
+        "final_days": 2,
         "pending_days": 1,
         "is_provisional": true
       }
@@ -652,8 +646,8 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260804:000815.SZ",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "CLOSED",
+          "reason": "shadow_exit_completed",
           "buy": {
             "at": "2026-08-05T09:25:00+08:00",
             "submitted_qty": 4900,
@@ -673,8 +667,136 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
-          "pnl": null,
+          "exit": {
+            "target_start": "20260806T11:00:00+08:00",
+            "target_end": "20260806T11:05:00+08:00",
+            "benchmark_twap": 18.294239078885703,
+            "benchmark_twaps": [
+              {
+                "date": "20260806",
+                "value": 18.294239078885703
+              }
+            ],
+            "fills": [
+              {
+                "fill_id": "20260806T11:00",
+                "at": "20260806T11:00:00+08:00",
+                "date": "20260806",
+                "minute": "11:00",
+                "qty": 1000,
+                "benchmark_price": 18.312620995228357,
+                "price": 18.3,
+                "amount": 18300.0,
+                "fees": 14.823,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:01",
+                "at": "20260806T11:01:00+08:00",
+                "date": "20260806",
+                "minute": "11:01",
+                "qty": 1000,
+                "benchmark_price": 18.258962264150945,
+                "price": 18.25,
+                "amount": 18250.0,
+                "fees": 14.782499999999999,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:02",
+                "at": "20260806T11:02:00+08:00",
+                "date": "20260806",
+                "minute": "11:02",
+                "qty": 1000,
+                "benchmark_price": 18.268533316633267,
+                "price": 18.25,
+                "amount": 18250.0,
+                "fees": 14.782499999999999,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:03",
+                "at": "20260806T11:03:00+08:00",
+                "date": "20260806",
+                "minute": "11:03",
+                "qty": 1000,
+                "benchmark_price": 18.32404625346901,
+                "price": 18.31,
+                "amount": 18310.0,
+                "fees": 14.8311,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:04",
+                "at": "20260806T11:04:00+08:00",
+                "date": "20260806",
+                "minute": "11:04",
+                "qty": 900,
+                "benchmark_price": 18.307032564946944,
+                "price": 18.29,
+                "amount": 16461.0,
+                "fees": 13.39511,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              }
+            ],
+            "filled_qty": 4900,
+            "remaining_qty": 0,
+            "sell_amount": 89571.0,
+            "fees": 72.61421,
+            "net_proceeds": 89498.38579,
+            "delay_trading_days": 0,
+            "processed_windows": [
+              "20260806"
+            ],
+            "attempts": [
+              {
+                "date": "20260806",
+                "result": "FILLED",
+                "reason": "completed",
+                "benchmark_twap": 18.294239078885703,
+                "new_fill_ids": [
+                  "20260806T11:00",
+                  "20260806T11:01",
+                  "20260806T11:02",
+                  "20260806T11:03",
+                  "20260806T11:04"
+                ],
+                "locked_minutes": [],
+                "remaining_qty": 0,
+                "delay_trading_days": 0,
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": "20260806T11:04:00+08:00",
+            "actual_exit_date": "20260806",
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR",
+            "avg_price": 18.27979591836735
+          },
+          "pnl": {
+            "state": "REALIZED",
+            "gross_return": -0.0379054779806659,
+            "net_return_on_invested": -0.03898335243249677,
+            "net_return_on_allocated": -0.03630475210000004,
+            "net_pnl": -3630.475210000004,
+            "asof": "20260806T11:04:00+08:00"
+          },
           "diagnostics": {
             "daily_open_fill": {
               "price": 19.0,
@@ -695,8 +817,8 @@
         },
         "2": {
           "candidate_id": "20260804:000595.SZ",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "CLOSED",
+          "reason": "shadow_exit_completed",
           "buy": {
             "at": "2026-08-05T09:25:00+08:00",
             "submitted_qty": 13800,
@@ -716,8 +838,136 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
-          "pnl": null,
+          "exit": {
+            "target_start": "20260806T11:00:00+08:00",
+            "target_end": "20260806T11:05:00+08:00",
+            "benchmark_twap": 6.273666577053978,
+            "benchmark_twaps": [
+              {
+                "date": "20260806",
+                "value": 6.273666577053978
+              }
+            ],
+            "fills": [
+              {
+                "fill_id": "20260806T11:00",
+                "at": "20260806T11:00:00+08:00",
+                "date": "20260806",
+                "minute": "11:00",
+                "qty": 2800,
+                "benchmark_price": 6.256740606609325,
+                "price": 6.25,
+                "amount": 17500.0,
+                "fees": 14.174999999999999,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:01",
+                "at": "20260806T11:01:00+08:00",
+                "date": "20260806",
+                "minute": "11:01",
+                "qty": 2800,
+                "benchmark_price": 6.281793664383562,
+                "price": 6.27,
+                "amount": 17556.0,
+                "fees": 14.22036,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:02",
+                "at": "20260806T11:02:00+08:00",
+                "date": "20260806",
+                "minute": "11:02",
+                "qty": 2800,
+                "benchmark_price": 6.27620325203252,
+                "price": 6.27,
+                "amount": 17556.0,
+                "fees": 14.22036,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:03",
+                "at": "20260806T11:03:00+08:00",
+                "date": "20260806",
+                "minute": "11:03",
+                "qty": 2700,
+                "benchmark_price": 6.277492711370263,
+                "price": 6.27,
+                "amount": 16929.0,
+                "fees": 13.71249,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:04",
+                "at": "20260806T11:04:00+08:00",
+                "date": "20260806",
+                "minute": "11:04",
+                "qty": 2700,
+                "benchmark_price": 6.276102650874225,
+                "price": 6.27,
+                "amount": 16929.0,
+                "fees": 13.71249,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              }
+            ],
+            "filled_qty": 13800,
+            "remaining_qty": 0,
+            "sell_amount": 86470.0,
+            "fees": 70.0407,
+            "net_proceeds": 86399.9593,
+            "delay_trading_days": 0,
+            "processed_windows": [
+              "20260806"
+            ],
+            "attempts": [
+              {
+                "date": "20260806",
+                "result": "FILLED",
+                "reason": "completed",
+                "benchmark_twap": 6.273666577053978,
+                "new_fill_ids": [
+                  "20260806T11:00",
+                  "20260806T11:01",
+                  "20260806T11:02",
+                  "20260806T11:03",
+                  "20260806T11:04"
+                ],
+                "locked_minutes": [],
+                "remaining_qty": 0,
+                "delay_trading_days": 0,
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": "20260806T11:04:00+08:00",
+            "actual_exit_date": "20260806",
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR",
+            "avg_price": 6.265942028985507
+          },
+          "pnl": {
+            "state": "REALIZED",
+            "gross_return": -0.11871420126786114,
+            "net_return_on_invested": -0.119700935474837,
+            "net_return_on_allocated": -0.11748457280000002,
+            "net_pnl": -11748.457280000002,
+            "asof": "20260806T11:04:00+08:00"
+          },
           "diagnostics": {
             "daily_open_fill": {
               "price": 7.11,
@@ -738,8 +988,8 @@
         },
         "3": {
           "candidate_id": "20260804:002421.SZ",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "CLOSED",
+          "reason": "shadow_exit_completed",
           "buy": {
             "at": "2026-08-05T09:25:00+08:00",
             "submitted_qty": 26100,
@@ -759,8 +1009,136 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
-          "pnl": null,
+          "exit": {
+            "target_start": "20260806T11:00:00+08:00",
+            "target_end": "20260806T11:05:00+08:00",
+            "benchmark_twap": 3.4344121543148582,
+            "benchmark_twaps": [
+              {
+                "date": "20260806",
+                "value": 3.4344121543148582
+              }
+            ],
+            "fills": [
+              {
+                "fill_id": "20260806T11:00",
+                "at": "20260806T11:00:00+08:00",
+                "date": "20260806",
+                "minute": "11:00",
+                "qty": 5300,
+                "benchmark_price": 3.4343198874296434,
+                "price": 3.43,
+                "amount": 18179.0,
+                "fees": 14.724990000000002,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:01",
+                "at": "20260806T11:01:00+08:00",
+                "date": "20260806",
+                "minute": "11:01",
+                "qty": 5200,
+                "benchmark_price": 3.4333063453210317,
+                "price": 3.43,
+                "amount": 17836.0,
+                "fees": 14.44716,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:02",
+                "at": "20260806T11:02:00+08:00",
+                "date": "20260806",
+                "minute": "11:02",
+                "qty": 5200,
+                "benchmark_price": 3.4336971393034825,
+                "price": 3.43,
+                "amount": 17836.0,
+                "fees": 14.44716,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:03",
+                "at": "20260806T11:03:00+08:00",
+                "date": "20260806",
+                "minute": "11:03",
+                "qty": 5200,
+                "benchmark_price": 3.4345957939417326,
+                "price": 3.43,
+                "amount": 17836.0,
+                "fees": 14.44716,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260806T11:04",
+                "at": "20260806T11:04:00+08:00",
+                "date": "20260806",
+                "minute": "11:04",
+                "qty": 5200,
+                "benchmark_price": 3.4361416055784018,
+                "price": 3.43,
+                "amount": 17836.0,
+                "fees": 14.44716,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "EASTMONEY",
+                "price_adjustment": "NONE"
+              }
+            ],
+            "filled_qty": 26100,
+            "remaining_qty": 0,
+            "sell_amount": 89523.0,
+            "fees": 72.51363,
+            "net_proceeds": 89450.48637,
+            "delay_trading_days": 0,
+            "processed_windows": [
+              "20260806"
+            ],
+            "attempts": [
+              {
+                "date": "20260806",
+                "result": "FILLED",
+                "reason": "completed",
+                "benchmark_twap": 3.4344121543148582,
+                "new_fill_ids": [
+                  "20260806T11:00",
+                  "20260806T11:01",
+                  "20260806T11:02",
+                  "20260806T11:03",
+                  "20260806T11:04"
+                ],
+                "locked_minutes": [],
+                "remaining_qty": 0,
+                "delay_trading_days": 0,
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": "20260806T11:04:00+08:00",
+            "actual_exit_date": "20260806",
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR",
+            "avg_price": 3.43
+          },
+          "pnl": {
+            "state": "REALIZED",
+            "gross_return": -0.0365168539325843,
+            "net_return_on_invested": -0.037595620638501005,
+            "net_return_on_allocated": -0.03494317590000006,
+            "net_pnl": -3494.317590000006,
+            "asof": "20260806T11:04:00+08:00"
+          },
           "diagnostics": {
             "daily_open_fill": {
               "price": 3.56,
@@ -861,6 +1239,349 @@
           "t_day_validation": null
         }
       }
+    },
+    {
+      "decision_date": "2026-08-06",
+      "buy_date": "2026-08-07",
+      "planned_exit_date": "2026-08-10",
+      "selection_status": "RANKED",
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/9ceab33cceda0e67717f102d8ae64491e38152e1/outputs/learning/pred_top10_20260806.csv",
+          "decision_date": "20260806",
+          "content_sha256": "d301c6781d440ab81554db81c51ef045075511dfb88d81d714fef74a067716a5",
+          "repository_commit_sha": "9ceab33cceda0e67717f102d8ae64491e38152e1",
+          "generated_at": "2026-08-06T11:14:25Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/d447d2262c2d0da89b46c7a62ae219c6bd638cf4/outputs/premium/premium_top10_20260806.csv",
+          "decision_date": "20260806",
+          "content_sha256": "b858ab13b8988fd5dc097b3c228147a5b3cddaa8c0fb76d5888294f866225ad0",
+          "repository_commit_sha": "d447d2262c2d0da89b46c7a62ae219c6bd638cf4",
+          "generated_at": "2026-08-06T11:42:54Z",
+          "row_count": 10
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/d447d2262c2d0da89b46c7a62ae219c6bd638cf4/outputs/decision/action_plan_20260807.json",
+          "decision_date": "20260806",
+          "content_sha256": "6619a0a59858b7e582190b9ef783c5ac6beb91923635b08d80dabe2b26ae87c0",
+          "repository_commit_sha": "d447d2262c2d0da89b46c7a62ae219c6bd638cf4",
+          "generated_at": "2026-08-06T11:40:41+00:00",
+          "row_count": 10
+        }
+      ],
+      "market_data_provenance": {
+        "daily_features": {
+          "002428.SZ": {
+            "providers": [
+              "TENCENT"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          }
+        }
+      },
+      "intersection_count": 1,
+      "candidates": [
+        {
+          "candidate_id": "20260806:002428.SZ",
+          "symbol": "002428.SZ",
+          "name": "云南锗业",
+          "stage_transition": "3→4",
+          "industry": "小金属",
+          "d_close": 90.98,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 100.08,
+          "model": {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_champion_v2",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-06",
+            "calibrated": false,
+            "fill_probability": 1.0,
+            "conditional_net_return_mean": 0.007810103016445486,
+            "conditional_net_return_p10": -0.10355575753621626,
+            "conditional_net_return_p50": 0.007810103016445486,
+            "conditional_net_return_p90": 0.11917596356910723,
+            "exit_delay_probability": 0.25314409214516986,
+            "expected_exit_delay_days": 2.7872423426510142,
+            "promotion_probability": 0.2310797124446683,
+            "expected_shortfall": 0.14469661841939896,
+            "uncertainty": 0.2193906147272397,
+            "risk_adjusted_utility": -0.03255009309468081,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
+          "rank": 1,
+          "model_score": -0.03255009309468081,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order",
+          "action_audit": [],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "source_ranks": {
+            "a_top10": 1,
+            "premium_top10": 2,
+            "decision_table": 8
+          },
+          "metrics": {
+            "p_fill_0925": 1.0,
+            "expected_gross_return": 0.009430103016445486,
+            "expected_net_return": 0.007810103016445486,
+            "cvar_loss_10pct": 0.09999459402283371,
+            "p_exit_delay": 0.25314409214516986,
+            "uncertainty": 0.2193906147272397,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.03255009309468081,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false,
+            "prediction": {
+              "schema_version": "ranking_prediction_v2",
+              "model_id": "transparent_shadow_champion_v2",
+              "model_stage": "CHAMPION_BASELINE",
+              "feature_schema_version": "formal_features_v2",
+              "prediction_status": "SCORED",
+              "p_fill": 1.0,
+              "expected_fill_ratio": 1.0,
+              "conditional_net_return_mean": 0.007810103016445486,
+              "conditional_net_return_q10": -0.10355575753621626,
+              "conditional_net_return_q50": 0.007810103016445486,
+              "conditional_net_return_q90": 0.11917596356910723,
+              "p_exit_delay": 0.25314409214516986,
+              "expected_delay_days": 2.7872423426510142,
+              "p_promotion": 0.2310797124446683,
+              "uncertainty": 0.2193906147272397,
+              "expected_shortfall": 0.14469661841939896,
+              "utility": -0.03255009309468081,
+              "gate_decision": "NO_TRADE",
+              "gate_reasons": [
+                "conditional_return_lcb_not_positive",
+                "risk_adjusted_utility_not_positive"
+              ],
+              "ranking_fallback": false
+            },
+            "model_id": "transparent_shadow_champion_v2",
+            "model_stage": "CHAMPION_BASELINE",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_schema_version": "ranking_prediction_v2",
+            "expected_fill_ratio": 1.0,
+            "conditional_net_return_mean": 0.007810103016445486,
+            "conditional_net_return_q10": -0.10355575753621626,
+            "conditional_net_return_q50": 0.007810103016445486,
+            "conditional_net_return_q90": 0.11917596356910723,
+            "expected_shortfall_10pct": 0.14469661841939896,
+            "expected_delay_days": 2.7872423426510142,
+            "p_promotion": 0.2310797124446683,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ],
+            "ranking_fallback": false,
+            "model_resolution_fallback": false,
+            "model_resolution_reason": null
+          },
+          "features": {
+            "ret_1d": 0.09998790956353543,
+            "ret_3d": 0.3310899780541332,
+            "ret_5d": 0.47216828478964423,
+            "ret_10d": 0.188038652389658,
+            "ret_20d": -0.11652748106428434,
+            "volatility_5d": 0.030665471303897896,
+            "volatility_20d": 0.07344899063677592,
+            "downside_volatility_20d": 0.05385310430501293,
+            "atr_14d": 0.0820981063342022,
+            "amplitude_20d": 0.08345207303616177,
+            "cvar_loss_10pct": 0.09999459402283371,
+            "max_drawdown_20d": -0.39988347251893575,
+            "avg_amount_20d": null,
+            "avg_volume_20d": 595544.3,
+            "avg_turnover_20d": null,
+            "bar_count": 100.0,
+            "market_data_providers": [
+              "TENCENT"
+            ],
+            "daily_price_adjustments": [
+              "QFQ"
+            ],
+            "rank_percentile_a_top10": 1.0,
+            "rank_percentile_premium_top10": 0.8888888888888888,
+            "rank_percentile_decision_table": 0.2222222222222222,
+            "rank_consensus": 0.7037037037037037,
+            "rank_disagreement": 0.6869347033700521,
+            "rank_borda": 0.7333333333333333,
+            "stage_transition": "3→4",
+            "stage_from": 3.0,
+            "stage_to": 4.0,
+            "stage_is_2_to_3": 0.0,
+            "stage_is_3_to_4": 1.0,
+            "src_a_top10__StrengthScore": 62.628571,
+            "src_a_top10__ThemeBoost": 0.0164,
+            "src_a_top10__auction_strength_score": 0.906293072179906,
+            "src_a_top10__final_score": 0.340048,
+            "src_a_top10__intraday_available": 0.0,
+            "src_a_top10__intraday_confidence_score": 0.0,
+            "src_a_top10__intraday_hard_risk_flag": 0.0,
+            "src_a_top10__intraday_quality_score": 0.750944,
+            "src_a_top10__intraday_risk_score": 0.0,
+            "src_a_top10__intraday_soft_risk_score": 0.0,
+            "src_a_top10__late_withdraw_score": 0.0,
+            "src_a_top10__limit_times": 3.0,
+            "src_a_top10__open_board_count": 0.0,
+            "src_a_top10__p_limit_up_calibrated": 0.2907559865583378,
+            "src_a_top10__prob_final": 0.2907559865583378,
+            "src_a_top10__rank_score": 0.2907559865583378,
+            "src_a_top10__regime_score": 0.5475,
+            "src_a_top10__regime_smooth": 0.5493,
+            "src_a_top10__reseal_score": 0.5,
+            "src_a_top10__stage_prior": 0.43,
+            "src_a_top10__stage_quality_weight": 1.1,
+            "src_a_top10__stage_risk_penalty": 0.0,
+            "src_premium_top10__auction_amount": 603544600.0,
+            "src_premium_top10__factor_auction_available": 1.0,
+            "src_premium_top10__factor_auction_strength": 0.906293072179906,
+            "src_premium_top10__factor_intraday_quality": 0.750944,
+            "src_premium_top10__factor_intraday_risk_penalty": 0.0,
+            "src_premium_top10__is_st_like": 0.0,
+            "src_premium_top10__max_drawdown_20d": -0.3836026331538001,
+            "src_premium_top10__mkt_amount_sum": 2545884385.4083,
+            "src_premium_top10__mkt_avg_ret": 0.005288637512039221,
+            "src_premium_top10__mkt_median_ret": 0.0005302226935313126,
+            "src_premium_top10__mkt_strong_ratio": 0.02061110106671488,
+            "src_premium_top10__mkt_touch_strong_ratio": 0.035255830772012296,
+            "src_premium_top10__mkt_up_ratio": 0.503344783945037,
+            "src_premium_top10__premium_final_score": 40.6808,
+            "src_premium_top10__premium_rank_score": 42.812,
+            "src_premium_top10__r_p05": -0.08137753238986462,
+            "src_premium_top10__r_p25": -0.005089435852581488,
+            "src_premium_top10__r_p50": 0.04793761977973082,
+            "src_premium_top10__r_p75": 0.10096467541204313,
+            "src_premium_top10__r_p95": 0.17725277194932765,
+            "src_premium_top10__risk_penalty_score": 0.121186,
+            "src_premium_top10__score_ev": 0.340048,
+            "src_premium_top10__t1_accept_prob_blend": 0.503483,
+            "src_premium_top10__t1_accept_score": 52.1586,
+            "src_premium_top10__t1_big_drawdown_prob_blend": 0.153103,
+            "src_premium_top10__t1_fail_prob_blend": 0.48613,
+            "src_premium_top10__t_close_ret_pred": 0.04835922876343406,
+            "src_premium_top10__t_intraday_ret_pred": 0.09702386425405077,
+            "src_premium_top10__t_limitup_prob_calibrated": 0.262523,
+            "src_premium_top10__t_up_attack_score": 41.5107,
+            "src_premium_top10__tail_risk_score": 0.4822694878562172,
+            "src_premium_top10__turnover_rate": 11.9683,
+            "src_premium_top10__turnover_rate_f": 14.9619,
+            "src_premium_top10__volatility_10d": 0.0730096823182921,
+            "src_premium_top10__volatility_20d": 0.0734489906367759,
+            "src_premium_top10__volatility_5d": 0.0306654713038979,
+            "src_premium_top10__volume_ratio": 1.47,
+            "src_decision_table__decision_cost": 0.0018388905,
+            "src_decision_table__decision_e_ret": 0.0107718796,
+            "src_decision_table__decision_ev": -0.0181692647,
+            "src_decision_table__decision_p_fill": 0.6959572382,
+            "src_decision_table__decision_risk_penalty": 0.0238271418,
+            "src_decision_table__mechanism_limit_pct": 10.0,
+            "src_decision_table__path_data_coverage": 1.0,
+            "src_decision_table__path_strength_delta": -0.1324490721,
+            "src_decision_table__path_strength_latest": 0.7672849705,
+            "src_decision_table__predicted_big_loss_probability": 0.3440633466,
+            "src_decision_table__predicted_continuation_limit_up_probability": 0.1177153822,
+            "src_decision_table__predicted_exit_probability": 0.9984194362,
+            "src_decision_table__predicted_fill_probability": 0.1467389579,
+            "src_decision_table__predicted_net_return": -0.0014952792,
+            "src_decision_table__predicted_profit_probability": 0.3522870326,
+            "src_decision_table__predicted_return_lcb": -0.1086457366,
+            "src_decision_table__predicted_return_ucb": 0.1363713491,
+            "src_decision_table__same_industry_stage_count": 1.0,
+            "src_decision_table__stage_recent_promotion_rate": 0.2941176471,
+            "src_decision_table__stage_recent_promotion_samples": 17.0,
+            "src_decision_table__predicted_exit_delay_probability": 0.0015805638000000455,
+            "source_strength": 0.3690770399847419,
+            "feature_schema_version": "formal_features_v2",
+            "feature_asof_date": "20260806",
+            "feature_coverage": 1.0,
+            "market_data_valid": true,
+            "market_data_invalid_reasons": []
+          }
+        }
+      ],
+      "rank_slots": {
+        "1": {
+          "candidate_id": "20260806:002428.SZ",
+          "status": "PENDING_BUY",
+          "reason": "waiting_for_t_daily_open",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "diagnostics": {},
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          }
+        },
+        "2": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        },
+        "3": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        }
+      }
     }
   ],
   "rank_daily": [
@@ -869,25 +1590,25 @@
       "decision_date": "2026-08-04",
       "ranks": {
         "1": {
-          "state": "OPEN",
-          "is_final": false,
-          "daily_return": null,
+          "state": "CLOSED",
+          "is_final": true,
+          "daily_return": -0.03630475210000004,
           "return_date": "2026-08-06",
-          "equity_index": 1.0
+          "equity_index": 0.9636952478999999
         },
         "2": {
-          "state": "OPEN",
-          "is_final": false,
-          "daily_return": null,
+          "state": "CLOSED",
+          "is_final": true,
+          "daily_return": -0.11748457280000002,
           "return_date": "2026-08-06",
-          "equity_index": 1.0
+          "equity_index": 0.8825154272
         },
         "3": {
-          "state": "OPEN",
-          "is_final": false,
-          "daily_return": null,
+          "state": "CLOSED",
+          "is_final": true,
+          "daily_return": -0.03494317590000006,
           "return_date": "2026-08-06",
-          "equity_index": 1.0
+          "equity_index": 0.9650568240999999
         }
       }
     },
@@ -900,21 +1621,48 @@
           "is_final": true,
           "daily_return": 0.0,
           "return_date": "2026-08-07",
-          "equity_index": 1.0
+          "equity_index": 0.9636952478999999
         },
         "2": {
           "state": "CASH",
           "is_final": true,
           "daily_return": 0.0,
           "return_date": "2026-08-07",
-          "equity_index": 1.0
+          "equity_index": 0.8825154272
         },
         "3": {
           "state": "CASH",
           "is_final": true,
           "daily_return": 0.0,
           "return_date": "2026-08-07",
-          "equity_index": 1.0
+          "equity_index": 0.9650568240999999
+        }
+      }
+    },
+    {
+      "date": "2026-08-10",
+      "decision_date": "2026-08-06",
+      "ranks": {
+        "1": {
+          "state": "PENDING_BUY",
+          "is_final": false,
+          "daily_return": null,
+          "return_date": "2026-08-10",
+          "equity_index": 0.9636952478999999
+        },
+        "2": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-10",
+          "equity_index": 0.8825154272
+        },
+        "3": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-10",
+          "equity_index": 0.9650568240999999
         }
       }
     }
@@ -924,14 +1672,14 @@
       "decision_date": "2026-08-04",
       "buy_date": "2026-08-05",
       "planned_exit_date": "2026-08-06",
-      "return_date": null,
+      "return_date": "2026-08-06",
       "candidate_count": 3,
-      "final_count": 0,
-      "pending_count": 3,
+      "final_count": 3,
+      "pending_count": 0,
       "profitable_count": 0,
-      "portfolio_return": null,
-      "result": "PENDING",
-      "is_final": false,
+      "portfolio_return": -0.06291083360000004,
+      "result": "LOSS",
+      "is_final": true,
       "is_provisional": false,
       "model": {
         "engine_version": "legacy_ranking_engine_v1",
@@ -999,12 +1747,12 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "OPEN",
-          "is_final": false,
+          "status": "CLOSED",
+          "is_final": true,
           "buy_price": 19.0,
-          "exit_price": null,
-          "net_return": null,
-          "result": "PENDING",
+          "exit_price": 18.27979591836735,
+          "net_return": -0.03630475210000004,
+          "result": "LOSS",
           "return_date": "2026-08-06"
         },
         {
@@ -1061,12 +1809,12 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "OPEN",
-          "is_final": false,
+          "status": "CLOSED",
+          "is_final": true,
           "buy_price": 7.11,
-          "exit_price": null,
-          "net_return": null,
-          "result": "PENDING",
+          "exit_price": 6.265942028985507,
+          "net_return": -0.11748457280000002,
+          "result": "LOSS",
           "return_date": "2026-08-06"
         },
         {
@@ -1121,12 +1869,12 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "OPEN",
-          "is_final": false,
+          "status": "CLOSED",
+          "is_final": true,
           "buy_price": 3.56,
-          "exit_price": null,
-          "net_return": null,
-          "result": "PENDING",
+          "exit_price": 3.43,
+          "net_return": -0.03494317590000006,
+          "result": "LOSS",
           "return_date": "2026-08-06"
         }
       ]
@@ -1157,6 +1905,95 @@
         "fallback_reason": null
       },
       "candidates": []
+    },
+    {
+      "decision_date": "2026-08-06",
+      "buy_date": "2026-08-07",
+      "planned_exit_date": "2026-08-10",
+      "return_date": null,
+      "candidate_count": 1,
+      "final_count": 0,
+      "pending_count": 1,
+      "profitable_count": 0,
+      "portfolio_return": null,
+      "result": "PENDING",
+      "is_final": false,
+      "is_provisional": false,
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "candidates": [
+        {
+          "candidate_id": "20260806:002428.SZ",
+          "rank": 1,
+          "symbol": "002428.SZ",
+          "name": "云南锗业",
+          "stage_transition": "3→4",
+          "industry": "小金属",
+          "d_close": 90.98,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 100.08,
+          "model": {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_champion_v2",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-06",
+            "calibrated": false,
+            "fill_probability": 1.0,
+            "conditional_net_return_mean": 0.007810103016445486,
+            "conditional_net_return_p10": -0.10355575753621626,
+            "conditional_net_return_p50": 0.007810103016445486,
+            "conditional_net_return_p90": 0.11917596356910723,
+            "exit_delay_probability": 0.25314409214516986,
+            "expected_exit_delay_days": 2.7872423426510142,
+            "promotion_probability": 0.2310797124446683,
+            "expected_shortfall": 0.14469661841939896,
+            "uncertainty": 0.2193906147272397,
+            "risk_adjusted_utility": -0.03255009309468081,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-10"
+        }
+      ]
     }
   ]
 }

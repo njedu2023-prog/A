@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-05T23:35:29+08:00",
+  "generated_at": "2026-08-06T21:00:42+08:00",
   "issues": [
     {
       "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
@@ -42,22 +42,6 @@
       }
     },
     {
-      "code": "DECISION_AUXILIARY_COVERAGE_INCOMPLETE",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision辅助模型字段存在缺失；实际展示成员继续参与交集，缺失值不作为数值特征",
-      "details": {
-        "row_count": 10,
-        "non_null_counts": {
-          "decision_p_fill": 9,
-          "decision_e_ret": 9,
-          "decision_ev": 9,
-          "decision_cost": 9,
-          "decision_risk_penalty": 9
-        }
-      }
-    },
-    {
       "code": "DECISION_NO_FORMAL_BUY",
       "severity": "warning",
       "source_id": "decision_table",
@@ -71,27 +55,23 @@
       }
     },
     {
-      "code": "SOURCE_REVISION_AFTER_FREEZE",
+      "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
-      "source_id": "aggregate",
-      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
+      "source_id": "market_data",
+      "message": "Eastmoney 行情不可用或已跳闸；1 支股票已聚合切换至腾讯只读行情",
       "details": {
-        "frozen_codes": [],
-        "live_codes": [],
-        "changed_sources": {
-          "decision_table": {
-            "frozen_content_sha256": "f6dd7e9924fa5054a3b16f4c6c4abfabae006e42be7bfb70ff8795d61f23f602",
-            "live_content_sha256": "274784990eb839eb4c089a36944cb2416dcaf7657cd2de1d4d78c0fe0e7387ac",
-            "frozen_repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
-            "live_repository_commit_sha": "b8689754d222bed17dae0aba9b1951891418d73b"
-          },
-          "premium_top10": {
-            "frozen_content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
-            "live_content_sha256": "124521bb42b3e089df43c8bc5ba2f426a2e08d90bcc0073c2c5fcdf9d0508e2e",
-            "frozen_repository_commit_sha": "6df88a06743ef3cab61b7f81e487a3eda539ba0f",
-            "live_repository_commit_sha": "b8689754d222bed17dae0aba9b1951891418d73b"
-          }
-        }
+        "primary_provider": "EASTMONEY",
+        "fallback_provider": "TENCENT",
+        "affected_codes": [
+          "002428.SZ"
+        ],
+        "request_types": [
+          "daily"
+        ],
+        "event_count": 1,
+        "successful_event_count": 1,
+        "failed_event_count": 0,
+        "circuit_open": true
       }
     }
   ]
