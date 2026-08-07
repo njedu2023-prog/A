@@ -353,7 +353,7 @@ function renderStatus() {
   const container = $("status");
   container.replaceChildren();
   container.className = `status-card ${run.status === "INPUT_BLOCKED" ? "error" : "ok"}`;
-  const copy = node("div");
+  const copy = node("div", null, "status-copy");
   const latestDecisionDate = run.decision_date || model.days?.at(-1)?.decision_date;
   const title = run.completed === true && run.status === "NO_CANDIDATE" && latestDecisionDate
     ? `D日名单筛选已执行：${latestDecisionDate} · 严格交集0支`
@@ -362,17 +362,20 @@ function renderStatus() {
       : run.message || "暂无运行结论";
   copy.append(node("h2", title, "status-title"));
   const meta = node("div", null, "status-meta");
-  meta.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
+  const summaryRow = node("div", null, "status-meta-row status-meta-summary");
+  const sourceRow = node("div", null, "status-meta-row status-meta-sources");
+  summaryRow.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
   if (run.completed_at) {
-    meta.append(node("span", `本次执行 ${formatUpdatedAt(run.completed_at)}`, "engine-meta-text"));
+    summaryRow.append(node("span", `本次执行 ${formatUpdatedAt(run.completed_at)}`, "engine-meta-text"));
   }
   const engine = model.engine || {};
-  meta.append(
+  summaryRow.append(
     node("span", engine.status_label || "基线运行 · 样本积累中", "engine-meta-text"),
     node("span", `模型 · ${shortModel(engine.selected_model_id)}`, "engine-meta-text")
   );
   const dates = run.source_dates || {};
-  Object.entries(dates).forEach(([source, value]) => meta.append(node("span", `${source} · D ${value.D || "—"}`, "pill")));
+  Object.entries(dates).forEach(([source, value]) => sourceRow.append(node("span", `${source} · D ${value.D || "—"}`, "pill")));
+  meta.append(summaryRow, sourceRow);
   container.append(copy, meta);
 }
 

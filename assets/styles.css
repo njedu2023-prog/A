@@ -97,8 +97,26 @@ main {
 }
 .status-card.error { border-color: #eccbc7; background: #fffafa; }
 .status-card.ok { border-color: #c9e1d5; background: linear-gradient(100deg, #f9fdfb, #fff); }
-.status-title { margin: 0; font-size: 15px; font-weight: 530; letter-spacing: -.01em; }
-.status-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+.status-copy { flex: 0 0 auto; }
+.status-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 530;
+  letter-spacing: -.01em;
+  white-space: nowrap;
+}
+.status-meta {
+  min-width: 0;
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+}
+.status-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+}
 .pill, .badge {
   display: inline-flex;
   align-items: center;
@@ -418,7 +436,12 @@ footer {
     font-size: 16px !important;
     line-height: 1.35;
   }
-  .status-meta { justify-content: flex-start; }
+  .status-title { white-space: normal; }
+  .status-meta { justify-items: start; }
+  .status-meta-row {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
   .panel-head {
     min-height: 52px;
     gap: 5px;

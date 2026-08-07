@@ -81,8 +81,17 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260805-2", source)
-        self.assertIn("app.js?v=20260805-4", source)
+        self.assertIn("styles.css?v=20260807-1", source)
+        self.assertIn("app.js?v=20260807-1", source)
+
+    def test_status_metadata_is_split_into_summary_and_source_rows(self) -> None:
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        styles = Path("assets/styles.css").read_text(encoding="utf-8")
+        self.assertIn("status-meta-row status-meta-summary", script)
+        self.assertIn("status-meta-row status-meta-sources", script)
+        self.assertIn("meta.append(summaryRow, sourceRow);", script)
+        self.assertIn("white-space: nowrap;", styles)
+        self.assertIn(".status-meta-row", styles)
 
     def test_open_fill_and_compact_gate_copy_are_visible(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")
@@ -124,6 +133,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertEqual(source.count("actions/configure-pages"), 1)
         self.assertEqual(source.count("actions/upload-pages-artifact"), 1)
         self.assertEqual(source.count("actions/deploy-pages"), 1)
+        self.assertIn("uses: actions/deploy-pages@v5", source)
         self.assertIn("pages: write", source)
         self.assertIn("id-token: write", source)
 
