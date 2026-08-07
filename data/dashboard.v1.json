@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-06T23:12:45+08:00",
+  "generated_at": "2026-08-07T13:40:42+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -45,7 +45,7 @@
     "status": "RANKED",
     "message": "D日信号已冻结；保留1支候选且不事后改写",
     "completed": true,
-    "completed_at": "2026-08-06T23:12:45+08:00",
+    "completed_at": "2026-08-07T13:40:42+08:00",
     "decision_date": "2026-08-06",
     "outcome": "COMPLETED_FROZEN_SIGNAL",
     "source_table_counts": {
@@ -173,6 +173,18 @@
             "live_content_sha256": "dc54f294db4ea71d629dc2da25a4ec6a1aad84e2bf68a4c21ab126d957792f88",
             "frozen_repository_commit_sha": "9ceab33cceda0e67717f102d8ae64491e38152e1",
             "live_repository_commit_sha": "75bfe28f1f93b253ce2e868a4dd74ab74314cf03"
+          },
+          "decision_table": {
+            "frozen_content_sha256": "6619a0a59858b7e582190b9ef783c5ac6beb91923635b08d80dabe2b26ae87c0",
+            "live_content_sha256": "83dc4e0d11722042ddef12a4199d274da99c63537a6367f5e6ce8f48916e717b",
+            "frozen_repository_commit_sha": "d447d2262c2d0da89b46c7a62ae219c6bd638cf4",
+            "live_repository_commit_sha": "bcfc0bbcd6821541743a42cd9cbcb34a1b8e8910"
+          },
+          "premium_top10": {
+            "frozen_content_sha256": "b858ab13b8988fd5dc097b3c228147a5b3cddaa8c0fb76d5888294f866225ad0",
+            "live_content_sha256": "2794a4555b07e39b005f10be56e3e5bf0a00f9790e73a1aefc95894401f14e77",
+            "frozen_repository_commit_sha": "d447d2262c2d0da89b46c7a62ae219c6bd638cf4",
+            "live_repository_commit_sha": "bcfc0bbcd6821541743a42cd9cbcb34a1b8e8910"
           }
         }
       }
@@ -1567,12 +1579,40 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260806:002428.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_t_daily_open",
-          "buy": null,
+          "status": "OPEN",
+          "reason": "waiting_for_t1_exit",
+          "buy": {
+            "at": "2026-08-07T09:25:00+08:00",
+            "submitted_qty": 900,
+            "filled_qty": 900,
+            "avg_price": 97.0,
+            "amount": 87300.0,
+            "fees": 27.063,
+            "limit_price": 100.08,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 900,
+            "participation_rate": null,
+            "source": "EASTMONEY",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
           "exit": null,
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_fill": {
+              "price": 97.0,
+              "date": "20260807",
+              "provider": "EASTMONEY",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_ORDER_SPEC"
+            }
+          },
           "t_day_validation": {
             "status": "PENDING",
             "t_return": null,
@@ -1661,7 +1701,7 @@
       "decision_date": "2026-08-06",
       "ranks": {
         "1": {
-          "state": "PENDING_BUY",
+          "state": "OPEN",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-10",
@@ -2002,9 +2042,9 @@
             "is_limit_up": null,
             "is_promoted": null
           },
-          "status": "PENDING_BUY",
+          "status": "OPEN",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 97.0,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",

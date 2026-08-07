@@ -2778,12 +2778,40 @@
         "maximum_reserved_cash_cny": 90099.92232,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_t_daily_open",
-      "buy": null,
+      "status": "OPEN",
+      "reason": "waiting_for_t1_exit",
+      "buy": {
+        "at": "2026-08-07T09:25:00+08:00",
+        "submitted_qty": 900,
+        "filled_qty": 900,
+        "avg_price": 97.0,
+        "amount": 87300.0,
+        "fees": 27.063,
+        "limit_price": 100.08,
+        "auction_matched_qty": null,
+        "queue_ahead_qty": null,
+        "executable_qty_at_order": 900,
+        "participation_rate": null,
+        "source": "EASTMONEY",
+        "data_tier": "DAILY_BAR",
+        "label_quality": "SHADOW_OPEN_ASSUMPTION",
+        "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "price_adjustment": "NONE",
+        "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+      },
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_fill": {
+          "price": 97.0,
+          "date": "20260807",
+          "provider": "EASTMONEY",
+          "price_adjustment": "NONE",
+          "counts_as_fill": true,
+          "policy": "T_DAILY_UNADJUSTED_OPEN",
+          "quantity_policy": "FROZEN_ORDER_SPEC"
+        }
+      },
       "t_day_validation": {
         "status": "PENDING",
         "trade_date": "20260807",
