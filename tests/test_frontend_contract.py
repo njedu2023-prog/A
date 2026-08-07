@@ -124,6 +124,10 @@ class FrontendContractTests(unittest.TestCase):
         self.assertNotIn('cron: "20 3 * * 1-5"', source)
         self.assertEqual(source.count("cron:"), 1)
         self.assertIn('cron: "30 13 * * 1-5"', source)
+        self.assertIn("timeout-minutes: 150", source)
+        self.assertIn("python -m three_table_quant.readiness", source)
+        self.assertIn("--attempts 25", source)
+        self.assertIn("--interval-seconds 300", source)
 
     def test_workflow_keeps_one_curated_pages_publication_path(self) -> None:
         source = Path(".github/workflows/daily-shadow.yml").read_text(

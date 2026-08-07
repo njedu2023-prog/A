@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import re
 from collections.abc import Mapping
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, ROUND_FLOOR, ROUND_HALF_UP
 from typing import Any
 
 from .domain import ContractError
@@ -13,6 +13,8 @@ DECISION_SOURCE = "decision_table"
 PREMIUM_SOURCE = "premium_top10"
 A_TOP10_SOURCE = "a_top10"
 D_CLOSE_ABS_TOL = 0.005
+PRICE_TICK = Decimal("0.01")
+HALF_PRICE_TICK = PRICE_TICK / Decimal("2")
 STAGE_TRANSITION_RE = re.compile(r"^([1-9][0-9]*)→([1-9][0-9]*)$")
 
 
@@ -121,10 +123,25 @@ def candidate_validation_inputs(candidate: Any) -> dict[str, Any]:
         decision.get("mechanism_limit_pct"),
         "mechanism_limit_pct",
     )
-    estimated_up_limit = _positive_number(
+    source_estimated_up_limit = _positive_number(
         decision.get("estimated_up_limit"),
         "estimated_up_limit",
     )
+    estimated_up_limit = source_estimated_up_limit
+    limit_up_rounding_adjusted = False
+    source_limit_decimal = (
+        Decimal(str(decision.get("estimated_up_limit")).strip())
+        if source_estimated_up_limit is not None
+        else None
+    )
+    if (
+        source_limit_decimal is not None
+        and source_limit_decimal.quantize(PRICE_TICK, rounding=ROUND_HALF_UP)
+        != source_limit_decimal
+    ):
+        raise ContractError(
+            "candidate: estimated_up_limit must align to the 0.01 price tick"
+        )
     d_close = (
         decision_d_close
         if decision_d_close is not None
@@ -133,24 +150,31 @@ def candidate_validation_inputs(candidate: Any) -> dict[str, Any]:
     if (
         d_close is not None
         and mechanism_limit_pct is not None
-        and estimated_up_limit is not None
+        and source_limit_decimal is not None
     ):
-        expected_limit = float(
-            (
-                Decimal(str(d_close))
-                * (Decimal("1") + Decimal(str(mechanism_limit_pct)) / Decimal("100"))
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        raw_limit = Decimal(str(d_close)) * (
+            Decimal("1") + Decimal(str(mechanism_limit_pct)) / Decimal("100")
         )
-        if not math.isclose(
-            estimated_up_limit,
-            expected_limit,
-            rel_tol=0.0,
-            abs_tol=D_CLOSE_ABS_TOL,
-        ):
-            raise ContractError(
-                "candidate: estimated_up_limit disagrees with frozen D close "
-                f"and mechanism ({estimated_up_limit} vs {expected_limit})"
+        expected_limit_decimal = raw_limit.quantize(
+            PRICE_TICK,
+            rounding=ROUND_HALF_UP,
+        )
+        if source_limit_decimal != expected_limit_decimal:
+            lower_tick = raw_limit.quantize(PRICE_TICK, rounding=ROUND_FLOOR)
+            is_exact_half_tick = raw_limit - lower_tick == HALF_PRICE_TICK
+            is_legacy_half_even_lower = (
+                is_exact_half_tick
+                and expected_limit_decimal == lower_tick + PRICE_TICK
+                and source_limit_decimal == lower_tick
             )
+            if not is_legacy_half_even_lower:
+                raise ContractError(
+                    "candidate: estimated_up_limit disagrees with frozen D close "
+                    f"and mechanism ({source_estimated_up_limit} vs "
+                    f"{float(expected_limit_decimal)})"
+                )
+            limit_up_rounding_adjusted = True
+        estimated_up_limit = float(expected_limit_decimal)
 
     return {
         "stage_transition": stage_transition,
@@ -159,10 +183,16 @@ def candidate_validation_inputs(candidate: Any) -> dict[str, Any]:
         "premium_d_close": premium_d_close,
         "d_close": d_close,
         "mechanism_limit_pct": mechanism_limit_pct,
+        "source_estimated_up_limit": source_estimated_up_limit,
         "estimated_up_limit": estimated_up_limit,
         "limit_up_price": estimated_up_limit,
+        "limit_up_rounding_adjusted": limit_up_rounding_adjusted,
         "limit_up_source": (
-            "DECISION_FROZEN_LIMIT_PRICE"
+            (
+                "D_CLOSE_MECHANISM_ROUND_HALF_UP"
+                if limit_up_rounding_adjusted
+                else "DECISION_FROZEN_LIMIT_PRICE"
+            )
             if estimated_up_limit is not None
             else None
         ),

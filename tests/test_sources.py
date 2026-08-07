@@ -343,7 +343,7 @@ class SourceContractTests(unittest.TestCase):
 
     def test_frozen_limit_price_must_match_d_close_and_mechanism(self) -> None:
         invalid = decision_row(1, "600000.SH")
-        invalid["estimated_up_limit"] = 11.27
+        invalid["estimated_up_limit"] = 11.26
         with self.assertRaisesRegex(
             ContractError,
             "estimated_up_limit disagrees",
@@ -355,6 +355,125 @@ class SourceContractTests(unittest.TestCase):
                     self.decision([invalid]),
                 ]
             )
+
+    def test_half_tick_lower_rounding_is_normalized_to_exchange_rule(self) -> None:
+        row = decision_row(1, "600000.SH")
+        row["d_close"] = 94.95
+        row["estimated_up_limit"] = 104.44
+        premium = parse_premium(
+            premium_csv(["600000.SH"], close_T=94.95),
+            "premium.csv",
+        )
+
+        candidate = strict_intersection(
+            [self.a, premium, self.decision([row])]
+        )[0]
+        facts = candidate_validation_inputs(candidate)
+
+        self.assertEqual(facts["source_estimated_up_limit"], 104.44)
+        self.assertEqual(facts["estimated_up_limit"], 104.45)
+        self.assertEqual(facts["limit_up_price"], 104.45)
+        self.assertTrue(facts["limit_up_rounding_adjusted"])
+        self.assertEqual(
+            facts["limit_up_source"],
+            "D_CLOSE_MECHANISM_ROUND_HALF_UP",
+        )
+
+    def test_non_half_tick_one_tick_error_remains_blocked(self) -> None:
+        row = decision_row(1, "600000.SH")
+        row["d_close"] = 10.24
+        row["estimated_up_limit"] = 11.27
+        premium = parse_premium(
+            premium_csv(["600000.SH"], close_T=10.24),
+            "premium.csv",
+        )
+        with self.assertRaisesRegex(
+            ContractError,
+            "estimated_up_limit disagrees",
+        ):
+            strict_intersection(
+                [self.a, premium, self.decision([row])]
+            )
+
+    def test_limit_price_must_align_to_one_cent_tick(self) -> None:
+        row = decision_row(1, "600000.SH")
+        row["d_close"] = 94.95
+        row["estimated_up_limit"] = 104.445
+        premium = parse_premium(
+            premium_csv(["600000.SH"], close_T=94.95),
+            "premium.csv",
+        )
+        with self.assertRaisesRegex(ContractError, "align to the 0.01 price tick"):
+            strict_intersection(
+                [self.a, premium, self.decision([row])]
+            )
+
+    def test_four_way_batch_survives_one_half_tick_source_rounding(self) -> None:
+        a = parse_a_top10(
+            a_csv(
+                [
+                    "600721.SH",
+                    "603228.SH",
+                    "000831.SZ",
+                    "600744.SH",
+                    "600272.SH",
+                    "002194.SZ",
+                    "603011.SH",
+                    "000603.SZ",
+                    "600206.SH",
+                    "603459.SH",
+                ]
+            ),
+            "a.csv",
+        )
+        premium = parse_premium(
+            premium_csv(
+                [
+                    "600721.SH",
+                    "600206.SH",
+                    "002971.SZ",
+                    "002194.SZ",
+                    "603228.SH",
+                    "002428.SZ",
+                    "600601.SH",
+                    "000831.SZ",
+                    "001267.SZ",
+                    "600272.SH",
+                ]
+            ),
+            "premium.csv",
+        )
+        decision_codes = [
+            "002827.SZ",
+            "002792.SZ",
+            "600206.SH",
+            "002194.SZ",
+            "603228.SH",
+            "600601.SH",
+            "002971.SZ",
+            "600272.SH",
+        ]
+        decision_rows = [
+            decision_row(rank, code)
+            for rank, code in enumerate(decision_codes, start=1)
+        ]
+        decision_rows[4]["estimated_up_limit"] = 11.27
+
+        result = strict_intersection(
+            [a, premium, self.decision(decision_rows)]
+        )
+
+        self.assertEqual(
+            {item.ts_code for item in result},
+            {"603228.SH", "600206.SH", "002194.SZ", "600272.SH"},
+        )
+        normalized = next(
+            item for item in result if item.ts_code == "603228.SH"
+        )
+        self.assertEqual(
+            candidate_validation_inputs(normalized)["limit_up_price"],
+            11.28,
+        )
 
     def test_decision_uses_visible_top10_not_full_candidate_pool(self) -> None:
         displayed = [

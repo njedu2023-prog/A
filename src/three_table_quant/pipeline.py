@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from .candidate_facts import candidate_validation_inputs
 from .dashboard import build_dashboard, validate_dashboard
 from .domain import Signal, SourceIssue, iso_date
 from .execution_policy import build_order_spec
@@ -126,6 +127,40 @@ def _append_market_fallback_issue(
             },
         )
     )
+
+
+def _append_limit_rounding_issues(
+    source_issues: list[SourceIssue],
+    candidates: list[Any],
+) -> None:
+    adjusted: list[dict[str, Any]] = []
+    for candidate in candidates:
+        facts = candidate_validation_inputs(candidate)
+        if not facts.get("limit_up_rounding_adjusted"):
+            continue
+        adjusted.append(
+            {
+                "ts_code": candidate.ts_code,
+                "name": candidate.name,
+                "source_estimated_up_limit": facts.get(
+                    "source_estimated_up_limit"
+                ),
+                "normalized_limit_up_price": facts.get("limit_up_price"),
+                "d_close": facts.get("d_close"),
+                "mechanism_limit_pct": facts.get("mechanism_limit_pct"),
+            }
+        )
+    if adjusted:
+        source_issues.append(
+            SourceIssue(
+                "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
+                "warning",
+                "decision_table",
+                "Decision涨停价位于半价位边界且使用了向下偶数舍入；"
+                "本系统已按交易所四舍五入规则规范化到0.01元",
+                {"candidates": adjusted},
+            )
+        )
 
 
 def _market_data_provenance(bars_by_code: dict[str, list[Any]]) -> dict[str, Any]:
@@ -391,6 +426,7 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
 
     if not any(item.severity == "error" for item in source_issues):
         candidates = strict_intersection(tables)
+        _append_limit_rounding_issues(source_issues, candidates)
         current_run["intersection_count"] = len(candidates)
         by_id = {table.source_id: table for table in tables}
         decision_date = tables[0].decision_date
