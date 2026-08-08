@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -13,6 +14,43 @@ from three_table_quant.model_registry import (
     resolve_champion,
     validate_registry,
 )
+from three_table_quant.promotion import (
+    PROMOTION_REPORT_SCHEMA,
+    REQUIRED_PROMOTION_CHECKS,
+    artifact_fingerprint,
+    attach_promotion_certificate,
+    transition_promotion_state,
+)
+
+
+def certified_model(model_id: str = "formal_quant_v2") -> dict:
+    artifact = {
+        "schema": "model_artifact_v1",
+        "model_id": model_id,
+        "weights": [0.1, -0.2],
+    }
+    report = {
+        "schema": PROMOTION_REPORT_SCHEMA,
+        "status": "APPROVED",
+        "promotion_state": "APPROVED",
+        "model_id": model_id,
+        "artifact_fingerprint": artifact_fingerprint(artifact),
+        "evaluation_dataset_fingerprint": "a" * 64,
+        "checks": {name: True for name in REQUIRED_PROMOTION_CHECKS},
+    }
+    return attach_promotion_certificate(artifact, report)
+
+
+def trained_champion(artifact: dict, path: Path) -> dict:
+    return {
+        "model_id": artifact["model_id"],
+        "kind": "TRAINED",
+        "status": "ACTIVE",
+        "artifact_path": path.name,
+        "artifact_sha256": artifact_sha256(path),
+        "artifact_fingerprint": artifact["artifact_fingerprint"],
+        "promotion_certificate": artifact["promotion_certificate"],
+    }
 
 
 def training_row(
@@ -103,15 +141,10 @@ class ModelRegistryTests(unittest.TestCase):
     def test_valid_trained_champion_is_resolved_by_checksum(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             artifact = Path(directory) / "model.json"
-            artifact.write_bytes(b'{"model":"challenger"}\n')
+            payload = certified_model()
+            artifact.write_text(json.dumps(payload), encoding="utf-8")
             registry = create_registry()
-            registry["champion"] = {
-                "model_id": "formal_quant_v2",
-                "kind": "TRAINED",
-                "status": "ACTIVE",
-                "artifact_path": "model.json",
-                "artifact_sha256": artifact_sha256(artifact),
-            }
+            registry["champion"] = trained_champion(payload, artifact)
             validate_registry(registry)
             resolved = resolve_champion(registry, base_dir=directory)
             self.assertFalse(resolved["fallback"])
@@ -120,15 +153,10 @@ class ModelRegistryTests(unittest.TestCase):
     def test_corrupt_or_missing_champion_artifact_falls_back_to_baseline(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             artifact = Path(directory) / "model.json"
-            artifact.write_bytes(b"original")
+            payload = certified_model()
+            artifact.write_text(json.dumps(payload), encoding="utf-8")
             registry = create_registry()
-            registry["champion"] = {
-                "model_id": "formal_quant_v2",
-                "kind": "TRAINED",
-                "status": "ACTIVE",
-                "artifact_path": "model.json",
-                "artifact_sha256": artifact_sha256(artifact),
-            }
+            registry["champion"] = trained_champion(payload, artifact)
             artifact.write_bytes(b"corrupt")
             resolved = resolve_champion(registry, base_dir=directory)
             self.assertTrue(resolved["fallback"])
@@ -146,6 +174,59 @@ class ModelRegistryTests(unittest.TestCase):
                 "CHAMPION_ARTIFACT_UNAVAILABLE",
             )
 
+    def test_boolean_validation_cannot_activate_a_trained_model(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "model.json"
+            payload = {
+                "schema": "model_artifact_v1",
+                "model_id": "legacy_boolean_model",
+                "validation_passed": True,
+            }
+            artifact.write_text(json.dumps(payload), encoding="utf-8")
+            registry = create_registry()
+            registry["champion"] = {
+                "model_id": payload["model_id"],
+                "kind": "TRAINED",
+                "status": "ACTIVE",
+                "artifact_path": artifact.name,
+                "artifact_sha256": artifact_sha256(artifact),
+            }
+            with self.assertRaisesRegex(ContractError, "promotion certificate"):
+                validate_registry(registry)
+            resolved = resolve_champion(registry, base_dir=directory)
+            self.assertTrue(resolved["fallback"])
+            self.assertEqual(
+                resolved["fallback_reason"],
+                "CHAMPION_PROMOTION_CERTIFICATE_INVALID",
+            )
+
+    def test_certificate_and_artifact_fingerprints_are_bound(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            artifact = Path(directory) / "model.json"
+            payload = certified_model()
+            artifact.write_text(json.dumps(payload), encoding="utf-8")
+            registry = create_registry()
+            registry["champion"] = trained_champion(payload, artifact)
+
+            payload["weights"][0] = 9.9
+            artifact.write_text(json.dumps(payload), encoding="utf-8")
+            registry["champion"]["artifact_sha256"] = artifact_sha256(artifact)
+            resolved = resolve_champion(registry, base_dir=directory)
+            self.assertTrue(resolved["fallback"])
+            self.assertEqual(
+                resolved["fallback_reason"],
+                "CHAMPION_PROMOTION_CERTIFICATE_INVALID",
+            )
+
+    def test_promotion_state_machine_rejects_skipped_transitions(self) -> None:
+        candidate = {"status": "CANDIDATE", "promotion_state": "CANDIDATE"}
+        evaluating = transition_promotion_state(candidate, "EVALUATING")
+        approved = transition_promotion_state(evaluating, "APPROVED")
+        promoted = transition_promotion_state(approved, "PROMOTED")
+        self.assertEqual(promoted["status"], "PROMOTED")
+        with self.assertRaisesRegex(ContractError, "illegal promotion transition"):
+            transition_promotion_state(candidate, "PROMOTED")
+
     def test_registry_rejects_unsafe_paths_and_invalid_checksums(self) -> None:
         registry = create_registry()
         registry["champion"] = {
@@ -161,4 +242,3 @@ class ModelRegistryTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

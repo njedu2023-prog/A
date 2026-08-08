@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from collections import Counter
 from collections.abc import Iterable, Mapping
@@ -8,15 +9,19 @@ from pathlib import Path
 from typing import Any
 
 from .domain import ContractError, normalize_date
+from .promotion import (
+    PROMOTION_STATES,
+    artifact_fingerprint,
+    validate_certified_artifact,
+    validate_promotion_certificate,
+)
 from .ranking_engine import MODEL_ID
 
 
 REGISTRY_SCHEMA = "model_registry_v1"
 BASELINE_MODEL_ID = MODEL_ID
 LEGACY_BASELINE_MODEL_IDS = frozenset({"transparent_shadow_baseline_v1"})
-CHALLENGER_STATUSES = frozenset(
-    {"INSUFFICIENT_DATA", "CANDIDATE", "REJECTED", "PROMOTED"}
-)
+CHALLENGER_STATUSES = PROMOTION_STATES
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 
 
@@ -102,7 +107,12 @@ def create_registry(rows: Iterable[Mapping[str, Any]] = ()) -> dict[str, Any]:
     }
 
 
-def _validate_artifact_fields(model: Mapping[str, Any], *, required: bool) -> None:
+def _validate_artifact_fields(
+    model: Mapping[str, Any],
+    *,
+    required: bool,
+    require_promotion_certificate: bool = False,
+) -> None:
     artifact_path = model.get("artifact_path")
     checksum = model.get("artifact_sha256")
     if required and (not artifact_path or not checksum):
@@ -113,6 +123,20 @@ def _validate_artifact_fields(model: Mapping[str, Any], *, required: bool) -> No
             raise ContractError("model artifact_path must be a contained relative path")
     if checksum is not None and not SHA256_PATTERN.fullmatch(str(checksum)):
         raise ContractError("model artifact_sha256 must be lowercase SHA-256")
+    if require_promotion_certificate:
+        fingerprint = str(model.get("artifact_fingerprint") or "")
+        certificate = model.get("promotion_certificate")
+        if not isinstance(certificate, Mapping):
+            raise ContractError("trained model requires a promotion certificate")
+        if not SHA256_PATTERN.fullmatch(fingerprint):
+            raise ContractError(
+                "trained model requires a lowercase SHA-256 artifact_fingerprint"
+            )
+        validate_promotion_certificate(
+            certificate,
+            model_id=str(model.get("model_id") or ""),
+            expected_artifact_fingerprint=fingerprint,
+        )
 
 
 def validate_registry(registry: Mapping[str, Any]) -> None:
@@ -137,17 +161,30 @@ def validate_registry(registry: Mapping[str, Any]) -> None:
         if champion.get("artifact_path") is not None or champion.get("artifact_sha256") is not None:
             raise ContractError("baseline champion cannot require an artifact")
     else:
-        _validate_artifact_fields(champion, required=True)
+        _validate_artifact_fields(
+            champion,
+            required=True,
+            require_promotion_certificate=True,
+        )
 
     if not isinstance(challenger, Mapping):
         raise ContractError("registry challenger must be an object")
     status = challenger.get("status")
     if status not in CHALLENGER_STATUSES:
         raise ContractError("unsupported challenger status")
-    requires_artifact = status in {"CANDIDATE", "PROMOTED"} and bool(
+    requires_artifact = status in {
+        "CANDIDATE",
+        "EVALUATING",
+        "APPROVED",
+        "PROMOTED",
+    } and bool(
         challenger.get("model_id")
     )
-    _validate_artifact_fields(challenger, required=requires_artifact)
+    _validate_artifact_fields(
+        challenger,
+        required=requires_artifact,
+        require_promotion_certificate=status in {"APPROVED", "PROMOTED"},
+    )
     if not isinstance(readiness, Mapping) or readiness.get("status") not in {
         "INSUFFICIENT_DATA",
         "ELIGIBLE_FOR_VALIDATION",
@@ -181,7 +218,24 @@ def resolve_champion(
 ) -> dict[str, Any]:
     """Resolve the active model, failing safely to the transparent baseline."""
 
-    validate_registry(registry)
+    try:
+        validate_registry(registry)
+    except ContractError as exc:
+        champion_candidate = registry.get("champion") if isinstance(registry, Mapping) else None
+        if (
+            isinstance(champion_candidate, Mapping)
+            and champion_candidate.get("kind") == "TRAINED"
+            and any(
+                token in str(exc).lower()
+                for token in ("promotion certificate", "artifact_fingerprint")
+            )
+        ):
+            return {
+                "model": baseline_champion(),
+                "fallback": True,
+                "fallback_reason": "CHAMPION_PROMOTION_CERTIFICATE_INVALID",
+            }
+        raise
     champion = dict(registry["champion"])
     if champion["kind"] == "BASELINE":
         return {
@@ -203,6 +257,30 @@ def resolve_champion(
             "model": baseline_champion(),
             "fallback": True,
             "fallback_reason": "CHAMPION_ARTIFACT_CHECKSUM_MISMATCH",
+        }
+    try:
+        payload = json.loads(artifact.read_text(encoding="utf-8-sig"))
+        if not isinstance(payload, Mapping):
+            raise ContractError("trained artifact root must be an object")
+        if str(payload.get("model_id") or "") != str(champion["model_id"]):
+            raise ContractError("registry and artifact model_id disagree")
+        validate_certified_artifact(
+            payload,
+            expected_certificate=champion["promotion_certificate"],
+        )
+        if artifact_fingerprint(payload) != champion["artifact_fingerprint"]:
+            raise ContractError("registry and artifact fingerprints disagree")
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return {
+            "model": baseline_champion(),
+            "fallback": True,
+            "fallback_reason": "CHAMPION_ARTIFACT_INVALID",
+        }
+    except ContractError:
+        return {
+            "model": baseline_champion(),
+            "fallback": True,
+            "fallback_reason": "CHAMPION_PROMOTION_CERTIFICATE_INVALID",
         }
     return {
         "model": champion,

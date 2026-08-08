@@ -95,6 +95,9 @@ class TrainingDatasetTests(unittest.TestCase):
 
         self.assertEqual(payload["row_count"], 1)
         self.assertEqual(payload["mature_count"], 0)
+        self.assertEqual(payload["cohort_count"], 1)
+        self.assertEqual(len(payload["feature_contract_sha256"]), 64)
+        self.assertEqual(len(payload["dataset_sha256"]), 64)
         row = payload["rows"][0]
         self.assertEqual(row["feature_asof"], "20260803")
         self.assertEqual(row["feature_version"], "signal_features_v2")
@@ -124,6 +127,21 @@ class TrainingDatasetTests(unittest.TestCase):
                 "is_mature": False,
             },
         )
+
+    def test_dataset_fingerprint_is_deterministic_and_content_addressed(self) -> None:
+        item = candidate(1, "000001.SZ")
+        state = base_state([item], [trade(1, "000001.SZ", "PENDING_BUY")])
+        first = build_training_dataset(state)
+        second = build_training_dataset(state)
+        self.assertEqual(first["dataset_sha256"], second["dataset_sha256"])
+
+        changed = base_state(
+            [candidate(1, "000001.SZ")],
+            [trade(1, "000001.SZ", "PENDING_BUY")],
+        )
+        changed["signals"][0]["candidates"][0]["features"]["ret_5d"] = 0.01
+        third = build_training_dataset(changed)
+        self.assertNotEqual(first["dataset_sha256"], third["dataset_sha256"])
 
     def test_unfilled_is_fill_zero_but_never_a_conditional_return(self) -> None:
         item = candidate(1, "000001.SZ")
@@ -218,4 +236,3 @@ class TrainingDatasetTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

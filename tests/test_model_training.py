@@ -10,12 +10,18 @@ from three_table_quant.model_training import (
     FEATURE_ALLOWLIST,
     MODEL_ARTIFACT_SCHEMA,
     build_promotion_report,
+    certify_challenger,
     fit_normalization,
     numeric_feature_rows,
     predict_artifact,
     train_challenger,
     transform_rows,
     walk_forward_oof_report,
+)
+from three_table_quant.promotion import (
+    PROMOTION_REPORT_SCHEMA,
+    REQUIRED_PROMOTION_CHECKS,
+    artifact_fingerprint,
 )
 from three_table_quant.ranking_engine import LearnedChallenger
 
@@ -109,6 +115,18 @@ def rows_for_days(days: int, *, force_fill: int | None = None) -> list[dict]:
     return rows
 
 
+def approved_report(artifact: dict) -> dict:
+    return {
+        "schema": PROMOTION_REPORT_SCHEMA,
+        "status": "APPROVED",
+        "promotion_state": "APPROVED",
+        "model_id": artifact["model_id"],
+        "artifact_fingerprint": artifact_fingerprint(artifact),
+        "evaluation_dataset_fingerprint": "b" * 64,
+        "checks": {name: True for name in REQUIRED_PROMOTION_CHECKS},
+    }
+
+
 class FeatureMatrixTests(unittest.TestCase):
     def test_only_whitelisted_numeric_features_enter_matrix(self) -> None:
         rows = rows_for_days(1)
@@ -151,9 +169,13 @@ class ModelTrainingTests(unittest.TestCase):
         cls.eligible_rows = rows_for_days(126)
         # The model cutoff follows label availability, not merely signal D.
         cls.eligible_rows[-1]["labels"]["label_end_date"] = "20250630"
-        cls.validated = train_challenger(
+        cls.trained = train_challenger(
             cls.eligible_rows,
             validation_passed=True,
+        )
+        cls.certified_artifact = certify_challenger(
+            cls.trained["artifact"],
+            approved_report(cls.trained["artifact"]),
         )
 
     def test_small_samples_are_rejected_but_one_class_fill_is_compatible(self) -> None:
@@ -168,7 +190,7 @@ class ModelTrainingTests(unittest.TestCase):
 
         one_class = rows_for_days(126, force_fill=1)
         result = train_challenger(one_class)
-        self.assertEqual(result["status"], "TRAINED_UNVALIDATED")
+        self.assertEqual(result["status"], "TRAINED_UNCERTIFIED")
         self.assertEqual(
             result["artifact"]["entry_fill_policy"],
             "T_DAILY_OPEN_FULL_FILL",
@@ -177,7 +199,7 @@ class ModelTrainingTests(unittest.TestCase):
             predict_artifact(
                 result["artifact"],
                 one_class[0]["features"],
-                require_validated=False,
+                require_certified=False,
             )["p_fill"],
             1.0,
         )
@@ -190,12 +212,17 @@ class ModelTrainingTests(unittest.TestCase):
         self.assertIn("unsupported_feature_schema_version", result["reasons"])
 
     def test_artifact_matches_learned_engine_contract(self) -> None:
-        result = self.validated
-        self.assertEqual(result["status"], "TRAINED_VALIDATED")
-        artifact = result["artifact"]
+        result = self.trained
+        self.assertEqual(result["status"], "TRAINED_UNCERTIFIED")
+        artifact = self.certified_artifact
         self.assertEqual(artifact["schema"], MODEL_ARTIFACT_SCHEMA)
         self.assertEqual(artifact["feature_schema"], FEATURE_SCHEMA_VERSION)
-        self.assertTrue(artifact["validation_passed"])
+        self.assertNotIn("validation_passed", artifact)
+        self.assertEqual(artifact["promotion_state"], "APPROVED")
+        self.assertEqual(
+            artifact["promotion_certificate"]["artifact_fingerprint"],
+            artifact["artifact_fingerprint"],
+        )
         self.assertEqual(
             artifact["entry_fill_policy"],
             "T_DAILY_OPEN_FULL_FILL",
@@ -243,8 +270,8 @@ class ModelTrainingTests(unittest.TestCase):
             [pending, *reversed(self.eligible_rows)],
             validation_passed=True,
         )
-        self.assertEqual(repeated, self.validated)
-        artifact = self.validated["artifact"]
+        self.assertEqual(repeated, self.trained)
+        artifact = self.certified_artifact
         prediction = predict_artifact(
             artifact,
             self.eligible_rows[0]["features"],
@@ -277,7 +304,7 @@ class ModelTrainingTests(unittest.TestCase):
             "uncertainty_weight": 0.003,
         }
         challenger = LearnedChallenger(
-            self.validated["artifact"],
+            self.certified_artifact,
             ranking,
             estimated_round_trip_rate=0.00162,
         )
@@ -288,25 +315,36 @@ class ModelTrainingTests(unittest.TestCase):
         )
         self.assertEqual(
             prediction.model_id,
-            self.validated["artifact"]["model_id"],
+            self.certified_artifact["model_id"],
         )
         self.assertEqual(prediction.model_stage, "LEARNED_CHALLENGER")
 
-    def test_unvalidated_artifact_is_refused_by_default(self) -> None:
-        result = train_challenger(self.eligible_rows, validation_passed=False)
-        self.assertEqual(result["status"], "TRAINED_UNVALIDATED")
-        self.assertFalse(result["artifact"]["validation_passed"])
-        with self.assertRaisesRegex(ContractError, "not passed validation"):
+    def test_boolean_validation_cannot_replace_a_certificate(self) -> None:
+        result = train_challenger(self.eligible_rows, validation_passed=True)
+        self.assertEqual(result["status"], "TRAINED_UNCERTIFIED")
+        self.assertNotIn("validation_passed", result["artifact"])
+        legacy = copy.deepcopy(result["artifact"])
+        legacy["validation_passed"] = True
+        with self.assertRaisesRegex(ContractError, "promotion certificate"):
             predict_artifact(
-                result["artifact"],
+                legacy,
                 self.eligible_rows[0]["features"],
             )
         prediction = predict_artifact(
             result["artifact"],
             self.eligible_rows[0]["features"],
-            require_validated=False,
+            require_certified=False,
         )
         self.assertIn("p_fill", prediction)
+
+    def test_certificate_fails_closed_after_model_payload_tampering(self) -> None:
+        tampered = copy.deepcopy(self.certified_artifact)
+        tampered["heads"]["return_mean"]["intercept"] += 0.01
+        with self.assertRaisesRegex(ContractError, "artifact fingerprint mismatch"):
+            predict_artifact(
+                tampered,
+                self.eligible_rows[0]["features"],
+            )
 
     def test_walk_forward_report_contains_oof_calibration_and_strategy_risk(self) -> None:
         rows = rows_for_days(14)
@@ -333,9 +371,17 @@ class ModelTrainingTests(unittest.TestCase):
         self.assertGreaterEqual(strategy["cvar_loss_10pct"], 0.0)
 
     def test_promotion_report_never_self_promotes(self) -> None:
-        report = build_promotion_report(self.eligible_rows)
+        report = build_promotion_report(
+            self.eligible_rows,
+            artifact=self.trained["artifact"],
+        )
         self.assertEqual(report["status"], "PENDING_VALIDATION")
-        self.assertFalse(report["validation_passed"])
+        self.assertEqual(report["promotion_state"], "CANDIDATE")
+        self.assertNotIn("validation_passed", report)
+        self.assertEqual(
+            report["artifact_fingerprint"],
+            artifact_fingerprint(self.trained["artifact"]),
+        )
         self.assertTrue(report["checks"]["sample_gate"])
         self.assertIsNone(report["checks"]["lockbox"])
 

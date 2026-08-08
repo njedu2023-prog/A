@@ -8,8 +8,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-from .domain import Candidate, normalize_date
+from .domain import Candidate, ContractError, normalize_date
 from .features import FEATURE_SCHEMA_VERSION
+from .promotion import validate_certified_artifact
 from .sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM
 
 
@@ -548,8 +549,6 @@ class LearnedChallenger:
         feature_schema = payload.get("feature_schema") or payload.get("feature_schema_version")
         if feature_schema != FEATURE_SCHEMA_VERSION:
             raise ArtifactValidationError("learned artifact feature schema mismatch")
-        if payload.get("validation_passed") is not True:
-            raise ArtifactValidationError("learned artifact has not passed validation")
         try:
             trained_through = normalize_date(payload.get("trained_through"), "trained_through")
         except Exception as exc:
@@ -613,6 +612,13 @@ class LearnedChallenger:
                 if minimum_output < 0:
                     raise ArtifactValidationError("heads.delay_days.minimum_output must be nonnegative")
                 heads[name]["minimum_output"] = minimum_output
+
+        try:
+            validate_certified_artifact(payload)
+        except ContractError as exc:
+            raise ArtifactValidationError(
+                f"learned artifact promotion certificate invalid: {exc}"
+            ) from exc
 
         self.ranking = ranking_config
         self.model_id = model_id
@@ -734,18 +740,35 @@ def _rank_with_predictor(
 ) -> list[tuple[Candidate, PredictionBundle]]:
     if not candidates:
         return []
-    minimum_coverage = 1.0 - float(ranking_config.get("max_missing_fraction", 0.34))
+
+    def missing_fraction(features: dict[str, Any]) -> float:
+        """Measure the fields actually consumed by a learned champion.
+
+        The transparent baseline intentionally retains the established market
+        quality coverage.  Learned artifacts must not hide missing upstream
+        predictors behind their fitted medians, so their complete frozen
+        ``feature_order`` is measured before imputation.
+        """
+
+        feature_order = getattr(predictor, "feature_order", None)
+        if isinstance(feature_order, (tuple, list)) and feature_order:
+            missing = sum(_finite(features.get(field)) is None for field in feature_order)
+            return missing / len(feature_order)
+        coverage = _clip(_value(features, "feature_coverage", 0.0), 0.0, 1.0)
+        return 1.0 - coverage
+
+    maximum_missing = float(ranking_config.get("max_missing_fraction", 0.34))
     cohort_fallback = any(
         item.features.get("market_data_valid") is not True
-        or _value(item.features, "feature_coverage", 0.0) < minimum_coverage
+        or missing_fraction(item.features) > maximum_missing
         for item in candidates
     )
     scored: list[tuple[Candidate, PredictionBundle]] = []
     for candidate in candidates:
-        coverage = _clip(_value(candidate.features, "feature_coverage", 0.0), 0.0, 1.0)
+        candidate_missing_fraction = missing_fraction(candidate.features)
         prediction = predictor.predict(
             candidate.features,
-            missing_fraction=1.0 - coverage,
+            missing_fraction=candidate_missing_fraction,
             force_borda_fallback=cohort_fallback,
             decision_date=decision_date,
         )

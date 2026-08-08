@@ -6,6 +6,8 @@
 
 每次读取先分别解析 `a-top10/main` 与 `top10-decision/main` 的完整远端 commit SHA，再用该 SHA 读取同一仓库内的指针、日期文件和索引。禁止在同一次快照中直接读取可变的 `raw/.../main/...`。a-top10 的指针 `run_id/commit_sha` 必须与日期CSV一致；Premium指针必须明确 `ok=True`；Decision索引的 `latest_report_date`、`reports[0].report_date` 与行动文件 `report_date` 必须一致。
 
+每个冻结信号除保存三源内容哈希和固定commit外，还保存三张实际展示名单的完整 `ranked_rows`（排名、代码、名称）。该快照只用于输入审计与反事实研究；正式Signal成员资格仍只能由三表严格交集产生，绝不能用非交集成员补票。
+
 Premium CSV 若出现重复表头，仅在每行重复值一致（数值等价也视为一致）或仅一侧非空时安全合并，并记录源质量警告；任一行存在冲突值则阻断。Decision 的 `stage_watch_display_limit` 必须为10；`stage_watch_count` 必须等于 `stage_watchlist` 行数，并等于 `min(stage_watch_eligible_count, 10)`。每个主表成员还必须能按代码及原始 `rank` 唯一映射回 `candidates`，且 `observation_rank` 与 `stage_watch_rank` 一致；任何不一致均阻断输入，绝不回退全量池。`decision_p_fill/decision_e_ret/decision_ev/decision_cost/decision_risk_penalty` 是辅助数值特征：缺失时记录覆盖率警告但保留该实际展示成员；非空值仍必须是有限数，且概率、成本和风险惩罚必须满足合法范围。
 
 严格交集：
@@ -18,7 +20,7 @@ intersection = codes(a_top10) ∩ codes(premium_top10) ∩ codes(decision_table)
 
 ## D时点特征与正式排序输出
 
-`formal_features_v2` 采用显式白名单，不会把源行任意展开成特征。市场特征只允许使用日期不晚于D且最后一根恰好等于D的连续历史；至少需要21根有效日线。重复日期、乱序、未来K线、D日尾部缺失、价量字段不自洽均使市场特征失效。失效候选不会被删除，而会触发同日整组Borda共识降级和 `NO_TRADE`。
+`formal_features_v2` 采用显式白名单，不会把源行任意展开成特征。`feature_contract_v2_1` 为每个生产字段声明角色、来源、D时点策略、缺失策略和信任等级，并生成可复核SHA-256。市场特征只允许使用日期不晚于D且最后一根恰好等于D的连续历史；至少需要21根有效日线。重复日期、乱序、未来K线、D日尾部缺失、价量字段不自洽均使市场特征失效。失效候选不会被删除，而会触发同日整组Borda共识降级和 `NO_TRADE`。学习冠军的缺失率必须按其完整 `feature_order` 在中位数填补前计算，不能用少数行情字段覆盖率掩盖上游预测缺失。
 
 正式预测契约为 `ranking_prediction_v2`，预测时点固定为 `D_PRIOR`。每个冻结候选必须保存：
 
@@ -88,9 +90,9 @@ T日入场价只读取日期严格等于买入日、`price_adjustment=NONE` 且�
 
 ## 训练标签与模型注册
 
-`training_dataset_v1` 只从已冻结信号和一一对应的影子交易构建，不再联网补特征。每行保留源仓库commit、内容哈希、特征时点与版本。新口径下合法开盘价的成交标签固定为1；兼容旧状态时未知标签保持 `null`、`BUY_UNFILLED` 仍为0；`CLOSED` 才能产生费用后净收益和实际延迟日。成交头仅为旧模型结构兼容，不参与生产排序或门槛。T日晋级标签与买入状态独立记录。模型晋级样本计数只接受明确标记为 `formal_features_v2` 的冻结行；升级前的历史特征仍保留审计，但不会冒充V2训练样本。
+`training_dataset_v1` 只从已冻结信号和一一对应的影子交易构建，不再联网补特征。每行保留源仓库commit、内容哈希、特征时点与版本；数据集同时保存特征契约指纹、D日组数量和自身内容SHA-256，同一冻结状态必须可重复构建出相同指纹。新口径下合法开盘价的成交标签固定为1；兼容旧状态时未知标签保持 `null`、`BUY_UNFILLED` 仍为0；`CLOSED` 才能产生费用后净收益和实际延迟日。成交头仅为旧模型结构兼容，不参与生产排序或门槛。T日晋级标签与买入状态独立记录。模型晋级样本计数只接受明确标记为 `formal_features_v2` 的冻结行；升级前的历史特征仍保留审计，但不会冒充V2训练样本。
 
-学习模型只接受 `model_artifact_v1` JSON，不加载pickle或可执行代码。训练截止日必须严格早于待排序D日；模型注册表中的相对路径与SHA-256必须通过校验，制品必须声明 `formal_features_v2` 且 `validation_passed=true`。任何路径越界、文件缺失、校验和变化、旧特征版本、未来字段、非法概率头或截止日穿越都失败关闭并回退透明冠军。
+学习模型只接受 `model_artifact_v1` JSON，不加载pickle或可执行代码。训练截止日必须严格早于待排序D日。训练只能生成未认证挑战者；旧式 `validation_passed=true` 不具备任何激活能力。正式晋级必须由 `promotion_certificate_v1` 绑定模型内容指纹、评价数据指纹和全部必需检查报告，并同时通过注册表文件SHA、注册表证书与制品内证书三层校验。任何路径越界、文件缺失、校验和变化、证书缺失或不一致、旧特征版本、未来字段、非法概率头或截止日穿越都失败关闭并回退透明冠军。
 
 ## 全部候选组合收益
 

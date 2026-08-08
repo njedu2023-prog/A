@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from typing import Any, Mapping
 
 from .domain import Candidate, normalize_date
+from .feature_contract import production_feature_coverage
 from .sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM
 
 
@@ -480,19 +481,7 @@ def build_feature_snapshot(
     values = {**market_values, **rank_values, **stage_values, **source_values}
     values["source_strength"] = _source_strength(source_values)
 
-    coverage_fields = (
-        "ret_5d",
-        "ret_20d",
-        "volatility_20d",
-        "downside_volatility_20d",
-        "atr_14d",
-        "amplitude_20d",
-        "cvar_loss_10pct",
-        "max_drawdown_20d",
-    )
-    observed = sum(values.get(field) is not None for field in coverage_fields)
-    liquidity_observed = values.get("avg_amount_20d") is not None or values.get("avg_volume_20d") is not None
-    coverage = (observed + int(liquidity_observed)) / (len(coverage_fields) + 1)
+    coverage = production_feature_coverage(values)
     if not market_valid:
         coverage = 0.0
     # Preserve deterministic order while avoiding duplicate reason strings.

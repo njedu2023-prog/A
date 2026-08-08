@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 import math
 from collections.abc import Mapping
 from datetime import datetime
 from typing import Any
 
 from .domain import ContractError, normalize_date, normalize_ts_code
+from .feature_contract import FEATURE_CONTRACT_VERSION, feature_contract_sha256
 
 
 TRAINING_DATASET_SCHEMA = "training_dataset_v1"
@@ -303,10 +306,21 @@ def build_training_dataset(state: Mapping[str, Any]) -> dict[str, Any]:
     if extra_trades:
         raise ContractError(f"orphan shadow trades: {sorted(extra_trades)}")
     rows.sort(key=lambda item: (item["decision_date"], item["rank"], item["ts_code"]))
-    return {
+    payload = {
         "schema_version": TRAINING_DATASET_SCHEMA,
+        "feature_contract_version": FEATURE_CONTRACT_VERSION,
+        "feature_contract_sha256": feature_contract_sha256(),
         "row_count": len(rows),
         "mature_count": sum(bool(item["labels"]["is_mature"]) for item in rows),
+        "cohort_count": len({item["decision_date"] for item in rows}),
         "rows": rows,
     }
-
+    payload["dataset_sha256"] = hashlib.sha256(
+        json.dumps(
+            payload,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    return payload

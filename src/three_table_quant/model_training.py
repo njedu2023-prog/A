@@ -11,11 +11,16 @@ from typing import Any
 from .domain import ContractError, normalize_date
 from .features import FEATURE_SCHEMA_VERSION
 from .model_registry import evaluate_promotion_readiness
+from .promotion import (
+    PROMOTION_REPORT_SCHEMA,
+    artifact_fingerprint,
+    attach_promotion_certificate,
+    validate_certified_artifact,
+)
 from .walk_forward import expanding_walk_forward
 
 
 MODEL_ARTIFACT_SCHEMA = "model_artifact_v1"
-PROMOTION_REPORT_SCHEMA = "model_promotion_report_v1"
 
 # This is intentionally narrower than the upstream D-as-of extraction list.
 # Training never flattens arbitrary source values and never infers new columns
@@ -467,10 +472,17 @@ def _dataset_fingerprint(
 def train_challenger(
     rows: Iterable[Mapping[str, Any]],
     *,
-    validation_passed: bool = False,
+    validation_passed: bool | None = None,
     feature_order: Sequence[str] = FEATURE_ALLOWLIST,
 ) -> dict[str, Any]:
-    """Train all formal heads only after the immutable 180/60/126 gate passes."""
+    """Train an uncertified challenger after the immutable 180/60/126 gate.
+
+    ``validation_passed`` is retained only so an old caller fails closed instead
+    of crashing during migration.  Its value can never certify or activate the
+    artifact; only an approved promotion report can issue a bound certificate.
+    """
+
+    del validation_passed
 
     ordered = _sorted_rows(rows)
     readiness = evaluate_promotion_readiness(ordered)
@@ -552,9 +564,7 @@ def train_challenger(
         "feature_order": list(order),
         "normalization": normalization,
         "heads": heads,
-        # A learned engine must refuse this artifact unless an external,
-        # lockbox-aware promotion decision has explicitly passed.
-        "validation_passed": validation_passed is True,
+        "promotion_state": "CANDIDATE",
         "training_metadata": {
             "head_sample_counts": counts,
             "readiness": readiness,
@@ -563,14 +573,14 @@ def train_challenger(
         "checksum_inputs": checksum_inputs,
     }
     return {
-        "status": "TRAINED_VALIDATED" if validation_passed is True else "TRAINED_UNVALIDATED",
+        "status": "TRAINED_UNCERTIFIED",
         "artifact": artifact,
         "readiness": readiness,
-        "reasons": [] if validation_passed is True else ["validation_not_passed"],
+        "reasons": ["promotion_certificate_required"],
     }
 
 
-def _validate_artifact(artifact: Mapping[str, Any], *, require_validated: bool) -> None:
+def _validate_artifact(artifact: Mapping[str, Any], *, require_certified: bool) -> None:
     if artifact.get("schema") != MODEL_ARTIFACT_SCHEMA:
         raise ContractError("unsupported model artifact schema")
     order = artifact.get("feature_order")
@@ -609,17 +619,33 @@ def _validate_artifact(artifact: Mapping[str, Any], *, require_validated: bool) 
             or any(_finite(value) is None for value in head["coefficients"])
         ):
             raise ContractError(f"artifact head {name} is invalid")
-    if require_validated and artifact.get("validation_passed") is not True:
-        raise ContractError("learned artifact has not passed validation")
+    if require_certified:
+        validate_certified_artifact(artifact)
+
+
+def certify_challenger(
+    artifact: Mapping[str, Any],
+    promotion_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Bind an externally approved evaluation report to a trained artifact."""
+
+    _validate_artifact(artifact, require_certified=False)
+    certified = attach_promotion_certificate(artifact, promotion_report)
+    _validate_artifact(certified, require_certified=True)
+    return certified
 
 
 def predict_artifact(
     artifact: Mapping[str, Any],
     features: Mapping[str, Any],
     *,
-    require_validated: bool = True,
+    require_certified: bool = True,
+    require_validated: bool | None = None,
 ) -> dict[str, float]:
-    _validate_artifact(artifact, require_validated=require_validated)
+    if require_validated is not None:
+        # Backward-compatible diagnostic switch; it does not certify an artifact.
+        require_certified = bool(require_validated)
+    _validate_artifact(artifact, require_certified=require_certified)
     synthetic = {
         "row_id": "inference",
         "decision_date": "20000101",
@@ -770,11 +796,14 @@ def walk_forward_oof_report(
             "normalization": normalization,
             "heads": heads,
             "entry_fill_policy": "T_DAILY_OPEN_FULL_FILL",
-            "validation_passed": True,
         }
         used_folds += 1
         for row in validation:
-            prediction = predict_artifact(artifact, row["features"])
+            prediction = predict_artifact(
+                artifact,
+                row["features"],
+                require_certified=False,
+            )
             prediction_count += 1
             for head, target in PROBABILITY_TARGETS.items():
                 observed = row["labels"].get(target)
@@ -818,14 +847,16 @@ def walk_forward_oof_report(
 def build_promotion_report(
     rows: Iterable[Mapping[str, Any]],
     oof_report: Mapping[str, Any] | None = None,
+    *,
+    artifact: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     ordered = _sorted_rows(rows)
     readiness = evaluate_promotion_readiness(ordered)
     eligible = readiness["status"] == "ELIGIBLE_FOR_VALIDATION"
-    return {
+    report: dict[str, Any] = {
         "schema": PROMOTION_REPORT_SCHEMA,
         "status": "PENDING_VALIDATION" if eligible else "NOT_ELIGIBLE",
-        "validation_passed": False,
+        "promotion_state": "CANDIDATE" if eligible else "INSUFFICIENT_DATA",
         "readiness": readiness,
         "oof": dict(oof_report) if oof_report is not None else None,
         "checks": {
@@ -840,6 +871,22 @@ def build_promotion_report(
         "benchmarks": {},
         "stress_tests": {},
     }
+    if artifact is not None:
+        _validate_artifact(artifact, require_certified=False)
+        feature_order = artifact.get("feature_order")
+        if not isinstance(feature_order, list):
+            raise ContractError("artifact feature_order is invalid")
+        report.update(
+            {
+                "model_id": str(artifact.get("model_id") or ""),
+                "artifact_fingerprint": artifact_fingerprint(artifact),
+                "evaluation_dataset_fingerprint": _dataset_fingerprint(
+                    _mature_rows(ordered),
+                    feature_order,
+                ),
+            }
+        )
+    return report
 
 
 __all__ = [
@@ -847,6 +894,7 @@ __all__ = [
     "MODEL_ARTIFACT_SCHEMA",
     "PROMOTION_REPORT_SCHEMA",
     "build_promotion_report",
+    "certify_challenger",
     "fit_normalization",
     "numeric_feature_rows",
     "predict_artifact",

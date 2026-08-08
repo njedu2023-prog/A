@@ -83,6 +83,18 @@ def _source_snapshots(tables: list[Any]) -> list[dict[str, Any]]:
             "repository_commit_sha": table.remote_blob_sha,
             "generated_at": table.generated_at,
             "row_count": len(table.rows),
+            # Freeze the complete displayed source universe, not only the
+            # intersection members.  These rows are audit/research inputs;
+            # strict_intersection() remains the sole membership rule for the
+            # official signal and shadow ledger.
+            "ranked_rows": [
+                {
+                    "rank": int(row.rank),
+                    "ts_code": row.ts_code,
+                    "name": row.name,
+                }
+                for row in sorted(table.rows, key=lambda item: item.rank)
+            ],
         }
         for table in tables
     ]

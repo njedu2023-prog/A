@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import tempfile
 import unittest
@@ -19,8 +20,15 @@ from three_table_quant.ranking_engine import (
     PREDICTION_SCHEMA_VERSION,
     LearnedChallenger,
     TransparentChampionV2,
+    _rank_with_predictor,
 )
 from three_table_quant.model_registry import artifact_sha256
+from three_table_quant.promotion import (
+    PROMOTION_REPORT_SCHEMA,
+    REQUIRED_PROMOTION_CHECKS,
+    artifact_fingerprint,
+    attach_promotion_certificate,
+)
 from three_table_quant.scoring import score_candidates
 from three_table_quant.sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM
 
@@ -124,6 +132,23 @@ def daily_bars(
     return values
 
 
+def certify_artifact(artifact: dict) -> dict:
+    core = copy.deepcopy(artifact)
+    core.pop("artifact_fingerprint", None)
+    core.pop("promotion_certificate", None)
+    core.pop("promotion_state", None)
+    report = {
+        "schema": PROMOTION_REPORT_SCHEMA,
+        "status": "APPROVED",
+        "promotion_state": "APPROVED",
+        "model_id": core["model_id"],
+        "artifact_fingerprint": artifact_fingerprint(core),
+        "evaluation_dataset_fingerprint": "c" * 64,
+        "checks": {name: True for name in REQUIRED_PROMOTION_CHECKS},
+    }
+    return attach_promotion_certificate(core, report)
+
+
 def learned_artifact(*, trained_through: str = "20260803") -> dict:
     feature_order = ["rank_consensus", "ret_5d"]
 
@@ -134,7 +159,7 @@ def learned_artifact(*, trained_through: str = "20260803") -> dict:
             "coefficients": coefficients or [0.0, 0.0],
         }
 
-    return {
+    artifact = {
         "schema": LEARNED_ARTIFACT_SCHEMA_VERSION,
         "model_id": "walk_forward_challenger_001",
         "feature_schema": FEATURE_SCHEMA_VERSION,
@@ -156,8 +181,8 @@ def learned_artifact(*, trained_through: str = "20260803") -> dict:
             "delay_days": head("positive_linear", 0.0),
             "promotion": head("l2_logistic", 0.4),
         },
-        "validation_passed": True,
     }
+    return certify_artifact(artifact)
 
 
 class FeatureContractTests(unittest.TestCase):
@@ -265,6 +290,49 @@ class FeatureContractTests(unittest.TestCase):
 
 
 class RankingEngineTests(unittest.TestCase):
+    def test_learned_missingness_uses_the_artifact_feature_order(self) -> None:
+        predictor = LearnedChallenger(
+            learned_artifact(),
+            CONFIG["ranking"],
+            estimated_round_trip_rate=0.001,
+        )
+        complete = make_candidate("000001.SZ")
+        complete.features = {
+            "market_data_valid": True,
+            "feature_coverage": 1.0,
+            "rank_consensus": 0.8,
+            "rank_borda": 0.8,
+            "rank_disagreement": 0.0,
+            "ret_5d": 0.01,
+        }
+        missing = make_candidate("000002.SZ")
+        missing.features = {
+            "market_data_valid": True,
+            "feature_coverage": 1.0,
+            "rank_consensus": 0.7,
+            "rank_borda": 0.7,
+            "rank_disagreement": 0.0,
+            "ret_5d": None,
+        }
+
+        ranked = _rank_with_predictor(
+            [complete, missing],
+            CONFIG["ranking"],
+            predictor,
+            decision_date="20260804",
+        )
+
+        self.assertTrue(all(bundle.ranking_fallback for _, bundle in ranked))
+        by_code = {candidate.ts_code: bundle for candidate, bundle in ranked}
+        self.assertIn(
+            "market_features_incomplete",
+            by_code["000002.SZ"].gate_reasons,
+        )
+        self.assertNotIn(
+            "market_features_incomplete",
+            by_code["000001.SZ"].gate_reasons,
+        )
+
     def test_open_fill_assumption_fixes_fill_to_one_and_removes_fill_gate(self) -> None:
         item = make_candidate("000001.SZ")
         features = build_feature_snapshot(
@@ -445,6 +513,7 @@ class RankingEngineTests(unittest.TestCase):
         artifact["heads"]["return_q10"]["intercept"] = 0.0
         artifact["heads"]["return_q50"]["intercept"] = 0.0
         artifact["heads"]["return_q90"]["intercept"] = 0.0
+        artifact = certify_artifact(artifact)
         result = score_candidates(
             [item],
             {item.ts_code: daily_bars()},
@@ -495,7 +564,7 @@ class RankingEngineTests(unittest.TestCase):
             result.metrics["model_resolution_reason"],
         )
 
-    def test_artifact_validation_rejects_future_features_and_unvalidated_models(self) -> None:
+    def test_artifact_validation_rejects_future_features_and_uncertified_models(self) -> None:
         future = learned_artifact()
         future["feature_order"] = ["actual_net_return", "ret_5d"]
         with self.assertRaisesRegex(ArtifactValidationError, "future-aware"):
@@ -505,11 +574,14 @@ class RankingEngineTests(unittest.TestCase):
                 estimated_round_trip_rate=0.00162,
             )
 
-        unvalidated = learned_artifact()
-        unvalidated["validation_passed"] = False
-        with self.assertRaisesRegex(ArtifactValidationError, "not passed validation"):
+        uncertified = learned_artifact()
+        uncertified.pop("artifact_fingerprint")
+        uncertified.pop("promotion_certificate")
+        uncertified.pop("promotion_state")
+        uncertified["validation_passed"] = True
+        with self.assertRaisesRegex(ArtifactValidationError, "promotion certificate"):
             LearnedChallenger(
-                unvalidated,
+                uncertified,
                 CONFIG["ranking"],
                 estimated_round_trip_rate=0.00162,
             )
