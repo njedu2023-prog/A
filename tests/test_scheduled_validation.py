@@ -33,7 +33,12 @@ class ScheduledValidationTests(unittest.TestCase):
             "decision_date": "2026-08-07",
             "intersection_count": 4,
         }
-        previous_dashboard = {"current_run": current_run}
+        previous_dashboard = {
+            "current_run": current_run,
+            "automation_runs": {
+                "validation": {"scheduled_local_time": "15:20"},
+            },
+        }
 
         def load_json(path: str, default: object) -> object:
             return {
@@ -62,7 +67,7 @@ class ScheduledValidationTests(unittest.TestCase):
             patch("three_table_quant.scheduled_validation.save_json") as save,
             patch(
                 "three_table_quant.scheduled_validation._now",
-                return_value="2026-08-10T15:20:08+08:00",
+                return_value="2026-08-10T19:00:08+08:00",
             ),
             patch("three_table_quant.pipeline.SourceLoader") as source_loader,
             patch("three_table_quant.pipeline.strict_intersection") as intersection,
@@ -84,7 +89,11 @@ class ScheduledValidationTests(unittest.TestCase):
         self.assertIs(result["current_run"], current_run)
         self.assertEqual(
             result["automation_runs"]["validation"]["last_completed_at"],
-            "2026-08-10T15:20:08+08:00",
+            "2026-08-10T19:00:08+08:00",
+        )
+        self.assertEqual(
+            result["automation_runs"]["validation"]["scheduled_local_time"],
+            "19:00",
         )
         self.assertEqual(
             result["automation_runs"]["output"]["last_completed_at"],

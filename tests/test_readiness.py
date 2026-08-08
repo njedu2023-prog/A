@@ -74,6 +74,42 @@ class SourceReadinessTests(unittest.TestCase):
         )
         self.assertEqual(result["current_run"]["intersection_count"], 0)
 
+    def test_target_date_lag_is_retried_and_forwarded_to_pipeline(self) -> None:
+        calls: list[tuple[str, str | None]] = []
+        results = iter(
+            [
+                dashboard(
+                    "INPUT_BLOCKED",
+                    completed=False,
+                    error_codes=("SOURCE_TARGET_DATE_NOT_READY",),
+                ),
+                dashboard("RANKED", completed=True, intersection_count=3),
+            ]
+        )
+
+        def runner(config: str, *, target_decision_date: str | None = None) -> dict:
+            calls.append((config, target_decision_date))
+            return next(results)
+
+        result = run_when_sources_ready(
+            "config/system.json",
+            attempts=2,
+            interval_seconds=0,
+            target_decision_date="20260810",
+            runner=runner,
+            sleeper=lambda _: None,
+            emit=lambda _: None,
+        )
+
+        self.assertEqual(result["current_run"]["intersection_count"], 3)
+        self.assertEqual(
+            calls,
+            [
+                ("config/system.json", "20260810"),
+                ("config/system.json", "20260810"),
+            ],
+        )
+
     def test_timeout_returns_latest_blocked_dashboard_for_publication(self) -> None:
         blocked = dashboard(
             "INPUT_BLOCKED",

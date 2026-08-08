@@ -16,7 +16,7 @@ from .pipeline import (
 )
 
 
-VALIDATION_SCHEDULE_LOCAL_TIME = "15:20"
+VALIDATION_SCHEDULE_LOCAL_TIME = "19:00"
 OUTPUT_SCHEDULE_LOCAL_TIME = "21:30"
 
 
@@ -47,19 +47,24 @@ def _fallback_current_run(
 
     signal = signals[-1]
     decision_date = str(signal["decision_date"])
+    candidate_count = len(signal.get("candidates", []))
     iso_decision_date = (
         f"{decision_date[:4]}-{decision_date[4:6]}-{decision_date[6:]}"
     )
     return {
         "status": signal["status"],
-        "message": f"D日信号已冻结；保留{len(signal.get('candidates', []))}支候选且不事后改写",
+        "message": f"D日信号已冻结；保留{candidate_count}支候选且不事后改写",
         "completed": True,
         "completed_at": str(signal.get("generated_at") or _now()),
         "decision_date": iso_decision_date,
-        "outcome": "COMPLETED_FROZEN_SIGNAL",
+        "outcome": (
+            "COMPLETED_ZERO_INTERSECTION"
+            if candidate_count == 0
+            else "COMPLETED_FROZEN_SIGNAL"
+        ),
         "source_table_counts": {},
         "source_dates": {},
-        "intersection_count": len(signal.get("candidates", [])),
+        "intersection_count": candidate_count,
         "ranking_engine": signal.get("ranking_engine") or {},
     }
 
@@ -86,6 +91,9 @@ def _automation_runs(
             "last_completed_at": prior_output_at,
             "status": "COMPLETED" if prior_output_at else "PENDING_FIRST_RUN",
         }
+    else:
+        output = dict(output)
+        output["scheduled_local_time"] = OUTPUT_SCHEDULE_LOCAL_TIME
     runs["output"] = output
     runs["validation"] = {
         "scheduled_local_time": VALIDATION_SCHEDULE_LOCAL_TIME,

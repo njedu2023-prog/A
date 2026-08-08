@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import re
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 class FrontendContractTests(unittest.TestCase):
@@ -81,8 +83,8 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260808-1", source)
-        self.assertIn("app.js?v=20260808-1", source)
+        self.assertIn("styles.css?v=20260808-2", source)
+        self.assertIn("app.js?v=20260808-2", source)
 
     def test_overview_uses_clear_settlement_copy(self) -> None:
         page = Path("index.html").read_text(encoding="utf-8")
@@ -147,7 +149,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("status-meta-row status-meta-sources", script)
         self.assertIn("meta.append(summaryRow, automationRow, sourceRow);", script)
         self.assertIn('outputRun.scheduled_local_time || "21:30"', script)
-        self.assertIn('validationRun.scheduled_local_time || "15:20"', script)
+        self.assertIn('validationRun.scheduled_local_time || "19:00"', script)
         self.assertIn("white-space: nowrap;", styles)
         self.assertIn(".status-meta-row", styles)
 
@@ -181,13 +183,17 @@ class FrontendContractTests(unittest.TestCase):
         )
         self.assertNotIn('cron: "20 3 * * 1-5"', source)
         self.assertEqual(source.count("cron:"), 2)
-        self.assertIn('cron: "20 7 * * 1-5"', source)
+        self.assertIn('cron: "0 11 * * 1-5"', source)
         self.assertIn('cron: "30 13 * * 1-5"', source)
         self.assertIn("timeout-minutes: 150", source)
         self.assertIn("three_table_quant.scheduled_validation", source)
         self.assertIn("python -m three_table_quant.readiness", source)
         self.assertIn("--attempts 25", source)
         self.assertIn("--interval-seconds 300", source)
+        self.assertIn("three_table_quant.schedule_guard", source)
+        self.assertIn("three_table_quant.batch_result", source)
+        self.assertIn("SOURCE_TARGET_DATE_NOT_READY", Path("src/three_table_quant/readiness.py").read_text(encoding="utf-8"))
+        self.assertIn("--target-decision-date", source)
         self.assertIn("cancel-in-progress: false", source)
 
     def test_validation_schedule_is_after_t_close_gate(self) -> None:
@@ -196,8 +202,21 @@ class FrontendContractTests(unittest.TestCase):
         )
         config = Path("config/system.json").read_text(encoding="utf-8")
         self.assertIn('"t_validation_after_local_time": "15:10"', config)
-        self.assertIn('cron: "20 7 * * 1-5"', workflow)
-        self.assertIn("15:20 Asia/Shanghai", workflow)
+        self.assertIn('cron: "0 11 * * 1-5"', workflow)
+        self.assertIn("19:00 Asia/Shanghai", workflow)
+        shanghai = ZoneInfo("Asia/Shanghai")
+        self.assertEqual(
+            datetime(2026, 8, 10, 11, 0, tzinfo=timezone.utc)
+            .astimezone(shanghai)
+            .strftime("%H:%M"),
+            "19:00",
+        )
+        self.assertEqual(
+            datetime(2026, 8, 10, 13, 30, tzinfo=timezone.utc)
+            .astimezone(shanghai)
+            .strftime("%H:%M"),
+            "21:30",
+        )
 
     def test_workflow_keeps_one_curated_pages_publication_path(self) -> None:
         source = Path(".github/workflows/daily-shadow.yml").read_text(

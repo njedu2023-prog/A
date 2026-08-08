@@ -17,6 +17,7 @@ RETRYABLE_SOURCE_CODES = frozenset(
         "SOURCE_DATE_MISMATCH",
         "BUY_DATE_MISMATCH",
         "EXIT_DATE_MISMATCH",
+        "SOURCE_TARGET_DATE_NOT_READY",
     }
 )
 COMPLETED_STATUSES = frozenset({"RANKED", "NO_CANDIDATE"})
@@ -51,6 +52,7 @@ def run_when_sources_ready(
     runner: Callable[[str], dict[str, Any]] = run_pipeline,
     sleeper: Callable[[float], None] = time.sleep,
     emit: Callable[[str], None] = print,
+    target_decision_date: str | None = None,
 ) -> dict[str, Any]:
     if attempts < 1:
         raise ValueError("attempts must be at least 1")
@@ -59,7 +61,14 @@ def run_when_sources_ready(
 
     last_dashboard: dict[str, Any] | None = None
     for attempt in range(1, attempts + 1):
-        dashboard = runner(config_path)
+        dashboard = (
+            runner(
+                config_path,
+                target_decision_date=target_decision_date,
+            )
+            if target_decision_date
+            else runner(config_path)
+        )
         last_dashboard = dashboard
         current = dashboard.get("current_run") or {}
         status = str(current.get("status") or "")
@@ -104,11 +113,13 @@ def main() -> None:
     parser.add_argument("--config", default="config/system.json")
     parser.add_argument("--attempts", type=int, default=25)
     parser.add_argument("--interval-seconds", type=float, default=300.0)
+    parser.add_argument("--target-decision-date")
     args = parser.parse_args()
     run_when_sources_ready(
         args.config,
         attempts=args.attempts,
         interval_seconds=args.interval_seconds,
+        target_decision_date=args.target_decision_date or None,
     )
 
 

@@ -8,6 +8,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from .candidate_facts import candidate_validation_inputs
+from .calendar import parse_calendar_date
 from .dashboard import build_dashboard, validate_dashboard
 from .domain import Signal, SourceIssue, iso_date
 from .execution_policy import build_order_spec
@@ -85,6 +86,33 @@ def _source_snapshots(tables: list[Any]) -> list[dict[str, Any]]:
         }
         for table in tables
     ]
+
+
+def _target_date_issue(
+    tables: list[Any],
+    target_decision_date: str | None,
+) -> tuple[str | None, SourceIssue | None]:
+    if not target_decision_date:
+        return None, None
+    target = parse_calendar_date(target_decision_date, "target_decision_date")
+    normalized_target = target.strftime("%Y%m%d")
+    observed_dates = {
+        table.source_id: table.decision_date for table in tables
+    }
+    if observed_dates and all(
+        value == normalized_target for value in observed_dates.values()
+    ):
+        return normalized_target, None
+    return normalized_target, SourceIssue(
+        "SOURCE_TARGET_DATE_NOT_READY",
+        "error",
+        "aggregate",
+        "三源尚未全部更新到本次21:30任务目标交易日",
+        {
+            "target_decision_date": normalized_target,
+            "observed_decision_dates": observed_dates,
+        },
+    )
 
 
 def _append_market_fallback_issue(
@@ -374,7 +402,11 @@ def _ensure_all_candidate_shadow_ledger(
         ensure_shadow_trades(state, signal, tracked_ranks)
 
 
-def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, Any]:
+def run_pipeline(
+    config_path: str | Path = "config/system.json",
+    *,
+    target_decision_date: str | None = None,
+) -> dict[str, Any]:
     config = load_config(config_path)
     paths = config["paths"]
     state = load_state(paths["state"])
@@ -404,6 +436,12 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
             config["input_contract"]["trading_calendar_path"],
         )
     )
+    normalized_target, target_issue = _target_date_issue(
+        tables,
+        target_decision_date,
+    )
+    if target_issue is not None:
+        source_issues.append(target_issue)
     source_issues.extend(diagnose_source_quality(tables))
     current_run: dict[str, Any] = {
         "status": "INPUT_BLOCKED" if any(item.severity == "error" for item in source_issues) else "READY",
@@ -424,6 +462,8 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
         "intersection_count": None,
         "ranking_engine": engine_status,
     }
+    if normalized_target is not None:
+        current_run["target_decision_date"] = iso_date(normalized_target)
 
     if not any(item.severity == "error" for item in source_issues):
         candidates = strict_intersection(tables)
@@ -562,11 +602,14 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
     validation_run = automation_runs.get("validation")
     if not isinstance(validation_run, dict):
         validation_run = {
-            "scheduled_local_time": "15:20",
+            "scheduled_local_time": "19:00",
             "last_attempted_at": None,
             "last_completed_at": None,
             "status": "PENDING_FIRST_RUN",
         }
+    else:
+        validation_run = dict(validation_run)
+        validation_run["scheduled_local_time"] = "19:00"
     output_run = automation_runs.get("output")
     output_run = dict(output_run) if isinstance(output_run, dict) else {}
     output_run.update(

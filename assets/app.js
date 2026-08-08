@@ -390,7 +390,7 @@ function renderStatus() {
     ),
     node(
       "span",
-      `验证 ${validationRun.scheduled_local_time || "15:20"} · ${validationAt ? `最近 ${formatUpdatedAt(validationAt)}` : "待首次执行"}`,
+      `验证 ${validationRun.scheduled_local_time || "19:00"} · ${validationAt ? `最近 ${formatUpdatedAt(validationAt)}` : "待首次执行"}`,
       "automation-meta-text"
     )
   );
