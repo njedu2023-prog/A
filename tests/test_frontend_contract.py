@@ -83,8 +83,8 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260808-2", source)
-        self.assertIn("app.js?v=20260808-2", source)
+        self.assertIn("styles.css?v=20260808-3", source)
+        self.assertIn("app.js?v=20260808-3", source)
 
     def test_overview_uses_clear_settlement_copy(self) -> None:
         page = Path("index.html").read_text(encoding="utf-8")
@@ -148,8 +148,17 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("status-meta-row status-meta-automation", script)
         self.assertIn("status-meta-row status-meta-sources", script)
         self.assertIn("meta.append(summaryRow, automationRow, sourceRow);", script)
-        self.assertIn('outputRun.scheduled_local_time || "21:30"', script)
-        self.assertIn('validationRun.scheduled_local_time || "19:00"', script)
+        self.assertIn('run.scheduled_local_time || "21:30"', script)
+        self.assertIn('run.scheduled_local_time || "19:00"', script)
+        self.assertIn("outputAutomationCopy(outputRun, outputAt)", script)
+        self.assertIn("validationAutomationCopy(validationRun)", script)
+        self.assertIn('`到期 ${run.due}`', script)
+        self.assertIn('`完成 ${run.final}`', script)
+        self.assertIn('`待数据 ${run.pending_data}`', script)
+        self.assertIn('`延期 ${run.delayed}`', script)
+        self.assertIn('`失败 ${run.failed}`', script)
+        self.assertIn("SUCCESS_NO_DUE", script)
+        self.assertIn(".automation-meta-text.degraded", styles)
         self.assertIn("white-space: nowrap;", styles)
         self.assertIn(".status-meta-row", styles)
 
@@ -192,6 +201,10 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("--interval-seconds 300", source)
         self.assertIn("three_table_quant.schedule_guard", source)
         self.assertIn("three_table_quant.batch_result", source)
+        self.assertNotIn("github.event_name == 'push' ||", source)
+        self.assertIn("github.event_name != 'push'", source)
+        self.assertIn("--started-at", source)
+        self.assertIn("--market-date", source)
         self.assertIn("SOURCE_TARGET_DATE_NOT_READY", Path("src/three_table_quant/readiness.py").read_text(encoding="utf-8"))
         self.assertIn("--target-decision-date", source)
         self.assertIn("cancel-in-progress: false", source)

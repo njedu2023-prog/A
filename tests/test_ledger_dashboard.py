@@ -201,8 +201,12 @@ def signal(candidate_count: int = 1) -> dict:
             "name": f"票{index}",
             "rank": index,
             "metrics": {"utility_score": .01, "policy_trade_eligible": True},
-            "features": {},
-            "source_ranks": {},
+            "features": {"rank_borda": 1.0 - index / 10.0},
+            "source_ranks": {
+                "a_top10": index,
+                "premium_top10": index,
+                "decision_table": index,
+            },
             "action": "SHADOW",
             "action_reason": "test",
         }
@@ -453,6 +457,24 @@ class LedgerDashboardTests(unittest.TestCase):
             [1, 2, 3],
         )
         validate_dashboard(dashboard)
+        benchmark = dashboard["benchmark_daily"][0]
+        self.assertEqual(benchmark["cohort_count"], 4)
+        self.assertIsNone(
+            benchmark["policies"]["all_candidates_equal_weight"][
+                "portfolio_return"
+            ]
+        )
+        self.assertIsNone(
+            benchmark["policies"]["model_top3_equal_weight"][
+                "portfolio_return"
+            ]
+        )
+        self.assertTrue(
+            benchmark["policies"]["fixed_model_rank_2"]["is_final"]
+        )
+        self.assertFalse(
+            benchmark["policies"]["fixed_model_rank_1"]["is_final"]
+        )
         self.assertEqual(
             dashboard["rank_daily"][0]["ranks"]["2"]["state"],
             "CLOSED",

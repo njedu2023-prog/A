@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 from typing import Any
 
+from .benchmarks import build_batch_benchmarks
 from .candidate_facts import candidate_display_fields as _candidate_display_fields
 from .domain import iso_date
 
@@ -589,6 +590,60 @@ def _build_portfolio_metrics(portfolio_daily: list[dict[str, Any]]) -> dict[str,
     }
 
 
+def _batch_benchmark_from_dashboard_rows(
+    day: dict[str, Any],
+    portfolio_row: dict[str, Any],
+) -> dict[str, Any]:
+    """Rebuild one D-day benchmark solely from frozen members and ledger truth."""
+
+    candidates = [
+        {
+            "ts_code": item["symbol"],
+            "name": item["name"],
+            "rank": item["rank"],
+            "features": item.get("features", {}),
+            "source_ranks": item.get("source_ranks", {}),
+        }
+        for item in day["candidates"]
+    ]
+    outcomes = {
+        item["symbol"]: {
+            "is_final": item["is_final"],
+            "net_return_on_allocated": item["net_return"],
+        }
+        for item in portfolio_row["candidates"]
+    }
+    payload = build_batch_benchmarks(
+        day["decision_date"],
+        candidates,
+        outcomes,
+        source_table_sizes=_frozen_source_table_sizes(
+            day.get("source_snapshots", [])
+        ),
+    )
+    payload["decision_date"] = day["decision_date"]
+    return payload
+
+
+def _frozen_source_table_sizes(snapshots: Any) -> dict[str, Any]:
+    """Extract immutable source display depths without inventing defaults."""
+
+    if not isinstance(snapshots, list):
+        return {}
+    result: dict[str, Any] = {}
+    for snapshot in snapshots:
+        if not isinstance(snapshot, dict):
+            continue
+        source_id = snapshot.get("source_id")
+        if not isinstance(source_id, str) or not source_id:
+            continue
+        if source_id in result:
+            raise ValueError(f"duplicate frozen source snapshot: {source_id}")
+        if "row_count" in snapshot:
+            result[source_id] = snapshot["row_count"]
+    return result
+
+
 def build_dashboard(
     state: dict[str, Any],
     issues: list[dict[str, Any]],
@@ -627,6 +682,7 @@ def build_dashboard(
     days: list[dict[str, Any]] = []
     rank_daily: list[dict[str, Any]] = []
     portfolio_daily: list[dict[str, Any]] = []
+    benchmark_daily: list[dict[str, Any]] = []
     for signal in sorted(state["signals"], key=lambda item: item["decision_date"]):
         candidates = signal.get("candidates", [])
         slots: dict[str, Any] = {}
@@ -761,6 +817,22 @@ def build_dashboard(
                 "candidates": portfolio_candidates,
             }
         )
+        benchmark = build_batch_benchmarks(
+            signal["decision_date"],
+            candidates,
+            {
+                item["symbol"]: {
+                    "is_final": item["is_final"],
+                    "net_return_on_allocated": item["net_return"],
+                }
+                for item in portfolio_candidates
+            },
+            source_table_sizes=_frozen_source_table_sizes(
+                signal.get("source_snapshots", [])
+            ),
+        )
+        benchmark["decision_date"] = iso_date(signal["decision_date"])
+        benchmark_daily.append(benchmark)
         rank_daily.append(
             {
                 "date": iso_date(signal["exit_date"]),
@@ -837,6 +909,7 @@ def build_dashboard(
         "days": days,
         "rank_daily": rank_daily,
         "portfolio_daily": portfolio_daily,
+        "benchmark_daily": benchmark_daily,
     }
 
 
@@ -1245,6 +1318,31 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
         for field in ("final_days", "pending_days", "is_provisional"):
             if actual.get(field) != expected[field]:
                 raise ValueError(f"portfolio monthly {field} mismatch")
+
+    benchmark_daily = payload.get("benchmark_daily")
+    if not isinstance(benchmark_daily, list) or len(benchmark_daily) != len(
+        payload["days"]
+    ):
+        raise ValueError("benchmark_daily must contain exactly one row per signal")
+    if [row.get("decision_date") for row in benchmark_daily] != sorted(
+        days_by_decision_date
+    ):
+        raise ValueError("benchmark_daily must be uniquely ordered by decision_date")
+    portfolio_by_decision_date = {
+        row["decision_date"]: row for row in portfolio_daily
+    }
+    for actual in benchmark_daily:
+        decision_date = actual.get("decision_date")
+        day = days_by_decision_date.get(decision_date)
+        portfolio_row = portfolio_by_decision_date.get(decision_date)
+        if day is None or portfolio_row is None:
+            raise ValueError("benchmark row is not linked to its exact D-day cohort")
+        expected = _batch_benchmark_from_dashboard_rows(day, portfolio_row)
+        if actual != expected:
+            raise ValueError(
+                "benchmark row must be recomputed from the exact frozen cohort "
+                "and final ledger returns"
+            )
 
     expected_months = sorted(
         {

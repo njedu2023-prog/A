@@ -149,6 +149,42 @@ function badge(status, title) {
   return element;
 }
 
+function outputAutomationCopy(run, fallbackCompletedAt) {
+  const scheduled = run.scheduled_local_time || "21:30";
+  const completedAt = run.last_completed_at || fallbackCompletedAt;
+  if (!run.last_attempted_at && !completedAt) {
+    return `名单 ${scheduled} · 待首次执行`;
+  }
+  const result = run.status === "COMPLETED"
+    ? "已完成"
+    : statusText(run.status || "INPUT_BLOCKED");
+  const timestamp = completedAt || run.last_attempted_at;
+  return `名单 ${scheduled} · ${result} · ${formatUpdatedAt(timestamp)}`;
+}
+
+function validationAutomationCopy(run) {
+  const scheduled = run.scheduled_local_time || "19:00";
+  const timestamp = run.last_completed_at || run.last_attempted_at;
+  if (!timestamp) return `验证 ${scheduled} · 待首次执行`;
+  const hasBatchCounts = ["due", "final", "pending_data", "delayed", "failed"]
+    .every((field) => Number.isInteger(run[field]) && run[field] >= 0);
+  if (!hasBatchCounts) {
+    return `验证 ${scheduled} · 已执行 · ${formatUpdatedAt(timestamp)}`;
+  }
+  if (run.result_status === "SUCCESS_NO_DUE") {
+    return `验证 ${scheduled} · 已执行 · 到期 0 · ${formatUpdatedAt(timestamp)}`;
+  }
+  return [
+    `验证 ${scheduled}`,
+    `到期 ${run.due}`,
+    `完成 ${run.final}`,
+    `待数据 ${run.pending_data}`,
+    `延期 ${run.delayed}`,
+    `失败 ${run.failed}`,
+    formatUpdatedAt(timestamp)
+  ].join(" · ");
+}
+
 function reasonText(reason) {
   if (!reason) return "";
   const labels = {
@@ -382,18 +418,18 @@ function renderStatus() {
   const validationRun = automation.validation || {};
   const outputAt = outputRun.last_completed_at || (run.completed === true ? run.completed_at : null);
   const validationAt = validationRun.last_completed_at;
-  automationRow.append(
-    node(
-      "span",
-      `名单 ${outputRun.scheduled_local_time || "21:30"} · ${outputAt ? `最近 ${formatUpdatedAt(outputAt)}` : "待首次执行"}`,
-      "automation-meta-text"
-    ),
-    node(
-      "span",
-      `验证 ${validationRun.scheduled_local_time || "19:00"} · ${validationAt ? `最近 ${formatUpdatedAt(validationAt)}` : "待首次执行"}`,
-      "automation-meta-text"
-    )
+  const outputAutomation = node(
+    "span",
+    outputAutomationCopy(outputRun, outputAt),
+    "automation-meta-text automation-output"
   );
+  const validationAutomation = node(
+    "span",
+    validationAutomationCopy(validationRun),
+    `automation-meta-text automation-validation ${validationRun.result_status === "DEGRADED" ? "degraded" : ""}`
+  );
+  if (validationRun.batch_error) validationAutomation.title = validationRun.batch_error;
+  automationRow.append(outputAutomation, validationAutomation);
   meta.append(summaryRow, automationRow, sourceRow);
   container.append(copy, meta);
 }

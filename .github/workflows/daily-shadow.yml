@@ -72,14 +72,23 @@ jobs:
         env:
           SHOULD_DEPLOY: ${{ github.event_name != 'schedule' || steps.market-day.outputs.is_open == 'true' }}
         run: echo "should_deploy=$SHOULD_DEPLOY" >> "$GITHUB_OUTPUT"
+      - name: Capture automated batch start
+        id: batch-start
+        if: ${{ github.event_name != 'push' }}
+        run: echo "started_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
       - name: Validate due shadow records without loading the three sources
         if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 11 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'validation') }}
         run: python -m three_table_quant.scheduled_validation --config config/system.json
       - name: Self-check validation result before publication
         if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 11 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'validation') }}
-        run: python -m three_table_quant.batch_result --mode validation --dashboard data/dashboard.v1.json
+        run: >-
+          python -m three_table_quant.batch_result
+          --mode validation
+          --dashboard data/dashboard.v1.json
+          --market-date "${{ steps.market-day.outputs.market_date }}"
+          --started-at "${{ steps.batch-start.outputs.started_at }}"
       - name: Wait for aligned sources and run fail-closed output pipeline
-        if: ${{ github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '30 13 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'output') }}
+        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '30 13 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'output') }}
         env:
           TARGET_DECISION_DATE: ${{ github.event_name == 'schedule' && steps.market-day.outputs.market_date || '' }}
         run: >-
@@ -89,7 +98,7 @@ jobs:
           --interval-seconds 300
           --target-decision-date "$TARGET_DECISION_DATE"
       - name: Self-check output result before publication
-        if: ${{ github.event_name == 'push' || (github.event_name == 'schedule' && github.event.schedule == '30 13 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'output') }}
+        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '30 13 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'output') }}
         env:
           TARGET_DECISION_DATE: ${{ github.event_name == 'schedule' && steps.market-day.outputs.market_date || '' }}
         run: >-
@@ -97,8 +106,9 @@ jobs:
           --mode output
           --dashboard data/dashboard.v1.json
           --target-decision-date "$TARGET_DECISION_DATE"
+          --started-at "${{ steps.batch-start.outputs.started_at }}"
       - name: Publish generated data in one API commit
-        if: ${{ steps.publish-policy.outputs.should_deploy == 'true' }}
+        if: ${{ steps.publish-policy.outputs.should_deploy == 'true' && github.event_name != 'push' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-

@@ -153,6 +153,20 @@ main {
   font-size: 10px;
   font-weight: 570;
 }
+.status-meta-automation {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.status-meta-automation .automation-meta-text + .automation-meta-text::before {
+  content: "｜";
+  margin-right: 5px;
+  color: #aab1ac;
+  font-weight: 400;
+}
+.automation-meta-text.degraded {
+  color: #a35921;
+  font-weight: 680;
+}
 .panel-head {
   min-height: 58px;
   padding: 13px 16px 10px;
@@ -572,6 +586,13 @@ footer {
   .status-meta-row {
     flex-wrap: wrap;
     justify-content: flex-start;
+  }
+  .status-meta-automation {
+    display: grid;
+    gap: 3px;
+  }
+  .status-meta-automation .automation-meta-text + .automation-meta-text::before {
+    content: none;
   }
   .panel-head {
     min-height: 52px;

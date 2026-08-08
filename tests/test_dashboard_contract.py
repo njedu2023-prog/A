@@ -24,8 +24,12 @@ def make_signal(
                 "name": f"票{rank}",
                 "rank": rank,
                 "metrics": {"utility_score": 0.01, "policy_trade_eligible": True},
-                "features": {},
-                "source_ranks": {},
+                "features": {"rank_borda": 1.0 - rank / 10.0},
+                "source_ranks": {
+                    "a_top10": rank,
+                    "premium_top10": rank,
+                    "decision_table": rank,
+                },
                 "action": "SHADOW",
                 "action_reason": "test",
             }
@@ -375,6 +379,123 @@ class DashboardContractTests(unittest.TestCase):
         self.assertIsNone(payload["portfolio_metrics"]["cumulative_return"])
         self.assertEqual(payload["portfolio_metrics"]["final_days"], 0)
         self.assertEqual(payload["portfolio_metrics"]["pending_days"], 1)
+        benchmark = payload["benchmark_daily"][0]
+        self.assertEqual(benchmark["cohort_count"], 4)
+        self.assertIsNone(
+            benchmark["policies"]["all_candidates_equal_weight"][
+                "portfolio_return"
+            ]
+        )
+        self.assertIsNone(
+            benchmark["policies"]["model_top3_equal_weight"][
+                "portfolio_return"
+            ]
+        )
+
+    def test_benchmarks_recompute_from_exact_cohort_and_final_ledger(self) -> None:
+        item = make_signal(
+            "20260827",
+            "20260828",
+            "20260831",
+            candidate_count=4,
+        )
+        # Deliberately make Borda disagree with the frozen model order.
+        for candidate, borda in zip(
+            item["candidates"],
+            (0.10, 0.90, 0.80, 0.70),
+            strict=True,
+        ):
+            candidate["features"]["rank_borda"] = borda
+        trades = []
+        for rank, value in enumerate((0.10, -0.04, 0.02, 0.06), start=1):
+            trade = make_trade(item, "CLOSED", rank=rank)
+            trade["buy"] = {"filled_qty": 1000, "amount": 10000.0, "fees": 5.0}
+            trade["exit"] = {
+                "remaining_qty": 0,
+                "actual_exit_date": "20260901",
+            }
+            trade["pnl"] = {"net_return_on_allocated": value}
+            trades.append(trade)
+        payload = build_dashboard(
+            {"signals": [item], "trades": trades},
+            [],
+            "2026-09-01T12:00:00+08:00",
+            {"status": "RANKED"},
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+
+        benchmark = payload["benchmark_daily"][0]
+        self.assertEqual(benchmark["model_order"], [
+            "600001.SH", "600002.SH", "600003.SH", "600004.SH"
+        ])
+        self.assertEqual(benchmark["borda_order"], [
+            "600002.SH", "600003.SH", "600004.SH", "600001.SH"
+        ])
+        self.assertAlmostEqual(
+            benchmark["policies"]["all_candidates_equal_weight"][
+                "portfolio_return"
+            ],
+            0.035,
+        )
+        self.assertAlmostEqual(
+            benchmark["policies"]["model_top2_equal_weight"][
+                "portfolio_return"
+            ],
+            0.03,
+        )
+        self.assertAlmostEqual(
+            benchmark["policies"]["borda_top2_equal_weight"][
+                "portfolio_return"
+            ],
+            -0.01,
+        )
+
+        payload["benchmark_daily"][0]["cohort_count"] = 3
+        with self.assertRaisesRegex(ValueError, "exact frozen cohort"):
+            validate_dashboard(payload)
+
+    def test_legacy_borda_receives_unequal_depths_from_frozen_snapshots(self) -> None:
+        item = make_signal(
+            "20260827",
+            "20260828",
+            "20260831",
+            candidate_count=2,
+        )
+        item["source_snapshots"] = [
+            {"source_id": "a_top10", "row_count": 10},
+            {"source_id": "premium_top10", "row_count": 6},
+            {"source_id": "decision_table", "row_count": 4},
+        ]
+        for candidate, ranks in zip(
+            item["candidates"],
+            ((1, 1, 1), (2, 3, 4)),
+            strict=True,
+        ):
+            candidate["features"] = {}
+            candidate["source_ranks"] = dict(
+                zip(
+                    ("a_top10", "premium_top10", "decision_table"),
+                    ranks,
+                    strict=True,
+                )
+            )
+        payload = build_dashboard(
+            {
+                "signals": [item],
+                "trades": [make_trade(item, rank=1), make_trade(item, rank=2)],
+            },
+            [],
+            "2026-08-31T12:00:00+08:00",
+            {"status": "RANKED"},
+            [1, 2, 3],
+        )
+        validate_dashboard(payload)
+        benchmark = payload["benchmark_daily"][0]
+        first = benchmark["policies"]["fixed_model_rank_1"]["constituents"][0]
+        second = benchmark["policies"]["fixed_model_rank_2"]["constituents"][0]
+        self.assertAlmostEqual(first["borda_score"], 1.0)
+        self.assertAlmostEqual(second["borda_score"], 14 / 20)
 
     def test_complete_portfolio_is_equal_weighted_and_uses_last_completion_month(self) -> None:
         item = make_signal(
