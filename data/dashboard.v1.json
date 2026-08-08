@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-07T23:09:02+08:00",
+  "generated_at": "2026-08-08T17:20:15+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -43,11 +43,11 @@
   },
   "current_run": {
     "status": "RANKED",
-    "message": "三表严格交集实际保留4支并完成重新排序",
+    "message": "D日信号已冻结；保留4支候选且不事后改写",
     "completed": true,
-    "completed_at": "2026-08-07T23:09:02+08:00",
+    "completed_at": "2026-08-08T17:20:15+08:00",
     "decision_date": "2026-08-07",
-    "outcome": "COMPLETED_RANKED",
+    "outcome": "COMPLETED_FROZEN_SIGNAL",
     "source_table_counts": {
       "a_top10": 10,
       "premium_top10": 10,
@@ -97,9 +97,10 @@
       "required_lockbox_days": 126,
       "promotion_eligible": false,
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
-      "training_row_count": 1,
+      "training_row_count": 5,
       "excluded_feature_row_count": 3
-    }
+    },
+    "live_intersection_count": 4
   },
   "source_issues": [
     {
@@ -173,10 +174,44 @@
       }
     },
     {
+      "code": "SOURCE_REVISION_AFTER_FREEZE",
+      "severity": "warning",
+      "source_id": "aggregate",
+      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
+      "details": {
+        "frozen_codes": [
+          "002194.SZ",
+          "600206.SH",
+          "600272.SH",
+          "603228.SH"
+        ],
+        "live_codes": [
+          "002194.SZ",
+          "600206.SH",
+          "600272.SH",
+          "603228.SH"
+        ],
+        "changed_sources": {
+          "decision_table": {
+            "frozen_content_sha256": "1c211f9279bc93c766174e1a65e3d757647608538753eda2982970e4ddfa940f",
+            "live_content_sha256": "1c211f9279bc93c766174e1a65e3d757647608538753eda2982970e4ddfa940f",
+            "frozen_repository_commit_sha": "d56aeb9f6e2a37cc3d0cd853299dd5139291cca2",
+            "live_repository_commit_sha": "4d66e9e6bfed4303bec71c955119b207ddfa48e9"
+          },
+          "premium_top10": {
+            "frozen_content_sha256": "c47bb06ad317f7f8944eb0cf8cbe6ecb71f6701cae23123e769440233a12bb55",
+            "live_content_sha256": "c47bb06ad317f7f8944eb0cf8cbe6ecb71f6701cae23123e769440233a12bb55",
+            "frozen_repository_commit_sha": "d56aeb9f6e2a37cc3d0cd853299dd5139291cca2",
+            "live_repository_commit_sha": "4d66e9e6bfed4303bec71c955119b207ddfa48e9"
+          }
+        }
+      }
+    },
+    {
       "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "Eastmoney 行情不可用或已跳闸；3 支股票已聚合切换至腾讯只读行情",
+      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
       "details": {
         "primary_provider": "EASTMONEY",
         "fallback_provider": "TENCENT",
@@ -185,13 +220,7 @@
           "600272.SH",
           "603228.SH"
         ],
-        "request_types": [
-          "daily"
-        ],
-        "event_count": 3,
-        "successful_event_count": 3,
-        "failed_event_count": 0,
-        "circuit_open": true
+        "persisted_with_frozen_signal": true
       }
     }
   ],
@@ -3482,5 +3511,19 @@
         }
       ]
     }
-  ]
+  ],
+  "automation_runs": {
+    "validation": {
+      "scheduled_local_time": "15:20",
+      "last_attempted_at": null,
+      "last_completed_at": null,
+      "status": "PENDING_FIRST_RUN"
+    },
+    "output": {
+      "scheduled_local_time": "21:30",
+      "last_attempted_at": "2026-08-08T17:20:15+08:00",
+      "status": "COMPLETED",
+      "last_completed_at": "2026-08-08T17:20:15+08:00"
+    }
+  }
 }
