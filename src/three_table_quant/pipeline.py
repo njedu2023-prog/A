@@ -378,6 +378,7 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
     config = load_config(config_path)
     paths = config["paths"]
     state = load_state(paths["state"])
+    previous_dashboard = load_json(paths["dashboard"], {})
     truth = load_json(
         paths["execution_truth"],
         {"schema_version": "execution_truth_v1", "auctions": {}},
@@ -556,6 +557,33 @@ def run_pipeline(config_path: str | Path = "config/system.json") -> dict[str, An
         current_run,
         list(config["tracked_ranks"]),
     )
+    previous_runs = previous_dashboard.get("automation_runs")
+    automation_runs = dict(previous_runs) if isinstance(previous_runs, dict) else {}
+    validation_run = automation_runs.get("validation")
+    if not isinstance(validation_run, dict):
+        validation_run = {
+            "scheduled_local_time": "15:20",
+            "last_attempted_at": None,
+            "last_completed_at": None,
+            "status": "PENDING_FIRST_RUN",
+        }
+    output_run = automation_runs.get("output")
+    output_run = dict(output_run) if isinstance(output_run, dict) else {}
+    output_run.update(
+        {
+            "scheduled_local_time": "21:30",
+            "last_attempted_at": generated_at,
+            "status": "COMPLETED" if current_run["completed"] else current_run["status"],
+        }
+    )
+    if current_run["completed"]:
+        output_run["last_completed_at"] = generated_at
+    else:
+        output_run.setdefault("last_completed_at", None)
+    dashboard["automation_runs"] = {
+        "validation": validation_run,
+        "output": output_run,
+    }
     validate_dashboard(dashboard)
     save_json(paths["state"], state)
     save_json(paths["source_issues"], issue_payload)

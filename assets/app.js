@@ -2,6 +2,7 @@
 
 const $ = (id) => document.getElementById(id);
 const colors = {1: "#16865f", 2: "#4e7195", 3: "#a0844c"};
+const MIN_TREND_POINTS = 5;
 let model = null;
 
 function node(tag, text, className) {
@@ -363,6 +364,7 @@ function renderStatus() {
   copy.append(node("h2", title, "status-title"));
   const meta = node("div", null, "status-meta");
   const summaryRow = node("div", null, "status-meta-row status-meta-summary");
+  const automationRow = node("div", null, "status-meta-row status-meta-automation");
   const sourceRow = node("div", null, "status-meta-row status-meta-sources");
   summaryRow.append(badge(run.status), node("span", `实际交集 ${run.intersection_count ?? "—"} 支`, "pill"));
   if (run.completed_at) {
@@ -375,7 +377,24 @@ function renderStatus() {
   );
   const dates = run.source_dates || {};
   Object.entries(dates).forEach(([source, value]) => sourceRow.append(node("span", `${source} · D ${value.D || "—"}`, "pill")));
-  meta.append(summaryRow, sourceRow);
+  const automation = model.automation_runs || {};
+  const outputRun = automation.output || {};
+  const validationRun = automation.validation || {};
+  const outputAt = outputRun.last_completed_at || (run.completed === true ? run.completed_at : null);
+  const validationAt = validationRun.last_completed_at;
+  automationRow.append(
+    node(
+      "span",
+      `名单 ${outputRun.scheduled_local_time || "21:30"} · ${outputAt ? `最近 ${formatUpdatedAt(outputAt)}` : "待首次执行"}`,
+      "automation-meta-text"
+    ),
+    node(
+      "span",
+      `验证 ${validationRun.scheduled_local_time || "15:20"} · ${validationAt ? `最近 ${formatUpdatedAt(validationAt)}` : "待首次执行"}`,
+      "automation-meta-text"
+    )
+  );
+  meta.append(summaryRow, automationRow, sourceRow);
   container.append(copy, meta);
 }
 
@@ -405,17 +424,36 @@ function periodStats(rank) {
   };
 }
 
-function verificationLabel(stats) {
-  if (!stats.hasRows) return "暂无记录";
-  if (!stats.finalDays) return `待验证 · ${stats.pendingDays}日`;
-  if (stats.pendingDays) return `暂定 · ${stats.pendingDays}日待完成`;
-  return "已最终";
+function settlementState(stats) {
+  if (!stats.hasRows) return {label: "暂无记录", className: "empty"};
+  if (!stats.finalDays) return {label: "待结算", className: "pending"};
+  if (stats.pendingDays) return {label: "暂定", className: "provisional"};
+  return {label: "已结算", className: "final"};
 }
 
 function addMetricRow(card, label, value) {
   const row = node("div", null, "metric-row");
   row.append(node("span", label), node("span", value));
   card.append(row);
+}
+
+function addCardHeader(card, title, stats) {
+  const state = settlementState(stats);
+  const header = node("div", null, "metric-card-head");
+  header.append(
+    node("span", title, "card-label top-rank-label"),
+    node("span", state.label, `settlement-badge ${state.className}`)
+  );
+  card.append(header);
+}
+
+function createMetricGroup(title, description, gridClass) {
+  const group = node("section", null, "metric-group");
+  const head = node("div", null, "metric-group-head");
+  head.append(node("h3", title), node("span", description));
+  const grid = node("div", null, `rank-card-grid ${gridClass}`);
+  group.append(head, grid);
+  return {group, grid};
 }
 
 function portfolioPeriodStats() {
@@ -443,19 +481,37 @@ function portfolioPeriodStats() {
 function renderRankCards() {
   const container = $("rankCards");
   container.replaceChildren();
+  const monthLabel = selectedMonth() || "所选月";
+  const scope = $("overviewScope");
+  const settledDates = selectedRows().flatMap((row) => [1, 2, 3]
+    .map((rank) => row.ranks?.[String(rank)])
+    .filter((item) => item?.is_final === true && finite(item.daily_return))
+    .map((item) => item.return_date));
+  const settledThrough = settledDates.sort().at(-1) || "暂无已结算记录";
+  scope.textContent = `统计月份 ${monthLabel} · 统计截至 ${settledThrough} · 累计收益仅包含已结算批次，待结算结果不计入当前收益`;
+
+  const ranks = createMetricGroup(
+    "固定名次策略",
+    "每个D日的TOP1 / TOP2 / TOP3分别复利统计",
+    "rank-strategy-grid"
+  );
   [1, 2, 3].forEach((rank) => {
     const all = model.rank_metrics?.[String(rank)] || {};
     const month = periodStats(rank);
     const card = node("article", null, `rank-card rank-${rank}`);
-    card.append(node("span", `TOP${rank}`, "card-label top-rank-label"), node("strong", pct(month.value), tone(month.value)));
-    addMetricRow(card, "月度状态", verificationLabel(month));
+    addCardHeader(card, `TOP${rank}`, month);
+    card.append(
+      node("span", `${monthLabel}累计收益`, "metric-name"),
+      node("strong", pct(month.value), tone(month.value))
+    );
+    addMetricRow(card, "已结算 / 待结算", `${month.finalDays}日 / ${month.pendingDays}日`);
     const allLabel = !finite(all.cumulative_return)
       ? "待验证"
-      : `${pct(all.cumulative_return)}${all.is_provisional ? " · 暂定" : ""}`;
-    addMetricRow(card, "成立以来", allLabel);
-    addMetricRow(card, "最终 / 未完成", `${all.final_days || 0} / ${all.pending_days || 0}`);
-    container.append(card);
+      : `${pct(all.cumulative_return)}${all.is_provisional ? "（暂定）" : ""}`;
+    addMetricRow(card, "历史累计收益", allLabel);
+    ranks.grid.append(card);
   });
+  container.append(ranks.group);
 
   const metrics = model.portfolio_metrics || {};
   const history = {
@@ -465,36 +521,109 @@ function renderRankCards() {
     hasRows: Array.isArray(metrics.history) ? metrics.history.length > 0 : portfolioDaily().length > 0,
     isProvisional: metrics.is_provisional === true
   };
+  const portfolios = createMetricGroup(
+    "全部候选等权组合",
+    "每日实际交集候选等权统计",
+    "portfolio-strategy-grid"
+  );
   const historyCard = node("article", null, "rank-card portfolio-card");
-  historyCard.append(node("span", "全部候选 · 历史累计总收益", "card-label top-rank-label"), node("strong", pct(history.value), tone(history.value)));
-  addMetricRow(historyCard, "组合口径", "全部交集候选等额");
-  addMetricRow(historyCard, "统计状态", verificationLabel(history));
-  addMetricRow(historyCard, "最终 / 未完成", `${history.finalDays} / ${history.pendingDays}`);
-  container.append(historyCard);
+  addCardHeader(historyCard, "全部候选 · 历史", history);
+  historyCard.append(
+    node("span", "历史累计收益", "metric-name"),
+    node("strong", pct(history.value), tone(history.value))
+  );
+  addMetricRow(historyCard, "已结算 / 待结算", `${history.finalDays}日 / ${history.pendingDays}日`);
+  const dataMonths = availableMonths();
+  const historyRange = dataMonths.length === 1
+    ? `当前仅含 ${dataMonths[0]}`
+    : dataMonths.length > 1
+      ? `${dataMonths.at(-1)} 至 ${dataMonths[0]}`
+      : "暂无有效数据";
+  addMetricRow(historyCard, "数据范围", historyRange);
+  portfolios.grid.append(historyCard);
 
   const month = selectedMonth();
   const computed = portfolioPeriodStats();
   const monthMetric = metrics.by_month?.[month] || {};
   const monthValue = finite(monthMetric.cumulative_return) ? Number(monthMetric.cumulative_return) : computed.value;
   const monthFinalDays = Number(monthMetric.final_days ?? computed.finalDays);
+  const monthStats = {...computed, finalDays: monthFinalDays};
   const monthCard = node("article", null, "rank-card portfolio-card month");
-  monthCard.append(node("span", `全部候选 · ${month || "所选月"}累计总收益`, "card-label top-rank-label"), node("strong", pct(monthValue), tone(monthValue)));
-  addMetricRow(monthCard, "组合口径", "每日等额 · 按退出日");
-  addMetricRow(monthCard, "统计状态", verificationLabel({...computed, finalDays: monthFinalDays}));
-  addMetricRow(monthCard, "最终 / 未完成", `${monthFinalDays} / ${computed.pendingDays}`);
-  container.append(monthCard);
+  addCardHeader(monthCard, `全部候选 · ${monthLabel}`, monthStats);
+  monthCard.append(
+    node("span", "月度累计收益", "metric-name"),
+    node("strong", pct(monthValue), tone(monthValue))
+  );
+  addMetricRow(monthCard, "已结算 / 待结算", `${monthFinalDays}日 / ${computed.pendingDays}日`);
+  addMetricRow(monthCard, "收益归属", "按实际退出日");
+  portfolios.grid.append(monthCard);
+  container.append(portfolios.group);
+}
+
+function renderComparisonChart(container, rankStats) {
+  const values = rankStats.map(({stats}) => stats.value).filter(finite).map(Number);
+  if (!values.length) {
+    container.classList.add("is-empty");
+    container.append(node("div", "所选月份只有待结算记录，收益对比将在形成最终结果后显示。", "empty"));
+    return;
+  }
+  container.classList.add("comparison-chart");
+  const maxAbs = Math.max(...values.map(Math.abs), 0.01);
+  const rows = node("div", null, "comparison-rows");
+  rankStats.forEach(({rank, stats}) => {
+    const row = node("div", null, "comparison-row");
+    const label = node("span", `TOP${rank}`, "comparison-label");
+    const track = node("div", null, "comparison-track");
+    if (finite(stats.value)) {
+      const value = Number(stats.value);
+      const bar = node("span", null, `comparison-bar ${value >= 0 ? "gain" : "loss"}`);
+      bar.style.width = `${Math.max(1.5, Math.abs(value) / maxAbs * 48)}%`;
+      bar.style.backgroundColor = colors[rank];
+      track.append(bar);
+    }
+    const valueLabel = node("strong", pct(stats.value), tone(stats.value));
+    row.append(label, track, valueLabel);
+    rows.append(row);
+  });
+  const scale = node("div", null, "comparison-scale");
+  scale.append(node("span", pct(-maxAbs)), node("span", "0%"), node("span", pct(maxAbs)));
+  container.append(rows, scale);
+  container.setAttribute(
+    "aria-label",
+    rankStats.map(({rank, stats}) => `TOP${rank}${pct(stats.value)}`).join("，")
+  );
 }
 
 function renderChart() {
   const rows = selectedRows();
   const container = $("chart");
+  const title = $("chartTitle");
+  const note = $("chartNote");
+  const legend = $("chartLegend");
+  const monthLabel = selectedMonth() || "所选月";
+  const rankStats = [1, 2, 3].map((rank) => ({rank, stats: periodStats(rank)}));
+  const settledMinimum = Math.min(...rankStats.map(({stats}) => stats.finalDays));
   container.replaceChildren();
-  container.classList.remove("is-empty");
+  container.className = "chart";
   if (!rows.length) {
+    title.textContent = `${monthLabel}收益统计`;
+    note.textContent = "";
+    legend.hidden = true;
     container.classList.add("is-empty");
     container.append(node("div", "所选月份暂无可绘制记录", "empty"));
     return;
   }
+  if (settledMinimum < MIN_TREND_POINTS) {
+    title.textContent = `${monthLabel}累计收益对比`;
+    note.textContent = `已结算样本少于${MIN_TREND_POINTS}期，暂不绘制趋势`;
+    legend.hidden = true;
+    renderComparisonChart(container, rankStats);
+    return;
+  }
+  title.textContent = `${monthLabel}累计收益曲线（仅已结算）`;
+  note.textContent = "";
+  legend.hidden = false;
+  container.setAttribute("aria-label", "TOP1、TOP2、TOP3的已结算累计收益曲线");
   const width = 1000;
   const height = 190;
   const left = 48;
@@ -506,7 +635,7 @@ function renderChart() {
   rows.forEach((row) => {
     [1, 2, 3].forEach((rank) => {
       const item = row.ranks?.[String(rank)];
-      if (!item) return;
+      if (!item || item.is_final !== true || !finite(item.daily_return)) return;
       const key = `${item.return_date}|${row.decision_date}`;
       axisByKey.set(key, {key, date: item.return_date, decisionDate: row.decision_date});
       events[rank].set(key, item);
@@ -517,18 +646,10 @@ function renderChart() {
   const values = [];
   [1, 2, 3].forEach((rank) => {
     let nav = 1;
-    let started = false;
-    let gap = false;
     series[rank] = axis.map((point) => {
       const item = events[rank].get(point.key);
-      if (!item) return started && !gap ? nav : null;
-      started = true;
-      if (item.is_final !== true || !finite(item.daily_return)) {
-        gap = true;
-        return null;
-      }
+      if (!item || item.is_final !== true || !finite(item.daily_return)) return null;
       nav *= 1 + Number(item.daily_return);
-      gap = false;
       values.push(nav);
       return nav;
     });
@@ -562,6 +683,15 @@ function renderChart() {
     label.textContent = pct(value - 1);
     svg.append(line, label);
   });
+  if (min <= 1 && max >= 1) {
+    const baseline = document.createElementNS(svg.namespaceURI, "line");
+    baseline.setAttribute("x1", left);
+    baseline.setAttribute("x2", width - right);
+    baseline.setAttribute("y1", y(1));
+    baseline.setAttribute("y2", y(1));
+    baseline.setAttribute("class", "baseline");
+    svg.append(baseline);
+  }
   [1, 2, 3].forEach((rank) => {
     const segments = [];
     let segment = [];
@@ -575,22 +705,23 @@ function renderChart() {
     });
     if (segment.length) segments.push(segment);
     segments.forEach((points) => {
-      if (points.length === 1) {
+      if (points.length > 1) {
+        const path = document.createElementNS(svg.namespaceURI, "polyline");
+        path.setAttribute("fill", "none");
+        path.setAttribute("stroke", colors[rank]);
+        path.setAttribute("stroke-width", "2");
+        path.setAttribute("stroke-linejoin", "round");
+        path.setAttribute("points", points.map((point) => `${x(point.index)},${y(point.value)}`).join(" "));
+        svg.append(path);
+      }
+      points.forEach((point) => {
         const marker = document.createElementNS(svg.namespaceURI, "circle");
-        marker.setAttribute("cx", x(points[0].index));
-        marker.setAttribute("cy", y(points[0].value));
+        marker.setAttribute("cx", x(point.index));
+        marker.setAttribute("cy", y(point.value));
         marker.setAttribute("r", "3");
         marker.setAttribute("fill", colors[rank]);
         svg.append(marker);
-        return;
-      }
-      const path = document.createElementNS(svg.namespaceURI, "polyline");
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", colors[rank]);
-      path.setAttribute("stroke-width", "2");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("points", points.map((point) => `${x(point.index)},${y(point.value)}`).join(" "));
-      svg.append(path);
+      });
     });
   });
   const start = document.createElementNS(svg.namespaceURI, "text");

@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <title>汇集量化影子验证</title>
-  <link rel="stylesheet" href="./assets/styles.css?v=20260807-1">
+  <link rel="stylesheet" href="./assets/styles.css?v=20260808-1">
 </head>
 <body>
   <header class="topbar">
@@ -25,16 +25,20 @@
       <summary class="panel-head overview-summary">
         <div><h2>收益概览</h2></div>
         <span class="overview-summary-meta">
-          <span class="muted">固定前三名独立统计 · 全部候选等额统计</span>
+          <span class="muted">仅计已结算收益 · 待结算不计入当前收益</span>
           <span class="ledger-toggle overview-toggle" aria-hidden="true"></span>
         </span>
       </summary>
+      <p id="overviewScope" class="overview-scope"></p>
       <div id="rankCards" class="rank-cards"></div>
       <div class="chart-head">
-        <span>第1 / 2 / 3名独立净值</span>
-        <span class="chart-legend"><i class="dot rank-one"></i>第1名 <i class="dot rank-two"></i>第2名 <i class="dot rank-three"></i>第3名</span>
+        <span id="chartTitle">TOP1 / TOP2 / TOP3收益对比</span>
+        <span class="chart-meta">
+          <span id="chartNote"></span>
+          <span id="chartLegend" class="chart-legend"><i class="dot rank-one"></i>TOP1 <i class="dot rank-two"></i>TOP2 <i class="dot rank-three"></i>TOP3</span>
+        </span>
       </div>
-      <div id="chart" class="chart" role="img" aria-label="三个固定名次的独立净值曲线"></div>
+      <div id="chart" class="chart" role="img" aria-label="TOP1、TOP2、TOP3的收益统计"></div>
     </details>
 
     <section class="panel">
@@ -60,6 +64,6 @@
   </main>
 
   <footer>影子研究系统，不连接券商、不发送订单、不构成投资建议。影子成交统一按T日未复权开盘价计算。</footer>
-  <script src="./assets/app.js?v=20260807-1" defer></script>
+  <script src="./assets/app.js?v=20260808-1" defer></script>
 </body>
 </html>

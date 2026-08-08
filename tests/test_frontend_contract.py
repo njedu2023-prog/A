@@ -81,15 +81,73 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260807-1", source)
-        self.assertIn("app.js?v=20260807-1", source)
+        self.assertIn("styles.css?v=20260808-1", source)
+        self.assertIn("app.js?v=20260808-1", source)
+
+    def test_overview_uses_clear_settlement_copy(self) -> None:
+        page = Path("index.html").read_text(encoding="utf-8")
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        self.assertIn("仅计已结算收益", page)
+        self.assertIn("待结算不计入当前收益", page)
+        self.assertIn("累计收益仅包含已结算批次", script)
+        self.assertIn("已结算 / 待结算", script)
+        self.assertIn("历史累计收益", script)
+        self.assertIn("月度累计收益", script)
+        self.assertNotIn("月度状态", script)
+        self.assertNotIn("成立以来", script)
+        self.assertNotIn("最终 / 未完成", script)
+
+    def test_overview_separates_rank_and_portfolio_groups(self) -> None:
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        styles = Path("assets/styles.css").read_text(encoding="utf-8")
+        self.assertIn("固定名次策略", script)
+        self.assertIn("全部候选等权组合", script)
+        self.assertIn("每日实际交集候选等权统计", script)
+        self.assertIn("按实际退出日", script)
+        self.assertIn("当前仅含", script)
+        self.assertIn(".rank-strategy-grid", styles)
+        self.assertIn(".portfolio-strategy-grid", styles)
+
+    def test_overview_uses_comparison_bars_before_five_settled_batches(self) -> None:
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        styles = Path("assets/styles.css").read_text(encoding="utf-8")
+        self.assertIn("const MIN_TREND_POINTS = 5;", script)
+        self.assertIn("const settledMinimum = Math.min", script)
+        self.assertIn("if (settledMinimum < MIN_TREND_POINTS)", script)
+        self.assertIn("renderComparisonChart(container, rankStats);", script)
+        self.assertIn("暂不绘制趋势", script)
+        self.assertIn("comparison-track", script)
+        self.assertIn("0%", script)
+        self.assertIn(".comparison-track::after", styles)
+
+    def test_equity_chart_uses_only_final_points(self) -> None:
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        self.assertIn(
+            "if (!item || item.is_final !== true || !finite(item.daily_return)) return;",
+            script,
+        )
+        self.assertIn(
+            "if (!item || item.is_final !== true || !finite(item.daily_return)) return null;",
+            script,
+        )
+        self.assertNotIn("return started && !gap ? nav : null", script)
+        self.assertIn('baseline.setAttribute("class", "baseline");', script)
+
+    def test_overview_remains_collapsed_by_default(self) -> None:
+        source = Path("index.html").read_text(encoding="utf-8")
+        match = re.search(r'<details class="panel overview-panel"([^>]*)>', source)
+        self.assertIsNotNone(match)
+        self.assertNotIn("open", match.group(1).split())
 
     def test_status_metadata_is_split_into_summary_and_source_rows(self) -> None:
         script = Path("assets/app.js").read_text(encoding="utf-8")
         styles = Path("assets/styles.css").read_text(encoding="utf-8")
         self.assertIn("status-meta-row status-meta-summary", script)
+        self.assertIn("status-meta-row status-meta-automation", script)
         self.assertIn("status-meta-row status-meta-sources", script)
-        self.assertIn("meta.append(summaryRow, sourceRow);", script)
+        self.assertIn("meta.append(summaryRow, automationRow, sourceRow);", script)
+        self.assertIn('outputRun.scheduled_local_time || "21:30"', script)
+        self.assertIn('validationRun.scheduled_local_time || "15:20"', script)
         self.assertIn("white-space: nowrap;", styles)
         self.assertIn(".status-meta-row", styles)
 
@@ -117,17 +175,29 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn('ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选")', source)
         self.assertIn('count ? resultText(day.result, day.is_final) : "合法空选"', source)
 
-    def test_workflow_has_only_the_evening_schedule(self) -> None:
+    def test_workflow_has_separate_validation_and_output_batches(self) -> None:
         source = Path(".github/workflows/daily-shadow.yml").read_text(
             encoding="utf-8"
         )
         self.assertNotIn('cron: "20 3 * * 1-5"', source)
-        self.assertEqual(source.count("cron:"), 1)
+        self.assertEqual(source.count("cron:"), 2)
+        self.assertIn('cron: "20 7 * * 1-5"', source)
         self.assertIn('cron: "30 13 * * 1-5"', source)
         self.assertIn("timeout-minutes: 150", source)
+        self.assertIn("three_table_quant.scheduled_validation", source)
         self.assertIn("python -m three_table_quant.readiness", source)
         self.assertIn("--attempts 25", source)
         self.assertIn("--interval-seconds 300", source)
+        self.assertIn("cancel-in-progress: false", source)
+
+    def test_validation_schedule_is_after_t_close_gate(self) -> None:
+        workflow = Path(".github/workflows/daily-shadow.yml").read_text(
+            encoding="utf-8"
+        )
+        config = Path("config/system.json").read_text(encoding="utf-8")
+        self.assertIn('"t_validation_after_local_time": "15:10"', config)
+        self.assertIn('cron: "20 7 * * 1-5"', workflow)
+        self.assertIn("15:20 Asia/Shanghai", workflow)
 
     def test_workflow_keeps_one_curated_pages_publication_path(self) -> None:
         source = Path(".github/workflows/daily-shadow.yml").read_text(
