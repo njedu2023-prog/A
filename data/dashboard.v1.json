@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-08T17:53:52+08:00",
+  "generated_at": "2026-08-08T20:38:17+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -45,7 +45,7 @@
     "status": "RANKED",
     "message": "D日信号已冻结；保留4支候选且不事后改写",
     "completed": true,
-    "completed_at": "2026-08-08T17:53:52+08:00",
+    "completed_at": "2026-08-08T20:38:17+08:00",
     "decision_date": "2026-08-07",
     "outcome": "COMPLETED_FROZEN_SIGNAL",
     "source_table_counts": {
@@ -3521,9 +3521,9 @@
     },
     "output": {
       "scheduled_local_time": "21:30",
-      "last_attempted_at": "2026-08-08T17:53:52+08:00",
+      "last_attempted_at": "2026-08-08T20:38:17+08:00",
       "status": "COMPLETED",
-      "last_completed_at": "2026-08-08T17:53:52+08:00"
+      "last_completed_at": "2026-08-08T20:38:17+08:00"
     }
   }
 }
