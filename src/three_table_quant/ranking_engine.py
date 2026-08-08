@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from .domain import Candidate, ContractError, normalize_date
+from .feature_contract import model_eligible_feature_names
 from .features import FEATURE_SCHEMA_VERSION
 from .promotion import validate_certified_artifact
 from .sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM
@@ -574,6 +575,11 @@ class LearnedChallenger:
         )
         if any(token in field.lower() for field in feature_order for token in forbidden):
             raise ArtifactValidationError("learned artifact contains a future-aware feature")
+        model_eligible = frozenset(model_eligible_feature_names())
+        if any(field not in model_eligible for field in feature_order):
+            raise ArtifactValidationError(
+                "learned artifact contains a non-model-eligible feature"
+            )
 
         normalization = payload.get("normalization")
         if not isinstance(normalization, Mapping):

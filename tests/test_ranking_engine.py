@@ -150,7 +150,7 @@ def certify_artifact(artifact: dict) -> dict:
 
 
 def learned_artifact(*, trained_through: str = "20260803") -> dict:
-    feature_order = ["rank_consensus", "ret_5d"]
+    feature_order = ["rank_percentile_a_top10", "ret_5d"]
 
     def head(kind: str, intercept: float, coefficients: list[float] | None = None) -> dict:
         return {
@@ -300,6 +300,7 @@ class RankingEngineTests(unittest.TestCase):
         complete.features = {
             "market_data_valid": True,
             "feature_coverage": 1.0,
+            "rank_percentile_a_top10": 0.8,
             "rank_consensus": 0.8,
             "rank_borda": 0.8,
             "rank_disagreement": 0.0,
@@ -309,6 +310,7 @@ class RankingEngineTests(unittest.TestCase):
         missing.features = {
             "market_data_valid": True,
             "feature_coverage": 1.0,
+            "rank_percentile_a_top10": 0.7,
             "rank_consensus": 0.7,
             "rank_borda": 0.7,
             "rank_disagreement": 0.0,
@@ -331,6 +333,35 @@ class RankingEngineTests(unittest.TestCase):
         self.assertNotIn(
             "market_features_incomplete",
             by_code["000001.SZ"].gate_reasons,
+        )
+
+    def test_learned_missing_amount_counts_as_missing_without_volume_substitution(self) -> None:
+        artifact = learned_artifact()
+        artifact["model_id"] = "liquidity_missingness_challenger"
+        artifact["feature_order"] = ["avg_amount_20d", "avg_volume_20d"]
+        artifact = certify_artifact(artifact)
+        item = make_candidate("000001.SZ")
+        result = score_candidates(
+            [item],
+            {item.ts_code: daily_bars(amount=0.0, volume=2_000_000.0)},
+            TABLE_SIZES,
+            CONFIG,
+            decision_date="20260804",
+            resolved_model={
+                "model": {
+                    "kind": "TRAINED",
+                    "model_id": artifact["model_id"],
+                },
+                "fallback": False,
+            },
+            artifact=artifact,
+        )[0]
+        self.assertIsNone(result.features["avg_amount_20d"])
+        self.assertGreater(result.features["avg_volume_20d"], 0.0)
+        self.assertTrue(result.metrics["ranking_fallback"])
+        self.assertIn(
+            "market_features_incomplete",
+            result.metrics["gate_reasons"],
         )
 
     def test_open_fill_assumption_fixes_fill_to_one_and_removes_fill_gate(self) -> None:
@@ -573,6 +604,40 @@ class RankingEngineTests(unittest.TestCase):
                 CONFIG["ranking"],
                 estimated_round_trip_rate=0.00162,
             )
+
+        legacy = learned_artifact()
+        legacy["feature_order"] = ["rank_consensus", "ret_5d"]
+        legacy = certify_artifact(legacy)
+        with self.assertRaisesRegex(ArtifactValidationError, "non-model-eligible"):
+            LearnedChallenger(
+                legacy,
+                CONFIG["ranking"],
+                estimated_round_trip_rate=0.00162,
+            )
+
+        resolved = {
+            "model": {
+                "kind": "TRAINED",
+                "model_id": legacy["model_id"],
+            },
+            "fallback": False,
+        }
+        item = make_candidate("000001.SZ")
+        fallback = score_candidates(
+            [item],
+            {item.ts_code: daily_bars()},
+            TABLE_SIZES,
+            CONFIG,
+            decision_date="20260804",
+            resolved_model=resolved,
+            artifact=legacy,
+        )[0]
+        self.assertEqual(fallback.metrics["model_id"], MODEL_ID)
+        self.assertTrue(fallback.metrics["model_resolution_fallback"])
+        self.assertIn(
+            "non-model-eligible",
+            fallback.metrics["model_resolution_reason"],
+        )
 
         uncertified = learned_artifact()
         uncertified.pop("artifact_fingerprint")

@@ -9,6 +9,7 @@ from collections.abc import Iterable, Mapping, Sequence
 from typing import Any
 
 from .domain import ContractError, normalize_date
+from .feature_contract import model_eligible_feature_names
 from .features import FEATURE_SCHEMA_VERSION
 from .model_registry import evaluate_promotion_readiness
 from .promotion import (
@@ -22,54 +23,9 @@ from .walk_forward import expanding_walk_forward
 
 MODEL_ARTIFACT_SCHEMA = "model_artifact_v1"
 
-# This is intentionally narrower than the upstream D-as-of extraction list.
-# Training never flattens arbitrary source values and never infers new columns
-# from the observed dataset.
-FEATURE_ALLOWLIST = (
-    "ret_1d",
-    "ret_3d",
-    "ret_5d",
-    "ret_10d",
-    "ret_20d",
-    "volatility_5d",
-    "volatility_20d",
-    "downside_volatility_20d",
-    "atr_14d",
-    "amplitude_20d",
-    "cvar_loss_10pct",
-    "max_drawdown_20d",
-    "avg_amount_20d",
-    "avg_volume_20d",
-    "avg_turnover_20d",
-    "bar_count",
-    "feature_coverage",
-    "rank_percentile_a_top10",
-    "rank_percentile_premium_top10",
-    "rank_percentile_decision_table",
-    "rank_borda",
-    "rank_consensus",
-    "rank_disagreement",
-    "stage_from",
-    "stage_to",
-    "stage_is_2_to_3",
-    "stage_is_3_to_4",
-    "source_strength",
-    "src_a_top10__prob_final",
-    "src_a_top10__p_limit_up_calibrated",
-    "src_a_top10__auction_strength_score",
-    "src_premium_top10__premium_rank_score",
-    "src_premium_top10__t_limitup_prob_calibrated",
-    "src_premium_top10__t_close_ret_pred",
-    "src_premium_top10__t1_accept_prob_blend",
-    "src_premium_top10__t1_fail_prob_blend",
-    "src_decision_table__decision_p_fill",
-    "src_decision_table__decision_e_ret",
-    "src_decision_table__decision_ev",
-    "src_decision_table__predicted_fill_probability",
-    "src_decision_table__predicted_net_return",
-    "src_decision_table__predicted_exit_delay_probability",
-    "src_decision_table__predicted_continuation_limit_up_probability",
-)
+# The contract is the sole source of truth.  Training never infers columns from
+# observed rows or from the much wider upstream extraction surface.
+FEATURE_ALLOWLIST = model_eligible_feature_names()
 
 PROBABILITY_TARGETS = {
     "delay": "exit_delayed",

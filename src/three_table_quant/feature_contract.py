@@ -8,7 +8,35 @@ from types import MappingProxyType
 from typing import Any, Mapping
 
 
-FEATURE_CONTRACT_VERSION = "feature_contract_v2_1"
+FEATURE_CONTRACT_VERSION = "feature_contract_v2_2"
+
+# Pre-registered learned-model inputs.  Keep this deliberately small: these
+# fields are reconstructed from local point-in-time market data or immutable
+# source snapshots, and each contributes a distinct signal family.  The
+# transparent baseline continues to use the wider production feature set.
+MODEL_ELIGIBLE_FEATURES = (
+    "ret_1d",
+    "ret_5d",
+    "ret_20d",
+    "cvar_loss_10pct",
+    "max_drawdown_20d",
+    "avg_amount_20d",
+    "avg_volume_20d",
+    "rank_percentile_a_top10",
+    "rank_percentile_premium_top10",
+    "rank_percentile_decision_table",
+    "rank_disagreement",
+    "stage_is_2_to_3",
+    "stage_is_3_to_4",
+)
+_MODEL_ELIGIBLE_SET = frozenset(MODEL_ELIGIBLE_FEATURES)
+_MODEL_ALLOWED_TRUST_LEVELS = frozenset(
+    {
+        "LOCAL_POINT_IN_TIME",
+        "PINNED_SOURCE",
+        "LOCAL_DERIVED",
+    }
+)
 
 
 class FieldRole(str, Enum):
@@ -55,6 +83,7 @@ class FeatureFieldContract:
     asof: AsOfPolicy
     missing_policy: MissingPolicy
     trust_level: TrustLevel
+    model_eligible: bool = False
     coverage_group: str | None = None
 
 
@@ -66,6 +95,7 @@ def _field(
     missing_policy: MissingPolicy = MissingPolicy.OPTIONAL_MODEL_DEFAULT,
     trust_level: TrustLevel = TrustLevel.LOCAL_POINT_IN_TIME,
     *,
+    model_eligible: bool = False,
     coverage_group: str | None = None,
 ) -> FeatureFieldContract:
     return FeatureFieldContract(
@@ -75,6 +105,7 @@ def _field(
         asof=asof,
         missing_policy=missing_policy,
         trust_level=trust_level,
+        model_eligible=model_eligible,
         coverage_group=coverage_group,
     )
 
@@ -127,6 +158,7 @@ def _build_contract() -> dict[str, FeatureFieldContract]:
                 "market_daily_qfq",
                 AsOfPolicy.D_CLOSE,
                 missing_policy,
+                model_eligible=name in _MODEL_ELIGIBLE_SET,
                 coverage_group=coverage_group,
             )
         )
@@ -146,6 +178,7 @@ def _build_contract() -> dict[str, FeatureFieldContract]:
             "three_table_ranks",
             AsOfPolicy.D_DERIVED,
             trust_level=TrustLevel.LOCAL_DERIVED,
+            model_eligible=name in _MODEL_ELIGIBLE_SET,
         )
         for name, role in rank_roles.items()
     )
@@ -157,6 +190,7 @@ def _build_contract() -> dict[str, FeatureFieldContract]:
             "decision_stage",
             AsOfPolicy.D_DERIVED,
             trust_level=TrustLevel.PINNED_SOURCE,
+            model_eligible=name in _MODEL_ELIGIBLE_SET,
         )
         for name in (
             "stage_transition",
@@ -220,6 +254,26 @@ def _build_contract() -> dict[str, FeatureFieldContract]:
         if item.name in result:
             raise RuntimeError(f"duplicate feature contract: {item.name}")
         result[item.name] = item
+    missing_model_fields = _MODEL_ELIGIBLE_SET - set(result)
+    if missing_model_fields:
+        raise RuntimeError(
+            "model-eligible fields are absent from the production contract: "
+            f"{sorted(missing_model_fields)}"
+        )
+    contracted_model_fields = {
+        item.name for item in result.values() if item.model_eligible
+    }
+    if contracted_model_fields != _MODEL_ELIGIBLE_SET:
+        raise RuntimeError("model-eligible contract disagrees with pre-registration")
+    if len(contracted_model_fields) > 15:
+        raise RuntimeError("model-eligible feature count must not exceed 15")
+    for name in MODEL_ELIGIBLE_FEATURES:
+        spec = result[name]
+        if spec.trust_level.value not in _MODEL_ALLOWED_TRUST_LEVELS:
+            raise RuntimeError(
+                f"model-eligible feature {name} has prohibited trust level "
+                f"{spec.trust_level.value}"
+            )
     return result
 
 
@@ -241,6 +295,7 @@ def feature_contract_payload() -> dict[str, Any]:
                 "asof": spec.asof.value,
                 "missing_policy": spec.missing_policy.value,
                 "trust_level": spec.trust_level.value,
+                "model_eligible": spec.model_eligible,
                 "coverage_group": spec.coverage_group,
             }
             for spec in sorted(
@@ -259,6 +314,16 @@ def feature_contract_sha256() -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def model_eligible_feature_names() -> tuple[str, ...]:
+    """Return the canonical learned-model order from the feature contract."""
+
+    return tuple(
+        name
+        for name in MODEL_ELIGIBLE_FEATURES
+        if PRODUCTION_FEATURE_CONTRACT[name].model_eligible
+    )
 
 
 def production_feature_coverage(values: Mapping[str, Any]) -> float:
@@ -282,6 +347,7 @@ def production_feature_coverage(values: Mapping[str, Any]) -> float:
 
 __all__ = [
     "FEATURE_CONTRACT_VERSION",
+    "MODEL_ELIGIBLE_FEATURES",
     "PRODUCTION_FEATURE_CONTRACT",
     "AsOfPolicy",
     "FeatureFieldContract",
@@ -290,5 +356,6 @@ __all__ = [
     "TrustLevel",
     "feature_contract_payload",
     "feature_contract_sha256",
+    "model_eligible_feature_names",
     "production_feature_coverage",
 ]

@@ -58,6 +58,11 @@ def training_row(
         "downside_volatility_20d": 0.01 + (index % 3) / 200.0,
         "cvar_loss_10pct": (index % 5) / 100.0,
         "max_drawdown_20d": -(index % 6) / 50.0,
+        "avg_amount_20d": 50_000_000.0 + index * 100_000.0,
+        "avg_volume_20d": 1_000_000.0 + index * 1_000.0,
+        "rank_percentile_a_top10": 1.0 - rank / 12.0,
+        "rank_percentile_premium_top10": 1.0 - rank / 14.0,
+        "rank_percentile_decision_table": 1.0 - rank / 16.0,
         "rank_borda": 1.0 - rank / 12.0,
         "rank_consensus": 1.0 - rank / 15.0,
         "rank_disagreement": rank / 20.0,
@@ -134,9 +139,46 @@ class FeatureMatrixTests(unittest.TestCase):
         self.assertEqual(len(matrix), 3)
         self.assertEqual(len(matrix[0]), len(FEATURE_ALLOWLIST))
         self.assertNotIn("actual_future_return", FEATURE_ALLOWLIST)
+        self.assertLessEqual(len(FEATURE_ALLOWLIST), 15)
+        for forbidden in (
+            "source_strength",
+            "rank_borda",
+            "rank_consensus",
+            "stage_from",
+            "stage_to",
+            "src_a_top10__prob_final",
+        ):
+            self.assertNotIn(forbidden, FEATURE_ALLOWLIST)
         self.assertTrue(
             all(value is None or isinstance(value, float) for value in matrix[0])
         )
+
+    def test_forbidden_legacy_features_fail_closed_when_explicitly_requested(self) -> None:
+        rows = rows_for_days(1)
+        for name in (
+            "source_strength",
+            "rank_borda",
+            "rank_consensus",
+            "stage_from",
+            "stage_to",
+            "src_a_top10__prob_final",
+        ):
+            with self.subTest(name=name), self.assertRaisesRegex(
+                ContractError,
+                "non-whitelisted",
+            ):
+                numeric_feature_rows(rows, (name,))
+
+    def test_missing_amount_is_recorded_and_volume_never_substitutes(self) -> None:
+        row = training_row(1, "20250102", 1)
+        row["features"]["avg_amount_20d"] = None
+        row["features"]["avg_volume_20d"] = 9_999_999.0
+        matrix = numeric_feature_rows([row])
+        amount_index = FEATURE_ALLOWLIST.index("avg_amount_20d")
+        volume_index = FEATURE_ALLOWLIST.index("avg_volume_20d")
+        self.assertIsNone(matrix[0][amount_index])
+        self.assertEqual(matrix[0][volume_index], 9_999_999.0)
+        self.assertNotEqual(amount_index, volume_index)
 
     def test_median_imputation_and_standardization_are_fitted_on_train_only(self) -> None:
         first = training_row(1, "20250102", 1)

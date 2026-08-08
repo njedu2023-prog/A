@@ -6,6 +6,7 @@ from unittest.mock import patch
 from three_table_quant.domain import Candidate
 from three_table_quant.feature_contract import (
     FEATURE_CONTRACT_VERSION,
+    MODEL_ELIGIBLE_FEATURES,
     PRODUCTION_FEATURE_CONTRACT,
     AsOfPolicy,
     FieldRole,
@@ -13,6 +14,7 @@ from three_table_quant.feature_contract import (
     TrustLevel,
     feature_contract_payload,
     feature_contract_sha256,
+    model_eligible_feature_names,
     production_feature_coverage,
 )
 from three_table_quant.features import build_feature_snapshot
@@ -23,12 +25,53 @@ from three_table_quant.sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM
 
 class FeatureContractTests(unittest.TestCase):
     def test_contract_covers_current_learning_order_and_is_immutable(self) -> None:
-        self.assertEqual(FEATURE_CONTRACT_VERSION, "feature_contract_v2_1")
+        self.assertEqual(FEATURE_CONTRACT_VERSION, "feature_contract_v2_2")
         self.assertTrue(set(FEATURE_ALLOWLIST) <= set(PRODUCTION_FEATURE_CONTRACT))
         with self.assertRaises(TypeError):
             PRODUCTION_FEATURE_CONTRACT["new_field"] = PRODUCTION_FEATURE_CONTRACT[  # type: ignore[index]
                 "ret_5d"
             ]
+
+    def test_model_eligible_set_is_small_preregistered_and_contract_driven(self) -> None:
+        expected = (
+            "ret_1d",
+            "ret_5d",
+            "ret_20d",
+            "cvar_loss_10pct",
+            "max_drawdown_20d",
+            "avg_amount_20d",
+            "avg_volume_20d",
+            "rank_percentile_a_top10",
+            "rank_percentile_premium_top10",
+            "rank_percentile_decision_table",
+            "rank_disagreement",
+            "stage_is_2_to_3",
+            "stage_is_3_to_4",
+        )
+        self.assertEqual(MODEL_ELIGIBLE_FEATURES, expected)
+        self.assertEqual(model_eligible_feature_names(), expected)
+        self.assertEqual(FEATURE_ALLOWLIST, expected)
+        self.assertLessEqual(len(FEATURE_ALLOWLIST), 15)
+        for name in expected:
+            spec = PRODUCTION_FEATURE_CONTRACT[name]
+            self.assertTrue(spec.model_eligible, name)
+            self.assertNotEqual(spec.trust_level, TrustLevel.UPSTREAM_DECLARED)
+
+        forbidden = {
+            "source_strength",
+            "rank_borda",
+            "rank_consensus",
+            "stage_from",
+            "stage_to",
+        }
+        self.assertTrue(forbidden.isdisjoint(FEATURE_ALLOWLIST))
+        self.assertFalse(
+            any(
+                spec.model_eligible
+                for spec in PRODUCTION_FEATURE_CONTRACT.values()
+                if spec.trust_level == TrustLevel.UPSTREAM_DECLARED
+            )
+        )
 
     def test_contract_declares_role_source_asof_missingness_and_trust(self) -> None:
         market = PRODUCTION_FEATURE_CONTRACT["ret_5d"]
@@ -40,6 +83,7 @@ class FeatureContractTests(unittest.TestCase):
             MissingPolicy.REQUIRED_FOR_COVERAGE,
         )
         self.assertEqual(market.trust_level, TrustLevel.LOCAL_POINT_IN_TIME)
+        self.assertTrue(market.model_eligible)
 
         upstream = PRODUCTION_FEATURE_CONTRACT[
             "src_decision_table__predicted_net_return"
@@ -47,6 +91,7 @@ class FeatureContractTests(unittest.TestCase):
         self.assertEqual(upstream.source, SOURCE_DECISION)
         self.assertEqual(upstream.asof, AsOfPolicy.D_SOURCE_SNAPSHOT)
         self.assertEqual(upstream.trust_level, TrustLevel.UPSTREAM_DECLARED)
+        self.assertFalse(upstream.model_eligible)
 
     def test_contract_fingerprint_is_canonical_and_complete(self) -> None:
         payload = feature_contract_payload()
@@ -54,6 +99,9 @@ class FeatureContractTests(unittest.TestCase):
         self.assertEqual(
             [item["name"] for item in payload["fields"]],
             sorted(PRODUCTION_FEATURE_CONTRACT),
+        )
+        self.assertTrue(
+            all(isinstance(item["model_eligible"], bool) for item in payload["fields"])
         )
         digest = feature_contract_sha256()
         self.assertEqual(len(digest), 64)
