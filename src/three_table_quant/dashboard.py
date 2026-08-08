@@ -1,11 +1,29 @@
 from __future__ import annotations
 
+import copy
 import math
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from .benchmarks import build_batch_benchmarks
 from .candidate_facts import candidate_display_fields as _candidate_display_fields
 from .domain import iso_date
+from .limit_lifecycle import validate_serialized_limit_lifecycle
+from .single_stock_research import (
+    AUDIT_ONLY_EFFECT,
+    RESEARCH_SNAPSHOT_HASH_FIELD,
+    SINGLE_STOCK_RESEARCH_SCHEMA,
+    research_snapshot_sha256,
+)
+from .single_stock_v3 import (
+    HARD_GATE_REQUIRED_FIELDS,
+    SINGLE_STOCK_V3_SCHEMA,
+    STRICT_INTERSECTION_RULE,
+    FactProvenance,
+    SingleStockFact,
+    SingleStockSnapshotV3,
+)
 
 
 def _compound(returns: list[float]) -> float:
@@ -74,6 +92,181 @@ def _result(value: float | None, is_final: bool) -> str:
     if value < 0:
         return "LOSS"
     return "FLAT"
+
+
+def _single_stock_research(candidate: dict[str, Any]) -> dict[str, Any] | None:
+    """Copy frozen V3 evidence without synthesizing or backfilling legacy rows."""
+
+    payload = candidate.get("single_stock_research")
+    if not isinstance(payload, dict) or not payload:
+        return None
+    return copy.deepcopy(payload)
+
+
+def _validate_single_stock_research(
+    payload: Any,
+    candidate: dict[str, Any],
+    decision_date: str,
+) -> None:
+    """Validate the additive dashboard copy of a frozen candidate snapshot."""
+
+    if payload is None:
+        # Historical signals predate V3 and are intentionally never backfilled.
+        return
+    if not isinstance(payload, dict):
+        raise ValueError("single-stock research must be an object or null")
+    if payload.get("schema_version") != SINGLE_STOCK_RESEARCH_SCHEMA:
+        raise ValueError("single-stock research schema mismatch")
+    if payload.get("decision_effect") != AUDIT_ONLY_EFFECT:
+        raise ValueError("single-stock research must remain audit-only")
+    expected_keys = {
+        "schema_version",
+        "decision_effect",
+        "availability",
+        "unavailable_reason",
+        "decision_date",
+        "decision_asof",
+        "ts_code",
+        "single_stock",
+        "candidate_analysis",
+        "order_spec",
+        "limit_lifecycle",
+        RESEARCH_SNAPSHOT_HASH_FIELD,
+    }
+    if set(payload) != expected_keys:
+        raise ValueError("single-stock research envelope fields are not canonical")
+    supplied_digest = payload.get(RESEARCH_SNAPSHOT_HASH_FIELD)
+    if (
+        not isinstance(supplied_digest, str)
+        or supplied_digest != research_snapshot_sha256(payload)
+    ):
+        raise ValueError("single-stock research snapshot digest mismatch")
+    normalized_day = "".join(ch for ch in decision_date if ch.isdigit())
+    if (
+        payload.get("ts_code") != candidate.get("symbol")
+        or payload.get("decision_date") != normalized_day
+    ):
+        raise ValueError("single-stock research identity disagrees with candidate")
+    if not isinstance(payload.get("decision_asof"), str) or "T" not in payload["decision_asof"]:
+        raise ValueError("single-stock research requires a timezone-aware decision_asof")
+    try:
+        parsed_asof = datetime.fromisoformat(payload["decision_asof"].replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise ValueError("single-stock research decision_asof is invalid") from exc
+    if parsed_asof.tzinfo is None or parsed_asof.utcoffset() is None:
+        raise ValueError("single-stock research decision_asof requires timezone")
+    availability = payload.get("availability")
+    if availability == "UNAVAILABLE":
+        if (
+            not isinstance(payload.get("unavailable_reason"), str)
+            or not payload["unavailable_reason"].strip()
+            or payload.get("single_stock") is not None
+        ):
+            raise ValueError("unavailable single-stock research envelope is invalid")
+        for section_name in ("candidate_analysis", "order_spec", "limit_lifecycle"):
+            section = payload.get(section_name)
+            if (
+                not isinstance(section, dict)
+                or section.get("availability") != "UNAVAILABLE"
+                or section.get("payload") is not None
+                or not isinstance(section.get("unavailable_reason"), str)
+                or not section["unavailable_reason"].strip()
+                or set(section) != {"availability", "payload", "unavailable_reason"}
+            ):
+                raise ValueError("unavailable single-stock research sections are invalid")
+        return
+    if availability != "AVAILABLE" or payload.get("unavailable_reason") is not None:
+        raise ValueError("single-stock research availability is invalid")
+    if parsed_asof.astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d") != normalized_day:
+        raise ValueError("available single-stock research decision_asof must fall on D")
+    single_stock = payload.get("single_stock")
+    if not isinstance(single_stock, dict):
+        raise ValueError("single-stock V3 snapshot is required")
+    if single_stock.get("schema_version") != SINGLE_STOCK_V3_SCHEMA:
+        raise ValueError("single-stock V3 schema mismatch")
+    if single_stock.get("selection_rule") != STRICT_INTERSECTION_RULE:
+        raise ValueError("single-stock research selection rule mismatch")
+    if (
+        single_stock.get("ts_code") != candidate.get("symbol")
+        or single_stock.get("name") != candidate.get("name")
+        or single_stock.get("decision_date") != normalized_day
+        or single_stock.get("decision_asof") != payload.get("decision_asof")
+        or single_stock.get("source_ranks") != candidate.get("source_ranks")
+    ):
+        raise ValueError("single-stock V3 identity disagrees with candidate")
+    facts = single_stock.get("facts")
+    if not isinstance(facts, dict) or not set(HARD_GATE_REQUIRED_FIELDS).issubset(facts):
+        raise ValueError("single-stock research hard-gate facts are incomplete")
+    parsed_facts: dict[str, SingleStockFact] = {}
+    for field_name, fact in facts.items():
+        if not isinstance(field_name, str) or not field_name or not isinstance(fact, dict):
+            raise ValueError("single-stock research facts are malformed")
+        value = fact.get("value")
+        reason = fact.get("missing_reason")
+        if value is None and (not isinstance(reason, str) or not reason.strip()):
+            raise ValueError("missing single-stock fact requires a reason")
+        if value is not None and reason is not None:
+            raise ValueError("known single-stock fact cannot carry a missing reason")
+        provenance = fact.get("provenance")
+        if not isinstance(provenance, dict):
+            raise ValueError("single-stock fact provenance is required")
+        for key in ("provider", "dataset_version", "known_at", "fetched_at", "content_sha256"):
+            if not isinstance(provenance.get(key), str) or not provenance[key].strip():
+                raise ValueError(f"single-stock fact provenance {key} is required")
+        parsed_facts[field_name] = SingleStockFact(
+            value=value,
+            provenance=FactProvenance(
+                provider=provenance.get("provider"),
+                dataset_version=provenance.get("dataset_version"),
+                known_at=provenance.get("known_at"),
+                fetched_at=provenance.get("fetched_at"),
+                content_sha256=provenance.get("content_sha256"),
+                revision_id=provenance.get("revision_id"),
+                event_at=provenance.get("event_at"),
+                source_uri=provenance.get("source_uri"),
+            ),
+            missing_reason=reason,
+            unit=fact.get("unit"),
+        )
+    canonical_snapshot = SingleStockSnapshotV3(
+        ts_code=single_stock.get("ts_code"),
+        name=single_stock.get("name"),
+        decision_date=single_stock.get("decision_date"),
+        decision_asof=single_stock.get("decision_asof"),
+        source_ranks=single_stock.get("source_ranks"),
+        facts=parsed_facts,
+    ).to_dict()
+    if canonical_snapshot != single_stock:
+        raise ValueError("single-stock V3 payload is not canonical")
+    for section_name in ("candidate_analysis", "order_spec", "limit_lifecycle"):
+        section = payload.get(section_name)
+        if not isinstance(section, dict) or section.get("availability") not in {
+            "AVAILABLE",
+            "UNAVAILABLE",
+        } or set(section) != {"availability", "payload", "unavailable_reason"}:
+            raise ValueError(f"single-stock {section_name} section is invalid")
+        if section["availability"] == "AVAILABLE":
+            if section.get("payload") is None or section.get("unavailable_reason") is not None:
+                raise ValueError(f"available single-stock {section_name} has invalid payload")
+        elif section.get("payload") is not None or not isinstance(
+            section.get("unavailable_reason"), str
+        ) or not section["unavailable_reason"].strip():
+            raise ValueError(f"unavailable single-stock {section_name} needs a reason")
+    lifecycle_section = payload["limit_lifecycle"]
+    if lifecycle_section["availability"] == "AVAILABLE":
+        lifecycle = lifecycle_section["payload"]
+        limit_fact = facts.get("market.limit_up_price")
+        tick_fact = facts.get("market.price_tick")
+        expected_limit = limit_fact.get("value") if isinstance(limit_fact, dict) else None
+        expected_tick = tick_fact.get("value") if isinstance(tick_fact, dict) else None
+        if expected_limit is None or expected_tick is None:
+            raise ValueError("available limit lifecycle requires frozen price facts")
+        validate_serialized_limit_lifecycle(
+            lifecycle,
+            expected_decision_date=normalized_day,
+            expected_limit_price=expected_limit,
+            expected_price_tick=expected_tick,
+        )
 
 
 def _t_day_validation(trade: dict[str, Any] | None) -> dict[str, Any]:
@@ -502,8 +695,10 @@ def _portfolio_candidate(
         "symbol": candidate["ts_code"],
         "name": candidate["name"],
         **_candidate_display_fields(candidate),
+        "source_ranks": copy.deepcopy(candidate.get("source_ranks", {})),
         "model": _signal_engine(signal),
         "prediction": _candidate_prediction(signal, candidate),
+        "single_stock_research": _single_stock_research(candidate),
         "t_day_validation": _t_day_validation(trade),
         "status": status,
         "is_final": is_final,
@@ -739,6 +934,9 @@ def build_dashboard(
                 "planned_exit_date": iso_date(signal["exit_date"]),
                 "selection_status": signal["status"],
                 "model": _signal_engine(signal),
+                "single_stock_research_schema_version": signal.get(
+                    "single_stock_research_schema_version"
+                ),
                 "source_snapshots": signal.get("source_snapshots", []),
                 "market_data_provenance": signal.get("market_data_provenance", {}),
                 "intersection_count": len(candidates),
@@ -750,6 +948,7 @@ def build_dashboard(
                         **_candidate_display_fields(item),
                         "model": _signal_engine(signal),
                         "prediction": _candidate_prediction(signal, item),
+                        "single_stock_research": _single_stock_research(item),
                         "t_day_validation": _t_day_validation(
                             trades_by_key.get(
                                 (signal["decision_date"], item.get("rank"))
@@ -931,6 +1130,10 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
         days_by_decision_date[decision_date] = day
         if day["intersection_count"] != len(day["candidates"]):
             raise ValueError("intersection_count does not match candidates")
+        research_schema = day.get("single_stock_research_schema_version")
+        if research_schema not in {None, SINGLE_STOCK_RESEARCH_SCHEMA}:
+            raise ValueError("unsupported single-stock research signal schema")
+        research_required = research_schema == SINGLE_STOCK_RESEARCH_SCHEMA
         candidate_ranks = [item["rank"] for item in day["candidates"]]
         if candidate_ranks != list(range(1, len(candidate_ranks) + 1)):
             raise ValueError("candidate ranks must be contiguous and deterministic")
@@ -938,6 +1141,10 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
         if len(candidate_ids) != len(set(candidate_ids)):
             raise ValueError("candidate ids must be unique within a decision date")
         for candidate in day["candidates"]:
+            if research_required and candidate.get("single_stock_research") is None:
+                raise ValueError(
+                    "V3-enabled signal candidate requires single-stock research"
+                )
             for field in ("stage_transition", "industry"):
                 value = candidate.get(field)
                 if not isinstance(value, str) or not value.strip():
@@ -948,6 +1155,11 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
             if candidate.get("action") != "SHADOW":
                 raise ValueError("every intersection candidate must remain SHADOW")
             _validate_prediction(candidate.get("prediction"))
+            _validate_single_stock_research(
+                candidate.get("single_stock_research"),
+                candidate,
+                decision_date,
+            )
             _validate_t_day_validation(candidate.get("t_day_validation"))
             eligible = candidate.get("metrics", {}).get("policy_trade_eligible")
             if not isinstance(eligible, bool):
@@ -1192,12 +1404,22 @@ def validate_dashboard(payload: dict[str, Any]) -> None:
                 detail.get("stage_transition") != candidate["stage_transition"]
                 or detail.get("industry") != candidate["industry"]
                 or not _same_number(detail.get("d_close"), candidate.get("d_close"))
+                or detail.get("source_ranks") != candidate.get("source_ranks")
             ):
                 raise ValueError("portfolio candidate display fields do not match ranked candidate")
             _validate_prediction(detail.get("prediction"))
             if detail.get("prediction") != candidate.get("prediction"):
                 raise ValueError(
                     "portfolio candidate prediction does not match ranked candidate"
+                )
+            _validate_single_stock_research(
+                detail.get("single_stock_research"),
+                detail,
+                decision_date,
+            )
+            if detail.get("single_stock_research") != candidate.get("single_stock_research"):
+                raise ValueError(
+                    "portfolio single-stock research does not match ranked candidate"
                 )
             _validate_t_day_validation(detail.get("t_day_validation"))
             if detail.get("t_day_validation") != candidate.get("t_day_validation"):

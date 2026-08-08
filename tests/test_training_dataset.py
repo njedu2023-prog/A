@@ -143,6 +143,21 @@ class TrainingDatasetTests(unittest.TestCase):
         third = build_training_dataset(changed)
         self.assertNotEqual(first["dataset_sha256"], third["dataset_sha256"])
 
+    def test_single_stock_research_is_audit_only_and_never_enters_training(self) -> None:
+        item = candidate(1, "000001.SZ")
+        state = base_state([item], [trade(1, "000001.SZ", "PENDING_BUY")])
+        baseline = build_training_dataset(state)
+
+        item["single_stock_research"] = {
+            "schema_version": "single_stock_research_audit_v1",
+            "poison_future_return": 999.0,
+        }
+        audited = build_training_dataset(state)
+
+        self.assertEqual(audited["dataset_sha256"], baseline["dataset_sha256"])
+        self.assertNotIn("single_stock_research", audited["rows"][0])
+        self.assertNotIn("poison_future_return", audited["rows"][0]["features"])
+
     def test_unfilled_is_fill_zero_but_never_a_conditional_return(self) -> None:
         item = candidate(1, "000001.SZ")
         record = trade(1, "000001.SZ", "BUY_UNFILLED")

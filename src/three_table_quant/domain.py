@@ -59,6 +59,10 @@ class Candidate:
     rank: int | None = None
     action: str = "NO_TRADE"
     action_reason: str = "not_scored"
+    # Kept last to preserve every pre-V3 positional constructor argument.
+    # It remains outside ``features`` and ``metrics`` so availability cannot
+    # change strict-intersection membership, ranking, or the frozen order.
+    single_stock_research: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -77,6 +81,7 @@ class Signal:
     status: str = "RANKED"
     market_data_provenance: dict[str, Any] = field(default_factory=dict)
     ranking_engine: dict[str, Any] = field(default_factory=dict)
+    single_stock_research_schema_version: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -22,7 +23,8 @@ from .ledger import (
     save_json,
     settle_trades,
 )
-from .market import ResilientMarketData
+from .limit_lifecycle import EXPECTED_SESSION_MINUTES, MINUTE_CLOSE_PROXY
+from .market import EastmoneyMarketData, ResilientMarketData
 from .model_registry import (
     BASELINE_MODEL_ID,
     create_registry,
@@ -31,6 +33,12 @@ from .model_registry import (
     validate_registry,
 )
 from .scoring import score_candidates
+from .single_stock_collection import build_candidate_single_stock_research
+from .single_stock_research import (
+    SINGLE_STOCK_RESEARCH_SCHEMA,
+    unavailable_single_stock_research,
+)
+from .single_stock_v3 import SINGLE_STOCK_V3_SCHEMA
 from .sources import (
     SourceLoader,
     diagnose_source_quality,
@@ -60,6 +68,42 @@ def load_config(path: str | Path) -> dict[str, Any]:
     if ranking_policy is not execution_policy:
         raise ValueError(
             "ranking and execution open-fill policies must match"
+        )
+    research = config.get("single_stock_research")
+    if not isinstance(research, dict):
+        raise ValueError("single-stock research configuration is required")
+    expected = {
+        "schema_version": SINGLE_STOCK_RESEARCH_SCHEMA,
+        "snapshot_schema_version": SINGLE_STOCK_V3_SCHEMA,
+        "mode": "SHADOW_AUDIT_ONLY",
+        "affects_strict_intersection": False,
+        "affects_ranking": False,
+        "affects_order_spec": False,
+        "limit_lifecycle_evidence": MINUTE_CLOSE_PROXY,
+        "required_full_session_minutes": len(EXPECTED_SESSION_MINUTES),
+        "real_auction_gate_connected": False,
+    }
+    for field, expected_value in expected.items():
+        if research.get(field) != expected_value:
+            raise ValueError(
+                f"single-stock research {field} must remain {expected_value!r}"
+            )
+    timeout = research.get("fetch_timeout_seconds")
+    attempts = research.get("fetch_attempts")
+    workers = research.get("max_parallel_fetches")
+    if (
+        isinstance(timeout, bool)
+        or not isinstance(timeout, (int, float))
+        or not 0 < float(timeout) <= 5.0
+        or isinstance(attempts, bool)
+        or not isinstance(attempts, int)
+        or attempts != 1
+        or isinstance(workers, bool)
+        or not isinstance(workers, int)
+        or not 1 <= workers <= 10
+    ):
+        raise ValueError(
+            "single-stock research fetch budget must be <=5 seconds, one attempt, and 1-10 workers"
         )
     return config
 
@@ -221,6 +265,75 @@ def _market_data_provenance(bars_by_code: dict[str, list[Any]]) -> dict[str, Any
             for ts_code, bars in sorted(bars_by_code.items())
         }
     }
+
+
+def _freeze_single_stock_research(
+    candidates: list[Any],
+    *,
+    market: Any,
+    decision_date: str,
+    decision_asof: str | None = None,
+    execution: dict[str, Any],
+    source_issues: list[SourceIssue],
+    max_workers: int = 5,
+) -> None:
+    """Attach audit-only V3 evidence under a bounded parallel fetch budget."""
+
+    if not candidates:
+        return
+
+    def fetch(candidate: Any) -> tuple[list[Any] | None, bool, str | None]:
+        try:
+            return market.minute_bars(candidate.ts_code, decision_date), False, None
+        except Exception as exc:
+            return None, True, str(exc)
+
+    worker_count = min(max(1, int(max_workers)), len(candidates))
+    with ThreadPoolExecutor(max_workers=worker_count) as executor_pool:
+        fetched = list(executor_pool.map(fetch, candidates))
+
+    for candidate, (minute_bars, minute_fetch_failed, fetch_error) in zip(
+        candidates,
+        fetched,
+        strict=True,
+    ):
+        observed_asof = decision_asof or _now()
+        if minute_fetch_failed:
+            source_issues.append(
+                SourceIssue(
+                    "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
+                    "warning",
+                    "market_data",
+                    f"{candidate.ts_code} 的D日分钟研究证据不可用；名单与名次保持不变",
+                    {"ts_code": candidate.ts_code, "error": fetch_error},
+                )
+            )
+        try:
+            candidate.single_stock_research = build_candidate_single_stock_research(
+                candidate,
+                decision_date=decision_date,
+                decision_asof=observed_asof,
+                execution=execution,
+                minute_bars=minute_bars,
+                minute_fetch_failed=minute_fetch_failed,
+            )
+        except Exception as exc:
+            message = f"SINGLE_STOCK_RESEARCH_BUILD_FAILED:{type(exc).__name__}:{str(exc)[:240]}"
+            candidate.single_stock_research = unavailable_single_stock_research(
+                candidate,
+                decision_date=decision_date,
+                decision_asof=observed_asof,
+                reason=message,
+            )
+            source_issues.append(
+                SourceIssue(
+                    "SINGLE_STOCK_RESEARCH_BUILD_FAILED",
+                    "warning",
+                    "single_stock_research",
+                    f"{candidate.ts_code} 的单票研究快照冻结失败；名单与名次保持不变",
+                    {"ts_code": candidate.ts_code, "error": str(exc)},
+                )
+            )
 
 
 def _compatible_training_rows(
@@ -556,19 +669,39 @@ def run_pipeline(
                     buy_date=buy_date,
                     execution=config["execution"],
                 )
+            # Freeze research only after rank and order_spec are final.  This
+            # additive evidence is never read by scoring or execution, and any
+            # research-data failure leaves the strict-intersection list intact.
+            research_config = config["single_stock_research"]
+            research_market = EastmoneyMarketData(
+                HttpClient(
+                    timeout=float(research_config["fetch_timeout_seconds"]),
+                    attempts=int(research_config["fetch_attempts"]),
+                )
+            )
+            _freeze_single_stock_research(
+                scored,
+                market=research_market,
+                decision_date=decision_date,
+                execution=config["execution"],
+                source_issues=source_issues,
+                max_workers=int(research_config["max_parallel_fetches"]),
+            )
+            signal_generated_at = _now()
             snapshots = _source_snapshots(tables)
             signal = Signal(
                 signal_id=_signal_id(decision_date, snapshots),
                 decision_date=decision_date,
                 buy_date=buy_date,
                 exit_date=exit_date,
-                generated_at=_now(),
+                generated_at=signal_generated_at,
                 source_snapshots=snapshots,
                 candidates=scored,
                 model_version=engine_status["selected_model_id"],
                 status="RANKED" if scored else "NO_CANDIDATE",
                 market_data_provenance=_market_data_provenance(bars_by_code),
                 ranking_engine=engine_status,
+                single_stock_research_schema_version=SINGLE_STOCK_RESEARCH_SCHEMA,
             ).to_dict()
             active_signal = signal
             add_signal(state, signal)

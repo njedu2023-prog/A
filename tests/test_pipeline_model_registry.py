@@ -26,6 +26,69 @@ class PipelineModelRegistryTests(unittest.TestCase):
             ):
                 load_config(path)
 
+    def test_single_stock_research_is_configuration_locked_to_audit_only(self) -> None:
+        original = json.loads(Path("config/system.json").read_text(encoding="utf-8"))
+        locked_mutations = {
+            "schema_version": "other",
+            "snapshot_schema_version": "other",
+            "mode": "LIVE_GATE",
+            "limit_lifecycle_evidence": "ORDER_BOOK",
+            "required_full_session_minutes": 239,
+        }
+        for field, value in locked_mutations.items():
+            with self.subTest(field=field):
+                payload = json.loads(json.dumps(original))
+                payload["single_stock_research"][field] = value
+                with tempfile.TemporaryDirectory() as directory:
+                    path = Path(directory) / "system.json"
+                    path.write_text(json.dumps(payload), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, f"{field} must remain"):
+                        load_config(path)
+
+        for field in (
+            "affects_strict_intersection",
+            "affects_ranking",
+            "affects_order_spec",
+        ):
+            with self.subTest(field=field):
+                payload = json.loads(json.dumps(original))
+                payload["single_stock_research"][field] = True
+                with tempfile.TemporaryDirectory() as directory:
+                    path = Path(directory) / "system.json"
+                    path.write_text(json.dumps(payload), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, f"{field} must remain"):
+                        load_config(path)
+
+        payload = json.loads(json.dumps(original))
+        payload["single_stock_research"]["real_auction_gate_connected"] = True
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "system.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "real_auction_gate_connected must remain"):
+                load_config(path)
+
+        payload = json.loads(json.dumps(original))
+        del payload["single_stock_research"]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "system.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "configuration is required"):
+                load_config(path)
+
+        for field, value in (
+            ("fetch_timeout_seconds", 5.1),
+            ("fetch_attempts", 2),
+            ("max_parallel_fetches", 0),
+        ):
+            with self.subTest(field=field):
+                payload = json.loads(json.dumps(original))
+                payload["single_stock_research"][field] = value
+                with tempfile.TemporaryDirectory() as directory:
+                    path = Path(directory) / "system.json"
+                    path.write_text(json.dumps(payload), encoding="utf-8")
+                    with self.assertRaisesRegex(ValueError, "fetch budget"):
+                        load_config(path)
+
     def test_legacy_frozen_features_never_count_as_formal_v2_samples(self) -> None:
         rows = [
             {"row_id": "legacy", "feature_version": None},

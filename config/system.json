@@ -77,6 +77,20 @@
     "slippage_rate_each_side": 0.0005,
     "fee_effective_from": "2023-08-28"
   },
+  "single_stock_research": {
+    "schema_version": "single_stock_research_audit_v1",
+    "snapshot_schema_version": "single_stock_snapshot_v3",
+    "mode": "SHADOW_AUDIT_ONLY",
+    "affects_strict_intersection": false,
+    "affects_ranking": false,
+    "affects_order_spec": false,
+    "limit_lifecycle_evidence": "MINUTE_CLOSE_PROXY",
+    "required_full_session_minutes": 240,
+    "fetch_timeout_seconds": 3.0,
+    "fetch_attempts": 1,
+    "max_parallel_fetches": 5,
+    "real_auction_gate_connected": false
+  },
   "paths": {
     "state": "data/state.v1.json",
     "dashboard": "data/dashboard.v1.json",
