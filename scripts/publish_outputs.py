@@ -47,6 +47,78 @@ def _git_blob_sha(content: bytes) -> str:
     return hashlib.sha1(header + content).hexdigest()
 
 
+def _safe_repository_path(value: str, *, field_name: str) -> Path:
+    path = Path(value)
+    if not value or not path.parts or path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"{field_name} must be relative and contained: {value}")
+    return path
+
+
+def collect_publish_files(
+    files: list[str],
+    include_dirs: list[str] | None = None,
+    *,
+    repository_root: str | Path = ".",
+) -> list[str]:
+    """Expand optional directories without allowing repository escapes.
+
+    Missing optional directories are legitimate (for example a zero-candidate
+    day before the minute archive exists). Hidden atomic-write scratch files are
+    never publishable artifacts.
+    """
+
+    root = Path(repository_root).resolve()
+    result: list[str] = []
+    seen: set[str] = set()
+
+    def add_file(path: Path) -> None:
+        try:
+            resolved = path.resolve(strict=True)
+            resolved.relative_to(root)
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"publish path escapes repository: {path}") from exc
+        if not resolved.is_file():
+            raise ValueError(f"publish path must be a regular file: {path}")
+        try:
+            relative = path.relative_to(root)
+        except ValueError as exc:
+            raise ValueError(f"publish path escapes repository: {path}") from exc
+        repo_path = relative.as_posix()
+        if repo_path not in seen:
+            seen.add(repo_path)
+            result.append(repo_path)
+
+    for item in files:
+        relative = _safe_repository_path(item, field_name="repository path")
+        add_file(root / relative)
+
+    for item in include_dirs or []:
+        relative = _safe_repository_path(item, field_name="include directory")
+        directory = root / relative
+        if not directory.exists():
+            continue
+        try:
+            resolved_directory = directory.resolve(strict=True)
+            resolved_directory.relative_to(root)
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"include directory escapes repository: {item}") from exc
+        if not resolved_directory.is_dir():
+            raise ValueError(f"include directory must be a directory: {item}")
+        for child in sorted(directory.rglob("*"), key=lambda value: value.as_posix()):
+            child_relative = child.relative_to(directory)
+            try:
+                resolved_child = child.resolve(strict=True)
+                resolved_child.relative_to(root)
+            except (OSError, ValueError) as exc:
+                raise ValueError(f"included path escapes repository: {child}") from exc
+            if any(part.startswith(".") for part in child_relative.parts):
+                continue
+            if resolved_child.is_dir():
+                continue
+            add_file(child)
+    return result
+
+
 def publish_files(
     files: list[str],
     branch: str,
@@ -57,10 +129,15 @@ def publish_files(
 ) -> dict[str, Any]:
     prepared: list[tuple[str, bytes]] = []
     seen_paths: set[str] = set()
+    repository_root = Path.cwd().resolve()
     for item in files:
         path = Path(item)
         if path.is_absolute() or ".." in path.parts:
             raise ValueError(f"repository path must be relative and contained: {item}")
+        try:
+            path.resolve().relative_to(repository_root)
+        except ValueError as exc:
+            raise ValueError(f"repository path escapes working tree: {item}") from exc
         repo_path = path.as_posix()
         if repo_path in seen_paths:
             raise ValueError(f"duplicate repository path: {repo_path}")
@@ -86,10 +163,16 @@ def publish_files(
         for item in parent_tree.get("tree", [])
         if item.get("type") == "blob"
     }
-    unchanged = not parent_tree.get("truncated", False) and all(
-        remote_blobs.get(path) == _git_blob_sha(content) for path, content in prepared
+    changed = (
+        prepared
+        if parent_tree.get("truncated", False)
+        else [
+            (path, content)
+            for path, content in prepared
+            if remote_blobs.get(path) != _git_blob_sha(content)
+        ]
     )
-    if unchanged:
+    if not changed:
         latest_ref = request("GET", ref_url, token)
         latest_parent = latest_ref["object"]["sha"]
         if latest_parent != expected_parent:
@@ -105,7 +188,7 @@ def publish_files(
         }
 
     elements = []
-    for repo_path, content in prepared:
+    for repo_path, content in changed:
         blob = request(
             "POST",
             f"{api}/git/blobs",
@@ -137,6 +220,12 @@ def publish_files(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("files", nargs="+")
+    parser.add_argument(
+        "--include-dir",
+        action="append",
+        default=[],
+        help="optionally publish every contained non-hidden file under this directory",
+    )
     parser.add_argument("--branch", default=os.environ.get("GITHUB_REF_NAME", "main"))
     parser.add_argument("--expected-parent", required=True)
     parser.add_argument("--message", default="Update three-table shadow data")
@@ -146,7 +235,7 @@ def main() -> None:
     if not token or not repository:
         raise SystemExit("GITHUB_TOKEN and GITHUB_REPOSITORY are required")
     result = publish_files(
-        args.files,
+        collect_publish_files(args.files, args.include_dir),
         args.branch,
         args.expected_parent,
         args.message,

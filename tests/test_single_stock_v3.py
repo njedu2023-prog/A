@@ -10,6 +10,10 @@ from three_table_quant.single_stock_v3 import (
     MAX_ORDER_SHARES_FIELD,
     PRICE_TICK_FIELD,
     PRICING_VERIFIED_FIELD,
+    SECURITY_BOARD_FIELD,
+    SECURITY_PRICE_LIMIT_PCT_FIELD,
+    SECURITY_PRICE_TICK_FIELD,
+    ST_FIELD,
     STRICT_INTERSECTION_RULE,
     SUSPENDED_FIELD,
     TRADING_RULES_VERIFIED_FIELD,
@@ -46,8 +50,12 @@ def fact(value: object) -> SingleStockFact:
 def complete_facts() -> dict[str, SingleStockFact]:
     return {
         SUSPENDED_FIELD: fact(False),
+        ST_FIELD: fact(False),
         DELISTING_FIELD: fact(False),
         TRADING_RULES_VERIFIED_FIELD: fact(True),
+        SECURITY_BOARD_FIELD: fact("MAIN"),
+        SECURITY_PRICE_LIMIT_PCT_FIELD: fact(10.0),
+        SECURITY_PRICE_TICK_FIELD: fact(0.01),
         PRICING_VERIFIED_FIELD: fact(True),
         D_CLOSE_FIELD: fact(12.34),
         PRICE_TICK_FIELD: fact(0.01),
@@ -159,6 +167,27 @@ class SingleStockV3Tests(unittest.TestCase):
             item.hard_gate.reasons,
             ("CAPACITY_BELOW_ONE_BOARD_LOT",),
         )
+
+    def test_st_security_is_a_known_blocker(self) -> None:
+        facts = complete_facts()
+        facts[ST_FIELD] = fact(True)
+
+        item = snapshot(facts)
+
+        self.assertEqual(item.hard_gate.status, HardGateStatus.BLOCK)
+        self.assertIn("SPECIAL_TREATMENT", item.hard_gate.reasons)
+
+    def test_missing_st_status_is_unknown_never_inferred_false(self) -> None:
+        facts = complete_facts()
+        facts[ST_FIELD] = SingleStockFact.missing(
+            "POINT_IN_TIME_ST_STATUS_UNAVAILABLE",
+            provenance(),
+        )
+
+        item = snapshot(facts)
+
+        self.assertEqual(item.hard_gate.status, HardGateStatus.UNKNOWN)
+        self.assertIn(ST_FIELD, item.hard_gate.unknown_fields)
 
     def test_snapshot_cannot_be_created_from_only_two_source_memberships(self) -> None:
         with self.assertRaisesRegex(ContractError, "exact membership in all three"):

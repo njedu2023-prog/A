@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import multiprocessing
+from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,7 +13,7 @@ from zoneinfo import ZoneInfo
 from .candidate_facts import candidate_validation_inputs
 from .calendar import parse_calendar_date
 from .dashboard import build_dashboard, validate_dashboard
-from .domain import Signal, SourceIssue, iso_date
+from .domain import Candidate, Signal, SourceIssue, iso_date
 from .execution_policy import build_order_spec
 from .http import HttpClient
 from .ledger import (
@@ -33,7 +35,9 @@ from .model_registry import (
     validate_registry,
 )
 from .scoring import score_candidates
+from .security_master import PointInTimeSecurityMaster
 from .single_stock_collection import build_candidate_single_stock_research
+from .single_stock_minute_archive import archive_minute_bars
 from .single_stock_research import (
     SINGLE_STOCK_RESEARCH_SCHEMA,
     unavailable_single_stock_research,
@@ -48,6 +52,10 @@ from .sources import (
     validate_timeline,
 )
 from .training_dataset import build_training_dataset
+
+
+RESEARCH_COLLECTION_PENDING = "PENDING_AFTER_CORE_FREEZE"
+RESEARCH_COLLECTION_COMPLETE = "COMPLETE"
 
 
 def load_config(path: str | Path) -> dict[str, Any]:
@@ -81,6 +89,7 @@ def load_config(path: str | Path) -> dict[str, Any]:
         "affects_order_spec": False,
         "limit_lifecycle_evidence": MINUTE_CLOSE_PROXY,
         "required_full_session_minutes": len(EXPECTED_SESSION_MINUTES),
+        "batch_deadline_seconds": 15.0,
         "real_auction_gate_connected": False,
     }
     for field, expected_value in expected.items():
@@ -105,6 +114,21 @@ def load_config(path: str | Path) -> dict[str, Any]:
         raise ValueError(
             "single-stock research fetch budget must be <=5 seconds, one attempt, and 1-10 workers"
         )
+    protected_paths = {
+        "single_stock_minute_archive": "single-stock minute archive",
+        "security_master": "point-in-time security master",
+    }
+    for field_name, label in protected_paths.items():
+        raw_path = config.get("paths", {}).get(field_name)
+        if not isinstance(raw_path, str) or not raw_path.strip():
+            raise ValueError(f"{label} path is required")
+        parsed_path = Path(raw_path)
+        if (
+            parsed_path.is_absolute()
+            or ".." in parsed_path.parts
+            or not parsed_path.parts
+        ):
+            raise ValueError(f"{label} path must be a contained relative path")
     return config
 
 
@@ -267,7 +291,7 @@ def _market_data_provenance(bars_by_code: dict[str, list[Any]]) -> dict[str, Any
     }
 
 
-def _freeze_single_stock_research(
+def _freeze_single_stock_research_inline(
     candidates: list[Any],
     *,
     market: Any,
@@ -276,28 +300,72 @@ def _freeze_single_stock_research(
     execution: dict[str, Any],
     source_issues: list[SourceIssue],
     max_workers: int = 5,
+    minute_archive_root: str | Path | None = None,
+    security_master_path: str | Path,
 ) -> None:
-    """Attach audit-only V3 evidence under a bounded parallel fetch budget."""
+    """Collect one research batch inside an expendable worker process."""
 
     if not candidates:
         return
 
-    def fetch(candidate: Any) -> tuple[list[Any] | None, bool, str | None]:
+    security_master = PointInTimeSecurityMaster.from_file(security_master_path)
+
+    def fetch(
+        candidate: Any,
+    ) -> tuple[list[Any] | None, bool, str | None, str]:
         try:
-            return market.minute_bars(candidate.ts_code, decision_date), False, None
+            bars = market.minute_bars(candidate.ts_code, decision_date)
         except Exception as exc:
-            return None, True, str(exc)
+            return None, True, str(exc), _now()
+        # This timestamp is deliberately captured after the provider returns.
+        # The parent-supplied decision_asof is only the batch start and must
+        # never be represented as fetched_at/captured_at for later evidence.
+        return bars, False, None, _now()
 
     worker_count = min(max(1, int(max_workers)), len(candidates))
     with ThreadPoolExecutor(max_workers=worker_count) as executor_pool:
         fetched = list(executor_pool.map(fetch, candidates))
 
-    for candidate, (minute_bars, minute_fetch_failed, fetch_error) in zip(
+    for candidate, (
+        minute_bars,
+        minute_fetch_failed,
+        fetch_error,
+        captured_at,
+    ) in zip(
         candidates,
         fetched,
         strict=True,
     ):
-        observed_asof = decision_asof or _now()
+        observed_asof = captured_at
+        captured_date = datetime.fromisoformat(
+            observed_asof.replace("Z", "+00:00")
+        ).astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
+        if captured_date != decision_date:
+            message = (
+                "SINGLE_STOCK_RESEARCH_FETCH_COMPLETED_AFTER_D:"
+                f"decision_date={decision_date};captured_date={captured_date}"
+            )
+            candidate.single_stock_research = unavailable_single_stock_research(
+                candidate,
+                decision_date=decision_date,
+                decision_asof=observed_asof,
+                reason=message,
+            )
+            source_issues.append(
+                SourceIssue(
+                    "SINGLE_STOCK_RESEARCH_FETCH_COMPLETED_AFTER_D",
+                    "warning",
+                    "single_stock_research",
+                    f"{candidate.ts_code} 的研究证据在D日结束后才取得；仅保留不可用记录",
+                    {
+                        "ts_code": candidate.ts_code,
+                        "decision_date": decision_date,
+                        "captured_at": observed_asof,
+                        "batch_started_at": decision_asof,
+                    },
+                )
+            )
+            continue
         if minute_fetch_failed:
             source_issues.append(
                 SourceIssue(
@@ -308,14 +376,49 @@ def _freeze_single_stock_research(
                     {"ts_code": candidate.ts_code, "error": fetch_error},
                 )
             )
+        minute_artifact = None
+        if minute_bars is not None and minute_archive_root is not None:
+            try:
+                minute_artifact = archive_minute_bars(
+                    minute_archive_root,
+                    candidate.ts_code,
+                    decision_date,
+                    minute_bars,
+                    observed_asof,
+                )
+            except Exception as exc:
+                message = (
+                    "SINGLE_STOCK_MINUTE_ARCHIVE_FAILED:"
+                    f"{type(exc).__name__}:{str(exc)[:240]}"
+                )
+                candidate.single_stock_research = (
+                    unavailable_single_stock_research(
+                        candidate,
+                        decision_date=decision_date,
+                        decision_asof=observed_asof,
+                        reason=message,
+                    )
+                )
+                source_issues.append(
+                    SourceIssue(
+                        "SINGLE_STOCK_MINUTE_ARCHIVE_FAILED",
+                        "warning",
+                        "single_stock_research",
+                        f"{candidate.ts_code} 的D日分钟原始证据归档失败；核心名单不变",
+                        {"ts_code": candidate.ts_code, "error": str(exc)},
+                    )
+                )
+                continue
         try:
             candidate.single_stock_research = build_candidate_single_stock_research(
                 candidate,
                 decision_date=decision_date,
                 decision_asof=observed_asof,
                 execution=execution,
+                security_master=security_master,
                 minute_bars=minute_bars,
                 minute_fetch_failed=minute_fetch_failed,
+                minute_artifact=minute_artifact,
             )
         except Exception as exc:
             message = f"SINGLE_STOCK_RESEARCH_BUILD_FAILED:{type(exc).__name__}:{str(exc)[:240]}"
@@ -334,6 +437,227 @@ def _freeze_single_stock_research(
                     {"ts_code": candidate.ts_code, "error": str(exc)},
                 )
             )
+
+
+def _single_stock_research_process_entry(
+    connection: Any,
+    candidates: list[Any],
+    market: Any,
+    decision_date: str,
+    decision_asof: str,
+    execution: dict[str, Any],
+    max_workers: int,
+    minute_archive_root: str | Path | None,
+    security_master_path: str | Path,
+) -> None:
+    """Child-process entrypoint; never mutates the durable parent state."""
+
+    issues: list[SourceIssue] = []
+    try:
+        _freeze_single_stock_research_inline(
+            candidates,
+            market=market,
+            decision_date=decision_date,
+            decision_asof=decision_asof,
+            execution=execution,
+            source_issues=issues,
+            max_workers=max_workers,
+            minute_archive_root=minute_archive_root,
+            security_master_path=security_master_path,
+        )
+        connection.send(
+            {
+                "status": "OK",
+                "candidates": [
+                    {
+                        "ts_code": candidate.ts_code,
+                        "single_stock_research": candidate.single_stock_research,
+                    }
+                    for candidate in candidates
+                ],
+                "issues": [issue.to_dict() for issue in issues],
+            }
+        )
+    except BaseException as exc:  # child failure must be data, not control flow
+        try:
+            connection.send(
+                {
+                    "status": "FAILED",
+                    "error": f"{type(exc).__name__}:{str(exc)[:240]}",
+                }
+            )
+        except BaseException:
+            pass
+    finally:
+        connection.close()
+
+
+def _terminate_research_process(process: Any) -> None:
+    if not process.is_alive():
+        process.join(timeout=0.1)
+        return
+    process.terminate()
+    process.join(timeout=0.25)
+    if process.is_alive():
+        process.kill()
+        process.join(timeout=0.25)
+
+
+def _mark_research_batch_unavailable(
+    candidates: list[Any],
+    *,
+    decision_date: str,
+    decision_asof: str,
+    source_issues: list[SourceIssue],
+    code: str,
+    reason: str,
+) -> None:
+    message = f"{code}:{reason[:240]}"
+    for candidate in candidates:
+        candidate.single_stock_research = unavailable_single_stock_research(
+            candidate,
+            decision_date=decision_date,
+            decision_asof=decision_asof,
+            reason=message,
+        )
+    source_issues.append(
+        SourceIssue(
+            code,
+            "warning",
+            "single_stock_research",
+            "单票研究批次不可用；核心名单、名次、订单与影子账本保持不变",
+            {"decision_date": decision_date, "reason": reason},
+        )
+    )
+
+
+def _freeze_single_stock_research(
+    candidates: list[Any],
+    *,
+    market: Any,
+    decision_date: str,
+    decision_asof: str | None = None,
+    execution: dict[str, Any],
+    source_issues: list[SourceIssue],
+    max_workers: int = 5,
+    batch_deadline_seconds: float = 15.0,
+    minute_archive_root: str | Path | None = None,
+    security_master_path: str | Path,
+) -> None:
+    """Collect audit evidence in a killable process with a hard deadline."""
+
+    if not candidates:
+        return
+    if (
+        isinstance(batch_deadline_seconds, bool)
+        or not isinstance(batch_deadline_seconds, (int, float))
+        or float(batch_deadline_seconds) <= 0
+    ):
+        raise ValueError("research batch deadline must be positive")
+
+    observed_asof = decision_asof or _now()
+    try:
+        context = multiprocessing.get_context("fork")
+    except ValueError:  # pragma: no cover - production runners are Unix
+        context = multiprocessing.get_context("spawn")
+    receive, send = context.Pipe(duplex=False)
+    process = context.Process(
+        target=_single_stock_research_process_entry,
+        args=(
+            send,
+            candidates,
+            market,
+            decision_date,
+            observed_asof,
+            execution,
+            max_workers,
+            minute_archive_root,
+            security_master_path,
+        ),
+        name=f"single-stock-research-{decision_date}",
+        daemon=True,
+    )
+    payload: Any = None
+    failure: tuple[str, str] | None = None
+    try:
+        process.start()
+        send.close()
+        if receive.poll(float(batch_deadline_seconds)):
+            try:
+                payload = receive.recv()
+            except EOFError:
+                failure = (
+                    "SINGLE_STOCK_RESEARCH_WORKER_FAILED",
+                    "worker exited without a result",
+                )
+        else:
+            failure = (
+                "SINGLE_STOCK_RESEARCH_BATCH_DEADLINE_EXCEEDED",
+                f"deadline_seconds={float(batch_deadline_seconds):g}",
+            )
+    except Exception as exc:
+        failure = (
+            "SINGLE_STOCK_RESEARCH_WORKER_FAILED",
+            f"{type(exc).__name__}:{str(exc)[:240]}",
+        )
+    finally:
+        send.close()
+        receive.close()
+        if process.pid is not None:
+            _terminate_research_process(process)
+
+    if failure is None:
+        if not isinstance(payload, dict) or payload.get("status") != "OK":
+            error = payload.get("error") if isinstance(payload, dict) else None
+            failure = (
+                "SINGLE_STOCK_RESEARCH_WORKER_FAILED",
+                str(error or "worker returned an invalid result"),
+            )
+        else:
+            results = payload.get("candidates")
+            if not isinstance(results, list) or len(results) != len(candidates):
+                failure = (
+                    "SINGLE_STOCK_RESEARCH_WORKER_FAILED",
+                    "worker candidate count mismatch",
+                )
+            else:
+                for candidate, result in zip(candidates, results, strict=True):
+                    if (
+                        not isinstance(result, dict)
+                        or result.get("ts_code") != candidate.ts_code
+                        or not isinstance(result.get("single_stock_research"), dict)
+                    ):
+                        failure = (
+                            "SINGLE_STOCK_RESEARCH_WORKER_FAILED",
+                            "worker candidate identity or payload mismatch",
+                        )
+                        break
+                if failure is None:
+                    for candidate, result in zip(candidates, results, strict=True):
+                        candidate.single_stock_research = deepcopy(
+                            result["single_stock_research"]
+                        )
+                    for issue in payload.get("issues") or []:
+                        if isinstance(issue, dict):
+                            source_issues.append(
+                                SourceIssue(
+                                    str(issue.get("code") or ""),
+                                    str(issue.get("severity") or "warning"),
+                                    str(issue.get("source_id") or "market_data"),
+                                    str(issue.get("message") or ""),
+                                    deepcopy(issue.get("details") or {}),
+                                )
+                            )
+
+    if failure is not None:
+        _mark_research_batch_unavailable(
+            candidates,
+            decision_date=decision_date,
+            decision_asof=observed_asof,
+            source_issues=source_issues,
+            code=failure[0],
+            reason=failure[1],
+        )
 
 
 def _compatible_training_rows(
@@ -527,6 +851,164 @@ def _ensure_all_candidate_shadow_ledger(
         ensure_shadow_trades(state, signal, tracked_ranks)
 
 
+def _candidate_from_frozen_signal(payload: dict[str, Any]) -> Candidate:
+    """Rebuild only the typed fields needed by additive research collectors."""
+
+    return Candidate(
+        ts_code=str(payload["ts_code"]),
+        name=str(payload["name"]),
+        source_ranks=deepcopy(payload.get("source_ranks") or {}),
+        source_values=deepcopy(payload.get("source_values") or {}),
+        features=deepcopy(payload.get("features") or {}),
+        metrics=deepcopy(payload.get("metrics") or {}),
+        order_spec=deepcopy(payload.get("order_spec") or {}),
+        rank=payload.get("rank"),
+        action=str(payload.get("action") or "NO_TRADE"),
+        action_reason=str(payload.get("action_reason") or "not_scored"),
+        single_stock_research=deepcopy(
+            payload.get("single_stock_research") or {}
+        ),
+    )
+
+
+def _persist_core_signal(
+    state: dict[str, Any],
+    signal: dict[str, Any],
+    *,
+    state_path: str | Path,
+    tracked_ranks: list[int],
+) -> None:
+    """Atomically checkpoint the immutable decision before optional research.
+
+    The checkpoint contains the Signal, every strict-intersection candidate,
+    each frozen ``order_spec`` and its idempotent shadow-ledger row.  A later
+    research failure can therefore never erase or prevent recovery of the
+    official 21:30 list.
+    """
+
+    signal["single_stock_research_collection_status"] = (
+        RESEARCH_COLLECTION_PENDING
+    )
+    signal["single_stock_research_schema_version"] = None
+    if not add_signal(state, signal):
+        raise ValueError(
+            f"core signal already exists for {signal.get('decision_date')}"
+        )
+    _ensure_all_candidate_shadow_ledger(state, tracked_ranks)
+    save_json(state_path, state)
+
+
+def _complete_optional_single_stock_research(
+    state: dict[str, Any],
+    signal: dict[str, Any],
+    *,
+    state_path: str | Path,
+    market: Any,
+    execution: dict[str, Any],
+    source_issues: list[SourceIssue],
+    max_workers: int,
+    batch_deadline_seconds: float = 15.0,
+    decision_asof: str | None = None,
+    minute_archive_root: str | Path | None = None,
+    security_master_path: str | Path,
+) -> None:
+    """Attach optional audit evidence after the core checkpoint exists.
+
+    This function is also the recovery path for a process interrupted after
+    ``_persist_core_signal``.  Historical signals have no explicit pending
+    marker and are intentionally never backfilled.
+    """
+
+    if (
+        signal.get("single_stock_research_collection_status")
+        != RESEARCH_COLLECTION_PENDING
+    ):
+        return
+
+    decision_date = str(signal["decision_date"])
+    observed_asof = decision_asof or _now()
+    frozen_candidates = signal.get("candidates", [])
+    candidates = [
+        _candidate_from_frozen_signal(item) for item in frozen_candidates
+    ]
+    try:
+        observed_date = datetime.fromisoformat(
+            observed_asof.replace("Z", "+00:00")
+        ).astimezone(ZoneInfo("Asia/Shanghai")).strftime("%Y%m%d")
+        if observed_date != decision_date:
+            _mark_research_batch_unavailable(
+                candidates,
+                decision_date=decision_date,
+                decision_asof=observed_asof,
+                source_issues=source_issues,
+                code="SINGLE_STOCK_RESEARCH_RECOVERY_AFTER_D",
+                reason=(
+                    f"decision_date={decision_date};"
+                    f"observed_date={observed_date};late evidence not backfilled"
+                ),
+            )
+        else:
+            _freeze_single_stock_research(
+                candidates,
+                market=market,
+                decision_date=decision_date,
+                decision_asof=observed_asof,
+                execution=execution,
+                source_issues=source_issues,
+                max_workers=max_workers,
+                batch_deadline_seconds=batch_deadline_seconds,
+                minute_archive_root=minute_archive_root,
+                security_master_path=security_master_path,
+            )
+    except Exception as exc:
+        reason = (
+            "SINGLE_STOCK_RESEARCH_BATCH_FAILED:"
+            f"{type(exc).__name__}:{str(exc)[:240]}"
+        )
+        source_issues.append(
+            SourceIssue(
+                "SINGLE_STOCK_RESEARCH_BATCH_FAILED",
+                "warning",
+                "single_stock_research",
+                "单票研究批次异常；核心名单、名次、订单与影子账本均已先行冻结",
+                {"decision_date": decision_date, "error": str(exc)},
+            )
+        )
+        for candidate in candidates:
+            candidate.single_stock_research = (
+                unavailable_single_stock_research(
+                    candidate,
+                    decision_date=decision_date,
+                    decision_asof=observed_asof,
+                    reason=reason,
+                )
+            )
+
+    if len(candidates) != len(frozen_candidates):  # defensive; zip is strict
+        raise ValueError("research candidate count changed after core freeze")
+    for frozen, candidate in zip(frozen_candidates, candidates, strict=True):
+        research = candidate.single_stock_research
+        if not isinstance(research, dict) or not research:
+            research = unavailable_single_stock_research(
+                candidate,
+                decision_date=decision_date,
+                decision_asof=observed_asof,
+                reason="SINGLE_STOCK_RESEARCH_RESULT_MISSING",
+            )
+        frozen["single_stock_research"] = deepcopy(research)
+
+    signal["single_stock_research_schema_version"] = (
+        SINGLE_STOCK_RESEARCH_SCHEMA
+    )
+    signal["single_stock_research_collection_status"] = (
+        RESEARCH_COLLECTION_COMPLETE
+    )
+    signal["single_stock_research_completed_at"] = _now()
+    # A second atomic replace enriches the already durable core.  If this
+    # write itself fails, the first checkpoint remains intact on disk.
+    save_json(state_path, state)
+
+
 def run_pipeline(
     config_path: str | Path = "config/system.json",
     *,
@@ -669,24 +1151,6 @@ def run_pipeline(
                     buy_date=buy_date,
                     execution=config["execution"],
                 )
-            # Freeze research only after rank and order_spec are final.  This
-            # additive evidence is never read by scoring or execution, and any
-            # research-data failure leaves the strict-intersection list intact.
-            research_config = config["single_stock_research"]
-            research_market = EastmoneyMarketData(
-                HttpClient(
-                    timeout=float(research_config["fetch_timeout_seconds"]),
-                    attempts=int(research_config["fetch_attempts"]),
-                )
-            )
-            _freeze_single_stock_research(
-                scored,
-                market=research_market,
-                decision_date=decision_date,
-                execution=config["execution"],
-                source_issues=source_issues,
-                max_workers=int(research_config["max_parallel_fetches"]),
-            )
             signal_generated_at = _now()
             snapshots = _source_snapshots(tables)
             signal = Signal(
@@ -701,15 +1165,51 @@ def run_pipeline(
                 status="RANKED" if scored else "NO_CANDIDATE",
                 market_data_provenance=_market_data_provenance(bars_by_code),
                 ranking_engine=engine_status,
-                single_stock_research_schema_version=SINGLE_STOCK_RESEARCH_SCHEMA,
             ).to_dict()
             active_signal = signal
-            add_signal(state, signal)
+            # P0-1 durability boundary: the immutable decision and every
+            # shadow order exist on disk before any optional D-minute request.
+            _persist_core_signal(
+                state,
+                signal,
+                state_path=paths["state"],
+                tracked_ranks=list(config["tracked_ranks"]),
+            )
             current_run["status"] = signal["status"]
             current_run["message"] = (
                 f"三表严格交集实际保留{len(scored)}支并完成重新排序"
                 if scored
                 else "D日名单筛选已执行；三表严格交集0支，合法空选且不补票"
+            )
+
+        if (
+            active_signal is not None
+            and active_signal.get("single_stock_research_collection_status")
+            == RESEARCH_COLLECTION_PENDING
+        ):
+            # Optional audit enrichment is deliberately after the atomic core
+            # checkpoint.  Explicit pending status enables crash recovery for
+            # this new two-phase format without backfilling legacy signals.
+            research_config = config["single_stock_research"]
+            research_market = EastmoneyMarketData(
+                HttpClient(
+                    timeout=float(research_config["fetch_timeout_seconds"]),
+                    attempts=int(research_config["fetch_attempts"]),
+                )
+            )
+            _complete_optional_single_stock_research(
+                state,
+                active_signal,
+                state_path=paths["state"],
+                market=research_market,
+                execution=config["execution"],
+                source_issues=source_issues,
+                max_workers=int(research_config["max_parallel_fetches"]),
+                batch_deadline_seconds=float(
+                    research_config["batch_deadline_seconds"]
+                ),
+                minute_archive_root=paths["single_stock_minute_archive"],
+                security_master_path=paths["security_master"],
             )
         # This is intentionally independent of add_signal(): a frozen legacy
         # signal can be missing rank 4+ shadow trades and must be repaired

@@ -11,6 +11,7 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from .domain import ContractError, normalize_date, normalize_ts_code
+from .security_master import ALLOWED_BOARDS
 from .sources import SOURCE_IDS
 
 
@@ -21,8 +22,12 @@ STRICT_INTERSECTION_RULE = "STRICT_THREE_TABLE_INTERSECTION"
 # deterministic tradeability/data-contract checks; predictive filters belong
 # in a later challenger and must not silently change intersection membership.
 SUSPENDED_FIELD = "security.is_suspended"
+ST_FIELD = "security.is_st"
 DELISTING_FIELD = "security.is_delisting_period"
 TRADING_RULES_VERIFIED_FIELD = "security.trading_rules_verified"
+SECURITY_BOARD_FIELD = "security.board"
+SECURITY_PRICE_LIMIT_PCT_FIELD = "security.price_limit_pct"
+SECURITY_PRICE_TICK_FIELD = "security.price_tick"
 PRICING_VERIFIED_FIELD = "market.pricing_verified"
 D_CLOSE_FIELD = "market.d_close"
 PRICE_TICK_FIELD = "market.price_tick"
@@ -31,8 +36,12 @@ MAX_ORDER_SHARES_FIELD = "execution.max_order_shares"
 
 HARD_GATE_REQUIRED_FIELDS = (
     SUSPENDED_FIELD,
+    ST_FIELD,
     DELISTING_FIELD,
     TRADING_RULES_VERIFIED_FIELD,
+    SECURITY_BOARD_FIELD,
+    SECURITY_PRICE_LIMIT_PCT_FIELD,
+    SECURITY_PRICE_TICK_FIELD,
     PRICING_VERIFIED_FIELD,
     D_CLOSE_FIELD,
     PRICE_TICK_FIELD,
@@ -259,6 +268,17 @@ def _integer(value: Any, field_name: str, *, positive: bool) -> int | None:
     return value
 
 
+def _security_board(value: Any) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ContractError(f"{SECURITY_BOARD_FIELD} must be a string or explicitly missing")
+    board = value.strip().upper()
+    if board not in ALLOWED_BOARDS:
+        raise ContractError(f"unsupported {SECURITY_BOARD_FIELD}: {value!r}")
+    return board
+
+
 def evaluate_hard_gate(
     facts: Mapping[str, SingleStockFact],
 ) -> HardGateDecision:
@@ -270,6 +290,7 @@ def evaluate_hard_gate(
     """
 
     suspended = _require_bool(_fact_value(facts, SUSPENDED_FIELD), SUSPENDED_FIELD)
+    is_st = _require_bool(_fact_value(facts, ST_FIELD), ST_FIELD)
     delisting = _require_bool(_fact_value(facts, DELISTING_FIELD), DELISTING_FIELD)
     rules_verified = _require_bool(
         _fact_value(facts, TRADING_RULES_VERIFIED_FIELD),
@@ -280,6 +301,15 @@ def evaluate_hard_gate(
         PRICING_VERIFIED_FIELD,
     )
     _positive_number(_fact_value(facts, D_CLOSE_FIELD), D_CLOSE_FIELD)
+    _security_board(_fact_value(facts, SECURITY_BOARD_FIELD))
+    _positive_number(
+        _fact_value(facts, SECURITY_PRICE_LIMIT_PCT_FIELD),
+        SECURITY_PRICE_LIMIT_PCT_FIELD,
+    )
+    _positive_number(
+        _fact_value(facts, SECURITY_PRICE_TICK_FIELD),
+        SECURITY_PRICE_TICK_FIELD,
+    )
     _positive_number(_fact_value(facts, PRICE_TICK_FIELD), PRICE_TICK_FIELD)
     board_lot = _integer(
         _fact_value(facts, BOARD_LOT_FIELD),
@@ -295,6 +325,8 @@ def evaluate_hard_gate(
     blockers: list[str] = []
     if suspended is True:
         blockers.append("SUSPENDED")
+    if is_st is True:
+        blockers.append("SPECIAL_TREATMENT")
     if delisting is True:
         blockers.append("DELISTING_PERIOD")
     if rules_verified is False:

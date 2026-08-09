@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-import hashlib
-import json
 from collections.abc import Sequence
 from typing import Any
 
 from .candidate_facts import candidate_validation_inputs
 from .domain import Candidate, ContractError, normalize_date
 from .limit_lifecycle import build_limit_lifecycle
+from .limit_lifecycle import EXPECTED_SESSION_MINUTES
+from .single_stock_minute_archive import (
+    MinuteArchiveReference,
+    canonicalize_minute_bars,
+    minute_bars_content_sha256,
+)
 from .single_stock_research import build_single_stock_research_snapshot
+from .security_master import PointInTimeSecurityMaster, SecurityMasterResolution
 from .single_stock_v3 import (
     BOARD_LOT_FIELD,
     D_CLOSE_FIELD,
@@ -16,6 +21,10 @@ from .single_stock_v3 import (
     MAX_ORDER_SHARES_FIELD,
     PRICE_TICK_FIELD,
     PRICING_VERIFIED_FIELD,
+    SECURITY_BOARD_FIELD,
+    SECURITY_PRICE_LIMIT_PCT_FIELD,
+    SECURITY_PRICE_TICK_FIELD,
+    ST_FIELD,
     SUSPENDED_FIELD,
     TRADING_RULES_VERIFIED_FIELD,
     FactProvenance,
@@ -32,6 +41,9 @@ LIFECYCLE_INPUT_FIELD = "research.limit_lifecycle_input"
 
 
 def _digest(value: Any) -> str:
+    import hashlib
+    import json
+
     return hashlib.sha256(
         json.dumps(
             value,
@@ -75,28 +87,16 @@ def _fact_or_missing(
     return SingleStockFact(value, provenance, unit=unit)
 
 
-def _canonical_minute_bars(bars: Sequence[Any] | None) -> list[dict[str, Any]]:
-    if bars is None:
-        return []
-    return [
-        {
-            "date": getattr(bar, "date", None),
-            "time": getattr(bar, "time", None),
-            "open": getattr(bar, "open", None),
-            "close": getattr(bar, "close", None),
-            "high": getattr(bar, "high", None),
-            "low": getattr(bar, "low", None),
-            "volume": getattr(bar, "volume", None),
-            "amount": getattr(bar, "amount", None),
-            "volume_unit": getattr(bar, "volume_unit", None),
-            "price_tick": getattr(bar, "price_tick", None),
-            "source_time": getattr(bar, "source_time", None),
-            "time_semantics": getattr(bar, "time_semantics", None),
-            "provider": getattr(bar, "provider", None),
-            "price_adjustment": getattr(bar, "price_adjustment", None),
-        }
-        for bar in bars
-    ]
+def _security_provenance(resolution: SecurityMasterResolution) -> FactProvenance:
+    return FactProvenance(
+        provider=resolution.provider,
+        dataset_version=resolution.dataset_version,
+        known_at=resolution.known_at,
+        fetched_at=resolution.fetched_at,
+        content_sha256=resolution.content_sha256,
+        revision_id=resolution.revision_id,
+        source_uri=resolution.source_uri,
+    )
 
 
 def build_candidate_single_stock_research(
@@ -105,8 +105,10 @@ def build_candidate_single_stock_research(
     decision_date: str,
     decision_asof: str,
     execution: dict[str, Any],
+    security_master: PointInTimeSecurityMaster,
     minute_bars: Sequence[Any] | None,
     minute_fetch_failed: bool = False,
+    minute_artifact: MinuteArchiveReference | dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Freeze P0/P1 single-stock evidence without affecting the decision path.
 
@@ -141,17 +143,24 @@ def build_candidate_single_stock_research(
         decision_asof=decision_asof,
         payload=policy_payload,
     )
-    security_gap_provenance = _provenance(
-        provider="SECURITY_MASTER_NOT_CONNECTED",
-        dataset_version="security_master_gap_v1",
+    if not isinstance(security_master, PointInTimeSecurityMaster):
+        raise ContractError("point-in-time security master is required")
+    security = security_master.resolve(
+        candidate.ts_code,
+        decision_date=day,
         decision_asof=decision_asof,
-        payload={
-            "ts_code": candidate.ts_code,
-            "missing": ["suspension", "delisting", "trading_rules"],
-        },
     )
-    canonical_bars = _canonical_minute_bars(minute_bars)
-    bars_content_sha256 = _digest(canonical_bars) if minute_bars is not None else None
+    security_provenance = _security_provenance(security)
+    canonical_bars = (
+        canonicalize_minute_bars(minute_bars, decision_date=day)
+        if minute_bars is not None
+        else []
+    )
+    bars_content_sha256 = (
+        minute_bars_content_sha256(canonical_bars)
+        if minute_bars is not None
+        else None
+    )
     bars_payload = {
         "ts_code": candidate.ts_code,
         "decision_date": day,
@@ -165,6 +174,33 @@ def build_candidate_single_stock_research(
             }
         ),
     }
+    if minute_artifact is not None:
+        if minute_bars is None:
+            raise ContractError(
+                "minute artifact reference requires the matching in-memory bars"
+            )
+        parsed_artifact = (
+            minute_artifact
+            if isinstance(minute_artifact, MinuteArchiveReference)
+            else MinuteArchiveReference.from_dict(minute_artifact)
+        )
+        parsed_artifact.validate_for(
+            ts_code=candidate.ts_code,
+            decision_date=day,
+            decision_asof=decision_asof,
+            bars_content_sha256=bars_content_sha256,
+            bar_count=len(canonical_bars),
+            full_session=(
+                tuple(item["time"] for item in canonical_bars)
+                == EXPECTED_SESSION_MINUTES
+            ),
+        )
+        observed_providers = tuple(
+            sorted({item["provider"] for item in canonical_bars})
+        )
+        if parsed_artifact.providers != observed_providers:
+            raise ContractError("minute artifact providers mismatch in research snapshot")
+        bars_payload["minute_artifact"] = parsed_artifact.to_dict()
     minute_provenance = _provenance(
         provider="MARKET_MINUTE_ADAPTER",
         dataset_version="d_day_minute_close_proxy_v1",
@@ -173,7 +209,11 @@ def build_candidate_single_stock_research(
     )
 
     d_close = facts.get("d_close")
-    price_tick = execution.get("price_tick")
+    policy_price_tick = execution.get("price_tick")
+    security_price_tick = security.value("price_tick")
+    lifecycle_price_tick = (
+        security_price_tick if security_price_tick is not None else policy_price_tick
+    )
     board_lot = execution.get("lot_size")
     submitted_qty = (
         candidate.order_spec.get("submitted_qty")
@@ -181,29 +221,93 @@ def build_candidate_single_stock_research(
         else None
     )
     limit_price = facts.get("limit_up_price")
+    frozen_limit_pct = facts.get("mechanism_limit_pct")
+    security_limit_pct = security.value("price_limit_pct")
+    rules_verified = security.value("trading_rules_verified")
+    pricing_inputs_complete = all(
+        value is not None
+        for value in (
+            d_close,
+            limit_price,
+            frozen_limit_pct,
+            security_limit_pct,
+            security_price_tick,
+            rules_verified,
+        )
+    )
+    pricing_verified = None
+    if pricing_inputs_complete:
+        pricing_verified = bool(
+            rules_verified is True
+            and abs(float(frozen_limit_pct) - float(security_limit_pct)) <= 1e-9
+        )
+    pricing_provenance = _provenance(
+        provider="FROZEN_SOURCE_AND_POINT_IN_TIME_SECURITY_MASTER",
+        dataset_version="pricing_cross_check_v1",
+        decision_asof=decision_asof,
+        payload={
+            "source_sha256": source_provenance.content_sha256,
+            "security_master_sha256": security.content_sha256,
+            "record_id": security.record_id,
+            "d_close": d_close,
+            "limit_price": limit_price,
+            "frozen_limit_pct": frozen_limit_pct,
+            "security_limit_pct": security_limit_pct,
+            "security_price_tick": security_price_tick,
+            "trading_rules_verified": rules_verified,
+        },
+    )
     fact_map = {
-        # A point-in-time security master is not available in this repository.
-        # Preserve the gap as UNKNOWN; never infer False from a missing flag.
-        SUSPENDED_FIELD: SingleStockFact.missing(
-            "POINT_IN_TIME_SUSPENSION_STATUS_UNAVAILABLE",
-            security_gap_provenance,
+        # Every value comes from an effective-dated, as-of-safe record.  The
+        # bootstrap master is intentionally empty: absence is UNKNOWN and is
+        # never converted to False/PASS from the code, name, board or policy.
+        SUSPENDED_FIELD: _fact_or_missing(
+            security.value("is_suspended"),
+            security_provenance,
+            security.missing_reason("is_suspended")
+            or "POINT_IN_TIME_SUSPENSION_STATUS_UNAVAILABLE",
         ),
-        DELISTING_FIELD: SingleStockFact.missing(
-            "POINT_IN_TIME_DELISTING_STATUS_UNAVAILABLE",
-            security_gap_provenance,
+        ST_FIELD: _fact_or_missing(
+            security.value("is_st"),
+            security_provenance,
+            security.missing_reason("is_st")
+            or "POINT_IN_TIME_ST_STATUS_UNAVAILABLE",
         ),
-        TRADING_RULES_VERIFIED_FIELD: SingleStockFact.missing(
-            "EXCHANGE_SECURITY_RULES_NOT_CONNECTED",
-            security_gap_provenance,
+        DELISTING_FIELD: _fact_or_missing(
+            security.value("is_delisting_period"),
+            security_provenance,
+            security.missing_reason("is_delisting_period")
+            or "POINT_IN_TIME_DELISTING_STATUS_UNAVAILABLE",
+        ),
+        TRADING_RULES_VERIFIED_FIELD: _fact_or_missing(
+            rules_verified,
+            security_provenance,
+            security.missing_reason("trading_rules_verified")
+            or "EXCHANGE_SECURITY_RULES_UNAVAILABLE",
+        ),
+        SECURITY_BOARD_FIELD: _fact_or_missing(
+            security.value("board"),
+            security_provenance,
+            security.missing_reason("board") or "SECURITY_BOARD_UNAVAILABLE",
+        ),
+        SECURITY_PRICE_LIMIT_PCT_FIELD: _fact_or_missing(
+            security_limit_pct,
+            security_provenance,
+            security.missing_reason("price_limit_pct")
+            or "SECURITY_PRICE_LIMIT_UNAVAILABLE",
+            unit="PERCENT",
+        ),
+        SECURITY_PRICE_TICK_FIELD: _fact_or_missing(
+            security_price_tick,
+            security_provenance,
+            security.missing_reason("price_tick")
+            or "POINT_IN_TIME_PRICE_TICK_UNAVAILABLE",
+            unit="CNY_PER_SHARE",
         ),
         PRICING_VERIFIED_FIELD: _fact_or_missing(
-            (
-                True
-                if d_close is not None and limit_price is not None
-                else None
-            ),
-            source_provenance,
-            "FROZEN_PRICING_EVIDENCE_INCOMPLETE",
+            pricing_verified,
+            pricing_provenance,
+            "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
         ),
         D_CLOSE_FIELD: _fact_or_missing(
             d_close,
@@ -212,7 +316,7 @@ def build_candidate_single_stock_research(
             unit="CNY_PER_SHARE",
         ),
         PRICE_TICK_FIELD: _fact_or_missing(
-            price_tick,
+            policy_price_tick,
             policy_provenance,
             "PRICE_TICK_POLICY_UNAVAILABLE",
             unit="CNY_PER_SHARE",
@@ -279,7 +383,7 @@ def build_candidate_single_stock_research(
             minute_bars,
             day,
             float(limit_price) if limit_price is not None else 0.0,
-            float(price_tick) if price_tick is not None else 0.0,
+            float(lifecycle_price_tick) if lifecycle_price_tick is not None else 0.0,
         )
     return build_single_stock_research_snapshot(
         candidate,

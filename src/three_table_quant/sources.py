@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from .calendar import DEFAULT_CALENDAR_PATH, TradingCalendar, parse_calendar_date
+from .calendar import DEFAULT_CALENDAR_PATH, load_trading_calendar, parse_calendar_date
 from .candidate_facts import candidate_validation_inputs
 from .domain import (
     Candidate,
@@ -1115,7 +1115,7 @@ def validate_timeline(
         buy_date = next(iter(buy_dates.values()))
         exit_date = next(iter(exit_dates.values()))
         try:
-            calendar = TradingCalendar.from_file(calendar_path)
+            calendar = load_trading_calendar(calendar_path)
             calendar.validate_d_t_t1(decision_date, buy_date, exit_date)
         except ContractError as exc:
             issues.append(

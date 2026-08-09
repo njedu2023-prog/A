@@ -1,0 +1,11 @@
+{
+  "schema_version": "sse_trading_calendar_candidate_v1",
+  "market": "SSE",
+  "year": 2027,
+  "timezone": "Asia/Shanghai",
+  "verification_status": "UNVERIFIED_AWAITING_OFFICIAL_NOTICE",
+  "checked_at": "2026-08-09",
+  "source_discovery_url": "https://www.sse.com.cn/disclosure/dealinstruc/closed/",
+  "closed_dates": null,
+  "notes": "As of 2026-08-09, no official SSE 2027 annual closure notice was available. This metadata-only candidate is forbidden in production until the official notice is ingested and the bundle entry is promoted to VERIFIED."
+}

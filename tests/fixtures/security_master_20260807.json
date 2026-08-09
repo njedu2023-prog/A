@@ -1,0 +1,30 @@
+{
+  "schema_version": "point_in_time_security_master_v1",
+  "provider": "TEST_POINT_IN_TIME_SECURITY_MASTER",
+  "dataset_version": "fixture-20260807-v1",
+  "generated_at": "2026-08-07T15:05:00+08:00",
+  "records": [
+    {
+      "record_id": "000815-20260807-v1",
+      "ts_code": "000815.SZ",
+      "effective_from": "2026-01-01",
+      "effective_to": null,
+      "known_at": "2026-08-07T15:01:00+08:00",
+      "fetched_at": "2026-08-07T15:05:00+08:00",
+      "provider": "OFFICIAL_SECURITY_MASTER_FIXTURE",
+      "dataset_version": "fixture-20260807-v1",
+      "revision_id": "fixture-v1",
+      "source_uri": "https://www.sse.com.cn/fixture/security-master",
+      "facts": {
+        "is_suspended": false,
+        "is_st": false,
+        "is_delisting_period": false,
+        "trading_rules_verified": true,
+        "board": "MAIN",
+        "price_limit_pct": 10.0,
+        "price_tick": 0.01
+      },
+      "missing_reasons": {}
+    }
+  ]
+}

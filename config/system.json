@@ -3,7 +3,7 @@
   "timezone": "Asia/Shanghai",
   "tracked_ranks": [1, 2, 3],
   "input_contract": {
-    "trading_calendar_path": "data/trading_calendar_2026.json",
+    "trading_calendar_path": "data/trading_calendar_bundle.json",
     "freeze_after_local_time": "20:00"
   },
   "sources": {
@@ -69,7 +69,7 @@
     "exit_minute_count": 5,
     "max_exit_participation_rate": 0.05,
     "one_price_bar_is_locked_without_limit": true,
-    "trading_calendar_path": "data/trading_calendar_2026.json",
+    "trading_calendar_path": "data/trading_calendar_bundle.json",
     "commission_rate": 0.0003,
     "minimum_commission_cny": 5.0,
     "stamp_duty_sell_rate": 0.0005,
@@ -89,6 +89,7 @@
     "fetch_timeout_seconds": 3.0,
     "fetch_attempts": 1,
     "max_parallel_fetches": 5,
+    "batch_deadline_seconds": 15.0,
     "real_auction_gate_connected": false
   },
   "paths": {
@@ -96,6 +97,8 @@
     "dashboard": "data/dashboard.v1.json",
     "source_issues": "data/source_issues.v1.json",
     "execution_truth": "data/execution_truth.v1.json",
-    "model_registry": "data/model_registry.v1.json"
+    "model_registry": "data/model_registry.v1.json",
+    "security_master": "data/security_master.v1.json",
+    "single_stock_minute_archive": "data/single_stock_minute_archive"
   }
 }

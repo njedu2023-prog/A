@@ -1,0 +1,17 @@
+{
+  "schema_version": "sse_trading_calendar_bundle_v1",
+  "market": "SSE",
+  "timezone": "Asia/Shanghai",
+  "years": [
+    {
+      "year": 2026,
+      "status": "VERIFIED",
+      "path": "trading_calendar_2026.json"
+    },
+    {
+      "year": 2027,
+      "status": "UNVERIFIED_AWAITING_OFFICIAL_NOTICE",
+      "path": "trading_calendar_2027_candidate.json"
+    }
+  ]
+}

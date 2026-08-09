@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from .calendar import TradingCalendar, parse_calendar_date
+from .calendar import TradingCalendarLike, load_trading_calendar, parse_calendar_date
 from .candidate_facts import candidate_validation_inputs
 from .domain import AuctionTruth, ContractError, normalize_date
 from .execution_policy import maximum_lot_quantity, validate_truth_against_order_spec
@@ -908,7 +908,7 @@ def _settle_exit_window(
 def _exit_dates_through(
     planned_exit_date: str,
     asof_date: str,
-    calendar: TradingCalendar,
+    calendar: TradingCalendarLike,
 ) -> list[str]:
     start = parse_calendar_date(planned_exit_date, "planned_exit_date")
     end = parse_calendar_date(asof_date, "asof_date")
@@ -1178,7 +1178,7 @@ def settle_trades(
     now = _settlement_clock(asof_date, asof_at)
     today = now.strftime("%Y%m%d")
     calendar_path = execution.get("trading_calendar_path")
-    calendar = TradingCalendar.from_file(calendar_path) if calendar_path else TradingCalendar.from_file()
+    calendar = load_trading_calendar(calendar_path) if calendar_path else load_trading_calendar()
     for trade in state["trades"]:
         _migrate_trade_execution(trade, execution)
         _settle_t_day_validation(trade, provider, execution, now)

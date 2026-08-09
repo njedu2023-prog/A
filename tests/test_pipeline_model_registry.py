@@ -68,11 +68,44 @@ class PipelineModelRegistryTests(unittest.TestCase):
                 load_config(path)
 
         payload = json.loads(json.dumps(original))
+        payload["single_stock_research"]["batch_deadline_seconds"] = 30.0
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "system.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "batch_deadline_seconds must remain"):
+                load_config(path)
+
+        payload = json.loads(json.dumps(original))
         del payload["single_stock_research"]
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "system.json"
             path.write_text(json.dumps(payload), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "configuration is required"):
+                load_config(path)
+
+        for path_field in ("single_stock_minute_archive", "security_master"):
+            for unsafe_path in ("/tmp/outside-evidence", "../outside-evidence"):
+                with self.subTest(path_field=path_field, unsafe_path=unsafe_path):
+                    payload = json.loads(json.dumps(original))
+                    payload["paths"][path_field] = unsafe_path
+                    with tempfile.TemporaryDirectory() as directory:
+                        path = Path(directory) / "system.json"
+                        path.write_text(json.dumps(payload), encoding="utf-8")
+                        with self.assertRaisesRegex(
+                            ValueError,
+                            "contained relative path",
+                        ):
+                            load_config(path)
+
+        payload = json.loads(json.dumps(original))
+        del payload["paths"]["security_master"]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "system.json"
+            path.write_text(json.dumps(payload), encoding="utf-8")
+            with self.assertRaisesRegex(
+                ValueError,
+                "point-in-time security master path is required",
+            ):
                 load_config(path)
 
         for field, value in (

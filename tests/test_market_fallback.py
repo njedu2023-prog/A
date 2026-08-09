@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import urllib.parse
 import unittest
+from datetime import datetime, timedelta
 
 from three_table_quant.domain import SourceIssue
 from three_table_quant.http import HttpError
@@ -13,6 +14,7 @@ from three_table_quant.market import (
     ResilientMarketData,
     TencentMarketData,
 )
+from three_table_quant.limit_lifecycle import EXPECTED_SESSION_MINUTES
 from three_table_quant.pipeline import _append_market_fallback_issue
 from three_table_quant.pipeline import (
     _append_frozen_market_fallback_issue,
@@ -226,6 +228,43 @@ class EastmoneyRawDailyTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(MarketDataError, "exactly one bar for 20260805"):
             market.raw_daily_bar("600001.SH", "20260805")
+
+
+class EastmoneyFullSessionMinuteShapeTests(unittest.TestCase):
+    @staticmethod
+    def _provider_rows() -> list[str]:
+        starts = (
+            datetime(2026, 8, 7, 9, 31),
+            datetime(2026, 8, 7, 13, 1),
+        )
+        counts = (120, 120)
+        rows: list[str] = []
+        for start, count in zip(starts, counts, strict=True):
+            for offset in range(count):
+                period_end = start + timedelta(minutes=offset)
+                rows.append(
+                    f"{period_end:%Y-%m-%d %H:%M},10.00,10.05,10.10,9.95,"
+                    "1234,1240000,1.50,0.50,0.05,0.20"
+                )
+        return rows
+
+    def test_realistic_period_end_session_normalizes_to_exact_240_intervals(self) -> None:
+        market = CapturingEastmoneyRaw(self._provider_rows())
+
+        bars = market.minute_bars("600001.SH", "20260807")
+
+        self.assertEqual(market.params["fqt"], 0)
+        self.assertEqual(market.params["lmt"], 300)
+        self.assertEqual(len(bars), 240)
+        self.assertEqual(tuple(item.time for item in bars), EXPECTED_SESSION_MINUTES)
+        self.assertEqual(bars[0].source_time, "09:31")
+        self.assertEqual(bars[0].time, "09:30")
+        self.assertEqual(bars[119].time, "11:29")
+        self.assertEqual(bars[120].source_time, "13:01")
+        self.assertEqual(bars[120].time, "13:00")
+        self.assertEqual(bars[-1].source_time, "15:00")
+        self.assertEqual(bars[-1].time, "14:59")
+        self.assertTrue(all(item.price_adjustment == "NONE" for item in bars))
 
 
 class TencentMarketDataTests(unittest.TestCase):

@@ -200,14 +200,36 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("--attempts 25", source)
         self.assertIn("--interval-seconds 300", source)
         self.assertIn("three_table_quant.schedule_guard", source)
+        self.assertIn("if: ${{ github.event_name != 'push' }}", source)
+        self.assertIn(
+            "SHOULD_DEPLOY: ${{ github.event_name == 'push' || steps.market-day.outputs.is_open == 'true' }}",
+            source,
+        )
+        self.assertIn(
+            "github.event_name == 'workflow_dispatch' && inputs.mode == 'validation' && steps.market-day.outputs.is_open == 'true'",
+            source,
+        )
+        self.assertIn(
+            "github.event_name == 'workflow_dispatch' && inputs.mode == 'output' && steps.market-day.outputs.is_open == 'true'",
+            source,
+        )
+        self.assertIn(
+            "TARGET_DECISION_DATE: ${{ steps.market-day.outputs.market_date }}",
+            source,
+        )
         self.assertIn("three_table_quant.batch_result", source)
-        self.assertNotIn("github.event_name == 'push' ||", source)
+        self.assertNotIn("if: ${{ github.event_name == 'push' ||", source)
         self.assertIn("github.event_name != 'push'", source)
         self.assertIn("--started-at", source)
         self.assertIn("--market-date", source)
         self.assertIn("SOURCE_TARGET_DATE_NOT_READY", Path("src/three_table_quant/readiness.py").read_text(encoding="utf-8"))
         self.assertIn("--target-decision-date", source)
         self.assertIn("cancel-in-progress: false", source)
+        self.assertIn(
+            "--include-dir data/single_stock_minute_archive",
+            source,
+        )
+        self.assertIn('data/security_master.v1.json', source)
 
     def test_validation_schedule_is_after_t_close_gate(self) -> None:
         workflow = Path(".github/workflows/daily-shadow.yml").read_text(
@@ -250,6 +272,7 @@ class FrontendContractTests(unittest.TestCase):
         self.assertNotIn("data/state.v1.json", artifact_block)
         self.assertNotIn("data/execution_truth.v1.json", artifact_block)
         self.assertNotIn("data/model_registry.v1.json", artifact_block)
+        self.assertNotIn("single_stock_minute_archive", artifact_block)
         self.assertNotIn("cp -R data", artifact_block)
 
     def test_status_title_is_rendered_once(self) -> None:

@@ -1,0 +1,7 @@
+{
+  "schema_version": "point_in_time_security_master_v1",
+  "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+  "dataset_version": "bootstrap-20260809",
+  "generated_at": "2026-08-09T00:00:00+08:00",
+  "records": []
+}

@@ -12,7 +12,7 @@ class ScheduleGuardTests(unittest.TestCase):
         self.config = {
             "timezone": "Asia/Shanghai",
             "input_contract": {
-                "trading_calendar_path": "data/trading_calendar_2026.json",
+                "trading_calendar_path": "data/trading_calendar_bundle.json",
             },
         }
 
@@ -33,7 +33,7 @@ class ScheduleGuardTests(unittest.TestCase):
         self.assertFalse(self.context("20261001")["is_open"])
 
     def test_unsupported_calendar_year_fails_closed(self) -> None:
-        with self.assertRaisesRegex(ContractError, "outside supported calendar year"):
+        with self.assertRaisesRegex(ContractError, "calendar year 2027 is not VERIFIED"):
             self.context("20270104")
 
 

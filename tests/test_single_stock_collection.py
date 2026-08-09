@@ -20,7 +20,8 @@ from three_table_quant.single_stock_research import (
     research_snapshot_sha256,
     unavailable_single_stock_research,
 )
-from three_table_quant.single_stock_v3 import HardGateStatus
+from three_table_quant.security_master import PointInTimeSecurityMaster
+from three_table_quant.single_stock_v3 import HardGateStatus, ST_FIELD
 from three_table_quant.sources import SOURCE_A, SOURCE_DECISION, SOURCE_PREMIUM
 
 
@@ -115,6 +116,48 @@ def minutes(count: int = 240) -> list[Bar]:
     ]
 
 
+def security_master(
+    *,
+    include_record: bool = False,
+    is_st: bool = False,
+) -> PointInTimeSecurityMaster:
+    records = []
+    if include_record:
+        records.append(
+            {
+                "record_id": "000815-20260807-v1",
+                "ts_code": "000815.SZ",
+                "effective_from": "20260101",
+                "effective_to": None,
+                "known_at": "2026-08-07T15:01:00+08:00",
+                "fetched_at": "2026-08-07T15:05:00+08:00",
+                "provider": "OFFICIAL_SECURITY_MASTER_FIXTURE",
+                "dataset_version": "fixture-v1",
+                "revision_id": "v1",
+                "source_uri": "https://www.sse.com.cn/fixture/security-master",
+                "facts": {
+                    "is_suspended": False,
+                    "is_st": is_st,
+                    "is_delisting_period": False,
+                    "trading_rules_verified": True,
+                    "board": "MAIN",
+                    "price_limit_pct": 10.0,
+                    "price_tick": 0.01,
+                },
+                "missing_reasons": {},
+            }
+        )
+    return PointInTimeSecurityMaster.from_payload(
+        {
+            "schema_version": "point_in_time_security_master_v1",
+            "provider": "TEST_MASTER",
+            "dataset_version": "fixture-v1",
+            "generated_at": ASOF,
+            "records": records,
+        }
+    )
+
+
 class SingleStockCollectionTests(unittest.TestCase):
     def test_freezes_full_d_day_research_without_mutating_decision_inputs(self) -> None:
         item = candidate()
@@ -125,6 +168,7 @@ class SingleStockCollectionTests(unittest.TestCase):
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=minutes(),
         )
 
@@ -151,6 +195,7 @@ class SingleStockCollectionTests(unittest.TestCase):
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=minutes(5),
         )
 
@@ -159,12 +204,45 @@ class SingleStockCollectionTests(unittest.TestCase):
         self.assertIsNone(lifecycle["payload"])
         self.assertIn("minute_coverage_incomplete", lifecycle["unavailable_reason"])
 
+    def test_point_in_time_security_master_can_produce_a_real_gate_pass(self) -> None:
+        payload = build_candidate_single_stock_research(
+            candidate(),
+            decision_date=DAY,
+            decision_asof=ASOF,
+            execution=execution(),
+            minute_bars=minutes(),
+            security_master=security_master(include_record=True),
+        )
+
+        stock = payload["single_stock"]
+        self.assertEqual(stock["hard_gate"]["status"], HardGateStatus.PASS.value)
+        self.assertEqual(stock["facts"]["security.board"]["value"], "MAIN")
+        self.assertEqual(stock["facts"]["security.price_limit_pct"]["value"], 10.0)
+        self.assertEqual(stock["facts"]["security.price_tick"]["value"], 0.01)
+        self.assertEqual(stock["facts"]["market.price_tick"]["value"], 0.01)
+
+    def test_st_from_master_blocks_but_does_not_remove_candidate(self) -> None:
+        payload = build_candidate_single_stock_research(
+            candidate(),
+            decision_date=DAY,
+            decision_asof=ASOF,
+            execution=execution(),
+            minute_bars=minutes(),
+            security_master=security_master(include_record=True, is_st=True),
+        )
+
+        stock = payload["single_stock"]
+        self.assertIs(stock["facts"][ST_FIELD]["value"], True)
+        self.assertEqual(stock["hard_gate"]["status"], HardGateStatus.BLOCK.value)
+        self.assertIn("SPECIAL_TREATMENT", stock["hard_gate"]["reasons"])
+
     def test_fetch_failure_is_explicit_missing_evidence(self) -> None:
         payload = build_candidate_single_stock_research(
             candidate(),
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=None,
             minute_fetch_failed=True,
         )
@@ -188,6 +266,7 @@ class SingleStockCollectionTests(unittest.TestCase):
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=base_bars,
         )
         changed = build_candidate_single_stock_research(
@@ -195,6 +274,7 @@ class SingleStockCollectionTests(unittest.TestCase):
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=changed_bars,
         )
 
@@ -218,12 +298,16 @@ class SingleStockCollectionTests(unittest.TestCase):
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=minutes(),
         )
 
         pricing = payload["single_stock"]["facts"]["market.pricing_verified"]
         self.assertIsNone(pricing["value"])
-        self.assertEqual(pricing["missing_reason"], "FROZEN_PRICING_EVIDENCE_INCOMPLETE")
+        self.assertEqual(
+            pricing["missing_reason"],
+            "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
+        )
         self.assertEqual(payload["single_stock"]["hard_gate"]["status"], "UNKNOWN")
 
     def test_dashboard_copies_same_research_and_detects_tampering(self) -> None:
@@ -233,6 +317,7 @@ class SingleStockCollectionTests(unittest.TestCase):
             decision_date=DAY,
             decision_asof=ASOF,
             execution=execution(),
+            security_master=security_master(),
             minute_bars=minutes(),
         )
         signal = {

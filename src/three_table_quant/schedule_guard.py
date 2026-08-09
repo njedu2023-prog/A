@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from .calendar import TradingCalendar, parse_calendar_date
+from .calendar import load_trading_calendar, parse_calendar_date
 from .pipeline import load_config
 
 
@@ -30,7 +30,7 @@ def market_day_context(
         resolved_date = parse_calendar_date(market_date, "market_date")
 
     calendar_path = config["input_contract"]["trading_calendar_path"]
-    calendar = TradingCalendar.from_file(calendar_path)
+    calendar = load_trading_calendar(calendar_path)
     return {
         "market_date": resolved_date.strftime("%Y%m%d"),
         "is_open": calendar.is_open(resolved_date, "scheduled market date"),

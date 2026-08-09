@@ -17,6 +17,10 @@ from three_table_quant.single_stock_v3 import (
     MAX_ORDER_SHARES_FIELD,
     PRICE_TICK_FIELD,
     PRICING_VERIFIED_FIELD,
+    SECURITY_BOARD_FIELD,
+    SECURITY_PRICE_LIMIT_PCT_FIELD,
+    SECURITY_PRICE_TICK_FIELD,
+    ST_FIELD,
     SUSPENDED_FIELD,
     TRADING_RULES_VERIFIED_FIELD,
     FactProvenance,
@@ -44,8 +48,12 @@ def provenance() -> FactProvenance:
 def single_stock() -> SingleStockSnapshotV3:
     facts = {
         SUSPENDED_FIELD: SingleStockFact(False, provenance()),
+        ST_FIELD: SingleStockFact(False, provenance()),
         DELISTING_FIELD: SingleStockFact(False, provenance()),
         TRADING_RULES_VERIFIED_FIELD: SingleStockFact(True, provenance()),
+        SECURITY_BOARD_FIELD: SingleStockFact("MAIN", provenance()),
+        SECURITY_PRICE_LIMIT_PCT_FIELD: SingleStockFact(10.0, provenance()),
+        SECURITY_PRICE_TICK_FIELD: SingleStockFact(0.01, provenance()),
         PRICING_VERIFIED_FIELD: SingleStockFact(True, provenance()),
         D_CLOSE_FIELD: SingleStockFact(10.0, provenance()),
         PRICE_TICK_FIELD: SingleStockFact(0.01, provenance()),
