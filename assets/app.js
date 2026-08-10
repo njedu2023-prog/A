@@ -16,7 +16,6 @@ const DATA_ENDPOINTS = Object.freeze({
 });
 let model = null;
 let sourceIssues = null;
-let dataLoadState = null;
 
 function timestampedUrl(url, requestTimestamp) {
   const separator = url.includes("?") ? "&" : "?";
@@ -87,24 +86,6 @@ function chooseCompanionSnapshot(candidates, preferredSource) {
   if (candidates[preferredSource]?.ok === true) return candidates[preferredSource];
   const fallbackSource = preferredSource === "pages" ? "main" : "pages";
   return candidates[fallbackSource]?.ok === true ? candidates[fallbackSource] : null;
-}
-
-function dataSourceCopy(selected, candidates, selectedIssues) {
-  const pages = candidates.pages;
-  const main = candidates.main;
-  let copy;
-  if (selected.source === "main") {
-    copy = pages?.ok === true ? "数据来源 main 兜底（Pages待同步）" : "数据来源 main 兜底（Pages不可用）";
-  } else if (main?.ok !== true) {
-    copy = "数据来源 Pages（main不可用）";
-  } else if (pages.generatedAt === main.generatedAt) {
-    copy = "数据来源 Pages（已与 main 同步）";
-  } else {
-    copy = "数据来源 Pages（main较旧）";
-  }
-  if (!selectedIssues) return `${copy} · 审计数据不可用`;
-  if (selectedIssues.source !== selected.source) return `${copy} · 审计数据已回退`;
-  return copy;
 }
 
 function node(tag, text, className) {
@@ -1135,13 +1116,7 @@ async function start() {
     const selectedIssues = chooseCompanionSnapshot(sourceIssueCandidates, selectedDashboard.source);
     model = selectedDashboard.payload;
     sourceIssues = selectedIssues?.payload || null;
-    dataLoadState = {
-      dashboard: selectedDashboard,
-      sourceIssues: selectedIssues,
-      copy: dataSourceCopy(selectedDashboard, dashboardCandidates, selectedIssues)
-    };
     $("updated").textContent = `数据更新时间 ${formatUpdatedAt(model.generated_at)}`;
-    $("dataSourceStatus").textContent = ` · ${dataLoadState.copy}`;
     const months = availableMonths();
     const select = $("month");
     select.replaceChildren();
@@ -1151,7 +1126,6 @@ async function start() {
     render();
   } catch (error) {
     $("updated").textContent = String(error.message || error);
-    $("dataSourceStatus").textContent = " · Pages / main 双源不可用";
     $("status").replaceChildren(node("div", "看板数据暂不可用，请检查最新工作流与 data/dashboard.v1.json。", "empty"));
   }
 }

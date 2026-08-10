@@ -83,8 +83,8 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260810-3", source)
-        self.assertIn("app.js?v=20260810-3", source)
+        self.assertIn("styles.css?v=20260811-1", source)
+        self.assertIn("app.js?v=20260811-1", source)
 
     def test_active_transparent_model_uses_shadow_baseline_display_name(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")
@@ -397,8 +397,10 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("right.generatedAt - left.generatedAt", script)
         self.assertIn('return left.source === "pages" ? -1 : 1;', script)
         self.assertIn("chooseCompanionSnapshot(sourceIssueCandidates, selectedDashboard.source)", script)
-        self.assertIn('id="dataSourceStatus"', page)
-        self.assertIn("数据来源 main 兜底（Pages待同步）", script)
+        self.assertNotIn('id="dataSourceStatus"', page)
+        self.assertNotIn("dataSourceCopy", script)
+        self.assertNotIn("数据来源 Pages", script)
+        self.assertNotIn("数据来源 main", script)
 
     def test_frontend_loader_keeps_either_source_as_a_valid_fallback(self) -> None:
         script = Path("assets/app.js").read_text(encoding="utf-8")
