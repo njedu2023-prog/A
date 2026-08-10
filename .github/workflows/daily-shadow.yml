@@ -11,6 +11,11 @@ on:
         options:
           - output
           - validation
+      force:
+        description: "Force this manual batch even when today's batch is already complete"
+        required: false
+        default: false
+        type: boolean
   push:
     branches: [main]
     paths:
@@ -27,22 +32,29 @@ on:
       - "tests/**"
       - "pyproject.toml"
   schedule:
-    - cron: "0 11 * * 1-5"   # 19:00 Asia/Shanghai: validate T close and due T+1 exits
-    - cron: "30 13 * * 1-5"  # 21:30 Asia/Shanghai: freeze aligned D signal
+    # Redundant wake-ups avoid depending on one delayed top-of-hour cron. The
+    # automation gate and the serialized state job make the attempts idempotent.
+    - cron: "40 10 * * 1-5"  # 18:40 Asia/Shanghai: validation pre-wake
+    - cron: "55 10 * * 1-5"  # 18:55 Asia/Shanghai: validation pre-wake
+    - cron: "10 11 * * 1-5"  # 19:10 Asia/Shanghai: validation recovery wake
+    - cron: "10 13 * * 1-5"  # 21:10 Asia/Shanghai: output pre-wake
+    - cron: "25 13 * * 1-5"  # 21:25 Asia/Shanghai: output pre-wake
+    - cron: "40 13 * * 1-5"  # 21:40 Asia/Shanghai: output recovery wake
 
 permissions:
   contents: write
   pages: write
   id-token: write
 
-concurrency:
-  group: three-table-daily-shadow
-  cancel-in-progress: false
-
 jobs:
   build:
+    # Only state readers/writers serialize. Pages deployment is a separate job
+    # and must never retain this lock after state has been published.
+    concurrency:
+      group: three-table-state
+      cancel-in-progress: false
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 180
     outputs:
       should_deploy: ${{ steps.publish-policy.outputs.should_deploy }}
     steps:
@@ -62,26 +74,88 @@ jobs:
           cache: pip
       - name: Install
         run: python -m pip install -e .
-      - name: Contract tests
-        run: python -m unittest discover -s tests -v
+      - name: Classify batch mode
+        id: batch-mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_CRON: ${{ github.event.schedule }}
+          DISPATCH_MODE: ${{ inputs.mode }}
+        run: |
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            echo "mode=push" >> "$GITHUB_OUTPUT"
+            echo "not_before=" >> "$GITHUB_OUTPUT"
+          elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            echo "mode=$DISPATCH_MODE" >> "$GITHUB_OUTPUT"
+            if [[ "$DISPATCH_MODE" == "validation" ]]; then
+              echo "not_before=19:00" >> "$GITHUB_OUTPUT"
+            else
+              echo "not_before=21:30" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            case "$SCHEDULE_CRON" in
+              "40 10 * * 1-5"|"55 10 * * 1-5"|"10 11 * * 1-5")
+                echo "mode=validation" >> "$GITHUB_OUTPUT"
+                echo "not_before=19:00" >> "$GITHUB_OUTPUT"
+                ;;
+              "10 13 * * 1-5"|"25 13 * * 1-5"|"40 13 * * 1-5")
+                echo "mode=output" >> "$GITHUB_OUTPUT"
+                echo "not_before=21:30" >> "$GITHUB_OUTPUT"
+                ;;
+              *)
+                echo "Unsupported scheduled cron: $SCHEDULE_CRON" >&2
+                exit 1
+                ;;
+            esac
+          fi
       - name: Check the official A-share trading calendar
         id: market-day
         if: ${{ github.event_name != 'push' }}
         run: python -m three_table_quant.schedule_guard --config config/system.json >> "$GITHUB_OUTPUT"
+      - name: Gate duplicate automated batch attempts
+        id: automation-gate
+        if: ${{ github.event_name != 'push' && steps.market-day.outputs.is_open == 'true' }}
+        env:
+          BATCH_MODE: ${{ steps.batch-mode.outputs.mode }}
+          MARKET_DATE: ${{ steps.market-day.outputs.market_date }}
+          FORCE_BATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.force }}
+        run: |
+          args=(
+            python -m three_table_quant.automation_gate
+            --mode "$BATCH_MODE"
+            --dashboard data/dashboard.v1.json
+            --market-date "$MARKET_DATE"
+          )
+          if [[ "$FORCE_BATCH" == "true" ]]; then
+            args+=(--force)
+          fi
+          "${args[@]}" >> "$GITHUB_OUTPUT"
+      - name: Contract tests
+        if: ${{ github.event_name == 'push' || steps.automation-gate.outputs.should_run == 'true' }}
+        run: python -m unittest discover -s tests -v
+      - name: Wait until the exact batch time
+        id: schedule-clock
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' }}
+        run: >-
+          python -m three_table_quant.schedule_clock
+          --timezone Asia/Shanghai
+          --market-date "${{ steps.market-day.outputs.market_date }}"
+          --not-before "${{ steps.batch-mode.outputs.not_before }}"
+          --max-wait-seconds 1500
+          >> "$GITHUB_OUTPUT"
       - name: Resolve publication policy
         id: publish-policy
         env:
-          SHOULD_DEPLOY: ${{ github.event_name == 'push' || steps.market-day.outputs.is_open == 'true' }}
+          SHOULD_DEPLOY: ${{ github.event_name == 'push' || steps.automation-gate.outputs.should_run == 'true' }}
         run: echo "should_deploy=$SHOULD_DEPLOY" >> "$GITHUB_OUTPUT"
       - name: Capture automated batch start
         id: batch-start
-        if: ${{ github.event_name != 'push' }}
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' }}
         run: echo "started_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
       - name: Validate due shadow records without loading the three sources
-        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 11 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'validation' && steps.market-day.outputs.is_open == 'true') }}
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'validation' }}
         run: python -m three_table_quant.scheduled_validation --config config/system.json
       - name: Self-check validation result before publication
-        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '0 11 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'validation' && steps.market-day.outputs.is_open == 'true') }}
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'validation' }}
         run: >-
           python -m three_table_quant.batch_result
           --mode validation
@@ -89,7 +163,7 @@ jobs:
           --market-date "${{ steps.market-day.outputs.market_date }}"
           --started-at "${{ steps.batch-start.outputs.started_at }}"
       - name: Wait for aligned sources and run fail-closed output pipeline
-        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '30 13 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'output' && steps.market-day.outputs.is_open == 'true') }}
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'output' }}
         env:
           TARGET_DECISION_DATE: ${{ steps.market-day.outputs.market_date }}
         run: >-
@@ -99,7 +173,7 @@ jobs:
           --interval-seconds 300
           --target-decision-date "$TARGET_DECISION_DATE"
       - name: Self-check output result before publication
-        if: ${{ (github.event_name == 'schedule' && github.event.schedule == '30 13 * * 1-5' && steps.market-day.outputs.is_open == 'true') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'output' && steps.market-day.outputs.is_open == 'true') }}
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'output' }}
         env:
           TARGET_DECISION_DATE: ${{ steps.market-day.outputs.market_date }}
         run: >-
@@ -109,7 +183,7 @@ jobs:
           --target-decision-date "$TARGET_DECISION_DATE"
           --started-at "${{ steps.batch-start.outputs.started_at }}"
       - name: Publish generated data in one API commit
-        if: ${{ steps.publish-policy.outputs.should_deploy == 'true' && github.event_name != 'push' }}
+        if: ${{ github.event_name != 'push' && steps.automation-gate.outputs.should_run == 'true' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: >-
@@ -139,6 +213,9 @@ jobs:
   deploy:
     needs: build
     if: ${{ needs.build.outputs.should_deploy == 'true' }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: true
     runs-on: ubuntu-latest
     environment:
       name: github-pages

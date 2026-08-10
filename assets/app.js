@@ -3,7 +3,109 @@
 const $ = (id) => document.getElementById(id);
 const colors = {1: "#16865f", 2: "#4e7195", 3: "#a0844c"};
 const MIN_TREND_POINTS = 5;
+const DATA_FETCH_TIMEOUT_MS = 8000;
+const DATA_ENDPOINTS = Object.freeze({
+  pages: Object.freeze({
+    dashboard: "./data/dashboard.v1.json",
+    sourceIssues: "./data/source_issues.v1.json"
+  }),
+  main: Object.freeze({
+    dashboard: "https://raw.githubusercontent.com/njedu2023-prog/A/main/data/dashboard.v1.json",
+    sourceIssues: "https://raw.githubusercontent.com/njedu2023-prog/A/main/data/source_issues.v1.json"
+  })
+});
 let model = null;
+let sourceIssues = null;
+let dataLoadState = null;
+
+function timestampedUrl(url, requestTimestamp) {
+  const separator = url.includes("?") ? "&" : "?";
+  return `${url}${separator}t=${encodeURIComponent(String(requestTimestamp))}`;
+}
+
+function generatedAtMillis(payload) {
+  const value = payload?.generated_at;
+  if (typeof value !== "string" || !/(?:Z|[+-]\d{2}:\d{2})$/.test(value)) {
+    throw new Error("数据缺少带时区的 generated_at");
+  }
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) throw new Error("generated_at 无效");
+  return parsed;
+}
+
+function validateSourceIssues(data) {
+  if (!data || data.schema_version !== "source_issues_v1") throw new Error("不支持的问题审计数据版本");
+  if (!Array.isArray(data.issues)) throw new Error("问题审计数据结构不完整");
+}
+
+async function fetchSnapshot(source, kind, expectedSchema, validator, requestTimestamp) {
+  const url = DATA_ENDPOINTS[source]?.[kind];
+  if (!url) throw new Error(`未配置 ${source} ${kind} 数据源`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DATA_FETCH_TIMEOUT_MS);
+  let response;
+  try {
+    response = await fetch(timestampedUrl(url, requestTimestamp), {
+      cache: "no-store",
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+  if (!response.ok) throw new Error(`${source} ${kind} 请求失败 HTTP ${response.status}`);
+  const payload = await response.json();
+  if (!payload || payload.schema_version !== expectedSchema) throw new Error(`${source} ${kind} schema 不匹配`);
+  validator(payload);
+  return {source, payload, generatedAt: generatedAtMillis(payload)};
+}
+
+async function loadSourcePair(kind, expectedSchema, validator, requestTimestamp) {
+  const sources = ["pages", "main"];
+  const outcomes = await Promise.allSettled(
+    sources.map((source) => fetchSnapshot(source, kind, expectedSchema, validator, requestTimestamp))
+  );
+  return Object.fromEntries(sources.map((source, index) => {
+    const outcome = outcomes[index];
+    return outcome.status === "fulfilled"
+      ? [source, {ok: true, ...outcome.value}]
+      : [source, {ok: false, source, error: outcome.reason}];
+  }));
+}
+
+function chooseNewestSnapshot(candidates) {
+  const valid = Object.values(candidates).filter((candidate) => candidate?.ok === true);
+  if (!valid.length) throw new Error("Pages 与 main 数据均不可用");
+  valid.sort((left, right) => {
+    const freshness = right.generatedAt - left.generatedAt;
+    if (freshness) return freshness;
+    return left.source === "pages" ? -1 : 1;
+  });
+  return valid[0];
+}
+
+function chooseCompanionSnapshot(candidates, preferredSource) {
+  if (candidates[preferredSource]?.ok === true) return candidates[preferredSource];
+  const fallbackSource = preferredSource === "pages" ? "main" : "pages";
+  return candidates[fallbackSource]?.ok === true ? candidates[fallbackSource] : null;
+}
+
+function dataSourceCopy(selected, candidates, selectedIssues) {
+  const pages = candidates.pages;
+  const main = candidates.main;
+  let copy;
+  if (selected.source === "main") {
+    copy = pages?.ok === true ? "数据来源 main 兜底（Pages待同步）" : "数据来源 main 兜底（Pages不可用）";
+  } else if (main?.ok !== true) {
+    copy = "数据来源 Pages（main不可用）";
+  } else if (pages.generatedAt === main.generatedAt) {
+    copy = "数据来源 Pages（已与 main 同步）";
+  } else {
+    copy = "数据来源 Pages（main较旧）";
+  }
+  if (!selectedIssues) return `${copy} · 审计数据不可用`;
+  if (selectedIssues.source !== selected.source) return `${copy} · 审计数据已回退`;
+  return copy;
+}
 
 function node(tag, text, className) {
   const element = document.createElement(tag);
@@ -1013,11 +1115,22 @@ function formatUpdatedAt(value) {
 
 async function start() {
   try {
-    const response = await fetch(`./data/dashboard.v1.json?t=${Date.now()}`, {cache: "no-store"});
-    if (!response.ok) throw new Error(`数据请求失败 HTTP ${response.status}`);
-    model = await response.json();
-    validate(model);
+    const requestTimestamp = Date.now();
+    const [dashboardCandidates, sourceIssueCandidates] = await Promise.all([
+      loadSourcePair("dashboard", "dashboard_v1", validate, requestTimestamp),
+      loadSourcePair("sourceIssues", "source_issues_v1", validateSourceIssues, requestTimestamp)
+    ]);
+    const selectedDashboard = chooseNewestSnapshot(dashboardCandidates);
+    const selectedIssues = chooseCompanionSnapshot(sourceIssueCandidates, selectedDashboard.source);
+    model = selectedDashboard.payload;
+    sourceIssues = selectedIssues?.payload || null;
+    dataLoadState = {
+      dashboard: selectedDashboard,
+      sourceIssues: selectedIssues,
+      copy: dataSourceCopy(selectedDashboard, dashboardCandidates, selectedIssues)
+    };
     $("updated").textContent = `数据更新时间 ${formatUpdatedAt(model.generated_at)}`;
+    $("dataSourceStatus").textContent = ` · ${dataLoadState.copy}`;
     const months = availableMonths();
     const select = $("month");
     select.replaceChildren();
@@ -1027,6 +1140,7 @@ async function start() {
     render();
   } catch (error) {
     $("updated").textContent = String(error.message || error);
+    $("dataSourceStatus").textContent = " · Pages / main 双源不可用";
     $("status").replaceChildren(node("div", "看板数据暂不可用，请检查最新工作流与 data/dashboard.v1.json。", "empty"));
   }
 }

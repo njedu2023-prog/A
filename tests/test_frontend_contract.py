@@ -83,8 +83,8 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260808-3", source)
-        self.assertIn("app.js?v=20260808-3", source)
+        self.assertIn("styles.css?v=20260810-1", source)
+        self.assertIn("app.js?v=20260810-1", source)
 
     def test_overview_uses_clear_settlement_copy(self) -> None:
         page = Path("index.html").read_text(encoding="utf-8")
@@ -191,26 +191,54 @@ class FrontendContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertNotIn('cron: "20 3 * * 1-5"', source)
-        self.assertEqual(source.count("cron:"), 2)
-        self.assertIn('cron: "0 11 * * 1-5"', source)
-        self.assertIn('cron: "30 13 * * 1-5"', source)
-        self.assertIn("timeout-minutes: 150", source)
+        self.assertNotIn('cron: "0 11 * * 1-5"', source)
+        self.assertNotIn('cron: "30 13 * * 1-5"', source)
+        self.assertEqual(source.count("- cron:"), 6)
+        for cron in (
+            'cron: "40 10 * * 1-5"',
+            'cron: "55 10 * * 1-5"',
+            'cron: "10 11 * * 1-5"',
+            'cron: "10 13 * * 1-5"',
+            'cron: "25 13 * * 1-5"',
+            'cron: "40 13 * * 1-5"',
+        ):
+            self.assertIn(cron, source)
+        self.assertIn("timeout-minutes: 180", source)
         self.assertIn("three_table_quant.scheduled_validation", source)
         self.assertIn("python -m three_table_quant.readiness", source)
         self.assertIn("--attempts 25", source)
         self.assertIn("--interval-seconds 300", source)
+        self.assertIn("id: batch-mode", source)
         self.assertIn("three_table_quant.schedule_guard", source)
         self.assertIn("if: ${{ github.event_name != 'push' }}", source)
+        self.assertIn("python -m three_table_quant.automation_gate", source)
+        self.assertIn("--dashboard data/dashboard.v1.json", source)
+        self.assertIn('args+=(--force)', source)
+        self.assertIn("python -m three_table_quant.schedule_clock", source)
+        self.assertIn("--timezone Asia/Shanghai", source)
+        self.assertIn("--max-wait-seconds 1500", source)
+        self.assertLess(
+            source.index("three_table_quant.schedule_guard"),
+            source.index("three_table_quant.automation_gate"),
+        )
+        self.assertLess(
+            source.index("three_table_quant.automation_gate"),
+            source.index("three_table_quant.schedule_clock"),
+        )
         self.assertIn(
-            "SHOULD_DEPLOY: ${{ github.event_name == 'push' || steps.market-day.outputs.is_open == 'true' }}",
+            "SHOULD_DEPLOY: ${{ github.event_name == 'push' || steps.automation-gate.outputs.should_run == 'true' }}",
             source,
         )
         self.assertIn(
-            "github.event_name == 'workflow_dispatch' && inputs.mode == 'validation' && steps.market-day.outputs.is_open == 'true'",
+            "if: ${{ github.event_name == 'push' || steps.automation-gate.outputs.should_run == 'true' }}",
             source,
         )
         self.assertIn(
-            "github.event_name == 'workflow_dispatch' && inputs.mode == 'output' && steps.market-day.outputs.is_open == 'true'",
+            "steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'validation'",
+            source,
+        )
+        self.assertIn(
+            "steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'output'",
             source,
         )
         self.assertIn(
@@ -218,18 +246,44 @@ class FrontendContractTests(unittest.TestCase):
             source,
         )
         self.assertIn("three_table_quant.batch_result", source)
-        self.assertNotIn("if: ${{ github.event_name == 'push' ||", source)
         self.assertIn("github.event_name != 'push'", source)
+        self.assertIn("type: boolean", source)
+        self.assertIn("FORCE_BATCH:", source)
         self.assertIn("--started-at", source)
         self.assertIn("--market-date", source)
         self.assertIn("SOURCE_TARGET_DATE_NOT_READY", Path("src/three_table_quant/readiness.py").read_text(encoding="utf-8"))
         self.assertIn("--target-decision-date", source)
-        self.assertIn("cancel-in-progress: false", source)
         self.assertIn(
             "--include-dir data/single_stock_minute_archive",
             source,
         )
         self.assertIn('data/security_master.v1.json', source)
+
+    def test_workflow_state_and_pages_concurrency_are_independent(self) -> None:
+        source = Path(".github/workflows/daily-shadow.yml").read_text(
+            encoding="utf-8"
+        )
+        header, jobs = source.split("\njobs:\n", 1)
+        build, deploy = jobs.split("\n  deploy:\n", 1)
+
+        self.assertNotIn("\nconcurrency:\n", header)
+        self.assertIn("group: three-table-state", build)
+        self.assertIn("cancel-in-progress: false", build)
+        self.assertIn("uses: actions/checkout@v6", build)
+        self.assertLess(
+            build.index("group: three-table-state"),
+            build.index("uses: actions/checkout@v6"),
+        )
+        self.assertNotIn("group: github-pages", build)
+        self.assertIn("group: github-pages", deploy)
+        self.assertIn("cancel-in-progress: true", deploy)
+        self.assertNotIn("group: three-table-state", deploy)
+
+        publish = build.split("- name: Publish generated data", 1)[1]
+        publish = publish.split("- name: Prepare Pages artifact", 1)[0]
+        self.assertIn(
+            "steps.automation-gate.outputs.should_run == 'true'", publish
+        )
 
     def test_validation_schedule_is_after_t_close_gate(self) -> None:
         workflow = Path(".github/workflows/daily-shadow.yml").read_text(
@@ -237,20 +291,28 @@ class FrontendContractTests(unittest.TestCase):
         )
         config = Path("config/system.json").read_text(encoding="utf-8")
         self.assertIn('"t_validation_after_local_time": "15:10"', config)
-        self.assertIn('cron: "0 11 * * 1-5"', workflow)
-        self.assertIn("19:00 Asia/Shanghai", workflow)
+        self.assertIn('echo "not_before=19:00"', workflow)
+        self.assertIn('echo "not_before=21:30"', workflow)
         shanghai = ZoneInfo("Asia/Shanghai")
+        validation_wakes = ((10, 40), (10, 55), (11, 10))
+        output_wakes = ((13, 10), (13, 25), (13, 40))
         self.assertEqual(
-            datetime(2026, 8, 10, 11, 0, tzinfo=timezone.utc)
-            .astimezone(shanghai)
-            .strftime("%H:%M"),
-            "19:00",
+            [
+                datetime(2026, 8, 10, hour, minute, tzinfo=timezone.utc)
+                .astimezone(shanghai)
+                .strftime("%H:%M")
+                for hour, minute in validation_wakes
+            ],
+            ["18:40", "18:55", "19:10"],
         )
         self.assertEqual(
-            datetime(2026, 8, 10, 13, 30, tzinfo=timezone.utc)
-            .astimezone(shanghai)
-            .strftime("%H:%M"),
-            "21:30",
+            [
+                datetime(2026, 8, 10, hour, minute, tzinfo=timezone.utc)
+                .astimezone(shanghai)
+                .strftime("%H:%M")
+                for hour, minute in output_wakes
+            ],
+            ["21:10", "21:25", "21:40"],
         )
 
     def test_workflow_keeps_one_curated_pages_publication_path(self) -> None:
@@ -289,6 +351,51 @@ class FrontendContractTests(unittest.TestCase):
             ),
             1,
         )
+
+    def test_frontend_selects_newest_valid_pages_or_main_snapshot(self) -> None:
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        page = Path("index.html").read_text(encoding="utf-8")
+        self.assertIn('dashboard: "./data/dashboard.v1.json"', script)
+        self.assertIn(
+            'dashboard: "https://raw.githubusercontent.com/njedu2023-prog/A/main/data/dashboard.v1.json"',
+            script,
+        )
+        self.assertIn('sourceIssues: "./data/source_issues.v1.json"', script)
+        self.assertIn(
+            'sourceIssues: "https://raw.githubusercontent.com/njedu2023-prog/A/main/data/source_issues.v1.json"',
+            script,
+        )
+        self.assertIn("Promise.allSettled", script)
+        self.assertIn('cache: "no-store"', script)
+        self.assertIn("DATA_FETCH_TIMEOUT_MS = 8000", script)
+        self.assertIn("signal: controller.signal", script)
+        self.assertIn("timestampedUrl(url, requestTimestamp)", script)
+        self.assertIn('schema_version !== "dashboard_v1"', script)
+        self.assertIn('schema_version !== "source_issues_v1"', script)
+        self.assertIn("right.generatedAt - left.generatedAt", script)
+        self.assertIn('return left.source === "pages" ? -1 : 1;', script)
+        self.assertIn("chooseCompanionSnapshot(sourceIssueCandidates, selectedDashboard.source)", script)
+        self.assertIn('id="dataSourceStatus"', page)
+        self.assertIn("数据来源 main 兜底（Pages待同步）", script)
+
+    def test_frontend_loader_keeps_either_source_as_a_valid_fallback(self) -> None:
+        script = Path("assets/app.js").read_text(encoding="utf-8")
+        chooser = re.search(
+            r"function chooseNewestSnapshot\(candidates\) \{(.*?)\n\}",
+            script,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(chooser)
+        self.assertIn("candidate?.ok === true", chooser.group(1))
+        self.assertIn("if (!valid.length)", chooser.group(1))
+        self.assertNotIn("candidates.pages.ok && candidates.main.ok", chooser.group(1))
+        companion = re.search(
+            r"function chooseCompanionSnapshot\(candidates, preferredSource\) \{(.*?)\n\}",
+            script,
+            flags=re.DOTALL,
+        )
+        self.assertIsNotNone(companion)
+        self.assertIn("fallbackSource", companion.group(1))
 
 
 if __name__ == "__main__":
