@@ -276,7 +276,7 @@ class FrontendContractTests(unittest.TestCase):
         )
         self.assertNotIn("group: github-pages", build)
         self.assertIn("group: github-pages", deploy)
-        self.assertIn("cancel-in-progress: true", deploy)
+        self.assertIn("cancel-in-progress: false", deploy)
         self.assertNotIn("group: three-table-state", deploy)
 
         publish = build.split("- name: Publish generated data", 1)[1]

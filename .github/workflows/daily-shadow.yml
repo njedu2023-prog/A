@@ -213,9 +213,11 @@ jobs:
   deploy:
     needs: build
     if: ${{ needs.build.outputs.should_deploy == 'true' }}
+    # Serialize production deployments without killing an active one. Abruptly
+    # cancelling deploy-pages can leave the backend deployment in progress.
     concurrency:
       group: github-pages
-      cancel-in-progress: true
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     environment:
       name: github-pages
