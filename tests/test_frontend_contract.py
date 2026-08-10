@@ -83,8 +83,8 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260810-1", source)
-        self.assertIn("app.js?v=20260810-1", source)
+        self.assertIn("styles.css?v=20260810-2", source)
+        self.assertIn("app.js?v=20260810-2", source)
 
     def test_overview_uses_clear_settlement_copy(self) -> None:
         page = Path("index.html").read_text(encoding="utf-8")
@@ -184,7 +184,21 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("严格交集0支", source)
         self.assertIn("本次执行 ${formatUpdatedAt(run.completed_at)}", source)
         self.assertIn('ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选")', source)
-        self.assertIn('count ? resultText(day.result, day.is_final) : "合法空选"', source)
+        self.assertIn('if (!count) return "合法空选";', source)
+
+    def test_final_daily_result_shows_directional_return(self) -> None:
+        source = Path("assets/app.js").read_text(encoding="utf-8")
+        styles = Path("assets/styles.css").read_text(encoding="utf-8")
+        self.assertIn("function dailyResultText(day, candidateCount)", source)
+        self.assertIn('if (day?.is_final !== true) return "待验证";', source)
+        self.assertIn('if (!finite(day?.portfolio_return)) return "待补证";', source)
+        self.assertIn('if (value > 0) return `↑ ${pct(value)}`;', source)
+        self.assertIn('if (value < 0) return `↓ ${pct(value)}`;', source)
+        self.assertIn('return "0.00%";', source)
+        self.assertIn('ledgerFact("当日结果", dailyResultText(day, count), `daily-result ${tone(returnValue)}`)', source)
+        self.assertIn(".ledger-fact strong.daily-result { font-weight: 700; }", styles)
+        self.assertIn(".ledger-fact strong.daily-result.positive { color: var(--red); }", styles)
+        self.assertIn(".ledger-fact strong.daily-result.negative { color: var(--green-deep); }", styles)
 
     def test_workflow_has_separate_validation_and_output_batches(self) -> None:
         source = Path(".github/workflows/daily-shadow.yml").read_text(

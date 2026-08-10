@@ -506,6 +506,9 @@ td.name { color: var(--ink); font-weight: 570; }
 }
 .ledger-fact strong.positive,
 .ledger-fact strong.negative { font-weight: 590; }
+.ledger-fact strong.daily-result { font-weight: 700; }
+.ledger-fact strong.daily-result.positive { color: var(--red); }
+.ledger-fact strong.daily-result.negative { color: var(--green-deep); }
 .ledger-toggle {
   width: 26px;
   height: 26px;

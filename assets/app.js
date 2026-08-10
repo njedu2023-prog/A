@@ -209,6 +209,17 @@ function resultText(result, isFinal) {
   return statusText(result);
 }
 
+function dailyResultText(day, candidateCount) {
+  const count = Number(candidateCount ?? 0);
+  if (!count) return "合法空选";
+  if (day?.is_final !== true) return "待验证";
+  if (!finite(day?.portfolio_return)) return "待补证";
+  const value = Number(day.portfolio_return);
+  if (value > 0) return `↑ ${pct(value)}`;
+  if (value < 0) return `↓ ${pct(value)}`;
+  return "0.00%";
+}
+
 function tDayValidation(item) {
   const validation = item?.t_day_validation;
   if (!validation || typeof validation !== "object") {
@@ -1022,7 +1033,7 @@ function renderDaily() {
       ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选"),
       ledgerFact("盈利票", count && (day.is_final === true || finalCount > 0) ? `${profitable} / ${count}` : "—"),
       ledgerFact("当日组合净收益", pct(returnValue), tone(returnValue)),
-      ledgerFact("当日结果", count ? resultText(day.result, day.is_final) : "合法空选", tone(returnValue)),
+      ledgerFact("当日结果", dailyResultText(day, count), `daily-result ${tone(returnValue)}`),
       ledgerFact("模型", shortModel(batchModel)),
       node("span", null, "ledger-toggle")
     );
