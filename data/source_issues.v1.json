@@ -1,28 +1,7 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-08T20:38:17+08:00",
+  "generated_at": "2026-08-10T23:05:23+08:00",
   "issues": [
-    {
-      "code": "SOURCE_DUPLICATE_HEADERS_MERGED",
-      "severity": "warning",
-      "source_id": "premium_top10",
-      "message": "重复CSV列名的逐行值一致或仅一侧非空，已安全合并；源仓库仍应修复表头",
-      "details": {
-        "headers": [
-          "intraday_hard_risk_flag"
-        ],
-        "row_count": 10
-      }
-    },
-    {
-      "code": "A_TOP10_INTRADAY_COVERAGE_ZERO",
-      "severity": "warning",
-      "source_id": "a_top10",
-      "message": "当前展示行的 intraday_available 全为0；成员关系仍可读取，但分时证据缺失",
-      "details": {
-        "row_count": 10
-      }
-    },
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
       "severity": "warning",
@@ -33,12 +12,19 @@
       }
     },
     {
-      "code": "PREMIUM_MODEL_NOT_PROMOTED",
+      "code": "DECISION_AUXILIARY_COVERAGE_INCOMPLETE",
       "severity": "warning",
-      "source_id": "premium_top10",
-      "message": "当前 Premium 展示行的 model_can_rank 全为 false，模型尚未通过晋级门槛",
+      "source_id": "decision_table",
+      "message": "Decision辅助模型字段存在缺失；实际展示成员继续参与交集，缺失值不作为数值特征",
       "details": {
-        "row_count": 10
+        "row_count": 9,
+        "non_null_counts": {
+          "decision_p_fill": 7,
+          "decision_e_ret": 7,
+          "decision_ev": 7,
+          "decision_cost": 7,
+          "decision_risk_penalty": 7
+        }
       }
     },
     {
@@ -51,75 +37,39 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 8
+        "row_count": 9
       }
     },
     {
-      "code": "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
+      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
       "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision涨停价位于半价位边界且使用了向下偶数舍入；本系统已按交易所四舍五入规则规范化到0.01元",
+      "source_id": "market_data",
+      "message": "600664.SH 的D日分钟研究证据不可用；名单与名次保持不变",
       "details": {
-        "candidates": [
-          {
-            "ts_code": "603228.SH",
-            "name": "景旺电子",
-            "source_estimated_up_limit": 104.44,
-            "normalized_limit_up_price": 104.45,
-            "d_close": 94.95,
-            "mechanism_limit_pct": 10.0
-          }
-        ]
-      }
-    },
-    {
-      "code": "SOURCE_REVISION_AFTER_FREEZE",
-      "severity": "warning",
-      "source_id": "aggregate",
-      "message": "同一D日的源表内容或固定仓库提交在冻结后发生变化；既有冻结排名未被改写",
-      "details": {
-        "frozen_codes": [
-          "002194.SZ",
-          "600206.SH",
-          "600272.SH",
-          "603228.SH"
-        ],
-        "live_codes": [
-          "002194.SZ",
-          "600206.SH",
-          "600272.SH",
-          "603228.SH"
-        ],
-        "changed_sources": {
-          "decision_table": {
-            "frozen_content_sha256": "1c211f9279bc93c766174e1a65e3d757647608538753eda2982970e4ddfa940f",
-            "live_content_sha256": "1c211f9279bc93c766174e1a65e3d757647608538753eda2982970e4ddfa940f",
-            "frozen_repository_commit_sha": "d56aeb9f6e2a37cc3d0cd853299dd5139291cca2",
-            "live_repository_commit_sha": "4d66e9e6bfed4303bec71c955119b207ddfa48e9"
-          },
-          "premium_top10": {
-            "frozen_content_sha256": "c47bb06ad317f7f8944eb0cf8cbe6ecb71f6701cae23123e769440233a12bb55",
-            "live_content_sha256": "c47bb06ad317f7f8944eb0cf8cbe6ecb71f6701cae23123e769440233a12bb55",
-            "frozen_repository_commit_sha": "d56aeb9f6e2a37cc3d0cd853299dd5139291cca2",
-            "live_repository_commit_sha": "4d66e9e6bfed4303bec71c955119b207ddfa48e9"
-          }
-        }
+        "ts_code": "600664.SH",
+        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600664&klt=1&fqt=0&lmt=300&beg=20260810090000&end=20260810150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
       }
     },
     {
       "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "冻结信号的D日特征使用腾讯只读行情回退；本次重跑未改写特征",
+      "message": "Eastmoney 行情不可用或已跳闸；2 支股票已聚合切换至腾讯只读行情",
       "details": {
         "primary_provider": "EASTMONEY",
         "fallback_provider": "TENCENT",
         "affected_codes": [
-          "600206.SH",
-          "600272.SH",
-          "603228.SH"
+          "002428.SZ",
+          "600664.SH"
         ],
-        "persisted_with_frozen_signal": true
+        "request_types": [
+          "daily",
+          "minute"
+        ],
+        "event_count": 3,
+        "successful_event_count": 1,
+        "failed_event_count": 2,
+        "circuit_open": true
       }
     }
   ]
