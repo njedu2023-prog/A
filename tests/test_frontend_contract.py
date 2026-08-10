@@ -83,8 +83,16 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260810-2", source)
-        self.assertIn("app.js?v=20260810-2", source)
+        self.assertIn("styles.css?v=20260810-3", source)
+        self.assertIn("app.js?v=20260810-3", source)
+
+    def test_active_transparent_model_uses_shadow_baseline_display_name(self) -> None:
+        source = Path("assets/app.js").read_text(encoding="utf-8")
+        self.assertIn(
+            'if (text === "transparent_shadow_champion_v2") return "影子基线 V2";',
+            source,
+        )
+        self.assertNotIn('return "透明冠军 V2";', source)
 
     def test_overview_uses_clear_settlement_copy(self) -> None:
         page = Path("index.html").read_text(encoding="utf-8")

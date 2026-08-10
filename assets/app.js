@@ -160,8 +160,8 @@ function returnForecast(item) {
 }
 
 function shortModel(value) {
-  const text = String(value || "透明基线");
-  if (text === "transparent_shadow_champion_v2") return "透明冠军 V2";
+  const text = String(value || "影子基线");
+  if (text === "transparent_shadow_champion_v2") return "影子基线 V2";
   if (text.startsWith("formal_quant_challenger_")) {
     const prefix = "formal_quant_challenger_";
     return `学习挑战者 ${text.slice(prefix.length, prefix.length + 8)}`;
