@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-10T23:05:23+08:00",
+  "generated_at": "2026-08-11T22:24:10+08:00",
   "issues": [
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
@@ -9,22 +9,6 @@
       "message": "当前 Premium 展示行的 premium_eligible 全为0；保留其表内成员关系，但不把该状态视为交易背书",
       "details": {
         "row_count": 10
-      }
-    },
-    {
-      "code": "DECISION_AUXILIARY_COVERAGE_INCOMPLETE",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision辅助模型字段存在缺失；实际展示成员继续参与交集，缺失值不作为数值特征",
-      "details": {
-        "row_count": 9,
-        "non_null_counts": {
-          "decision_p_fill": 7,
-          "decision_e_ret": 7,
-          "decision_ev": 7,
-          "decision_cost": 7,
-          "decision_risk_penalty": 7
-        }
       }
     },
     {
@@ -37,38 +21,36 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 9
+        "row_count": 10
       }
     },
     {
       "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "600664.SH 的D日分钟研究证据不可用；名单与名次保持不变",
+      "message": "000802.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
       "details": {
-        "ts_code": "600664.SH",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600664&klt=1&fqt=0&lmt=300&beg=20260810090000&end=20260810150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
+        "ts_code": "000802.SZ",
+        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.000802&klt=1&fqt=0&lmt=300&beg=20260811090000&end=20260811150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
       }
     },
     {
       "code": "MARKET_DATA_PROVIDER_FALLBACK",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "Eastmoney 行情不可用或已跳闸；2 支股票已聚合切换至腾讯只读行情",
+      "message": "Eastmoney 行情不可用或已跳闸；1 支股票已聚合切换至腾讯只读行情",
       "details": {
         "primary_provider": "EASTMONEY",
         "fallback_provider": "TENCENT",
         "affected_codes": [
-          "002428.SZ",
-          "600664.SH"
+          "000802.SZ"
         ],
         "request_types": [
-          "daily",
-          "minute"
+          "daily"
         ],
-        "event_count": 3,
+        "event_count": 1,
         "successful_event_count": 1,
-        "failed_event_count": 2,
+        "failed_event_count": 0,
         "circuit_open": true
       }
     }
