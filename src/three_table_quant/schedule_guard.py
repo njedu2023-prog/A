@@ -21,18 +21,28 @@ def market_day_context(
     config = load_config(config_path)
     timezone_name = str(config.get("timezone") or "Asia/Shanghai")
     timezone = ZoneInfo(timezone_name)
+    current = now or datetime.now(timezone)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone)
+    local_today = current.astimezone(timezone).date()
     if market_date is None:
-        current = now or datetime.now(timezone)
-        if current.tzinfo is None:
-            current = current.replace(tzinfo=timezone)
-        resolved_date = current.astimezone(timezone).date()
+        resolved_date = local_today
     else:
         resolved_date = parse_calendar_date(market_date, "market_date")
+
+    if resolved_date < local_today:
+        date_relation = "PAST"
+    elif resolved_date > local_today:
+        date_relation = "FUTURE"
+    else:
+        date_relation = "TODAY"
 
     calendar_path = config["input_contract"]["trading_calendar_path"]
     calendar = load_trading_calendar(calendar_path)
     return {
         "market_date": resolved_date.strftime("%Y%m%d"),
+        "local_today": local_today.strftime("%Y%m%d"),
+        "date_relation": date_relation,
         "is_open": calendar.is_open(resolved_date, "scheduled market date"),
         "timezone": timezone_name,
         "calendar_path": str(calendar_path),
@@ -48,6 +58,8 @@ def main() -> None:
     args = parser.parse_args()
     context = market_day_context(args.config, market_date=args.date)
     print(f"market_date={context['market_date']}")
+    print(f"local_today={context['local_today']}")
+    print(f"date_relation={context['date_relation']}")
     print(f"is_open={'true' if context['is_open'] else 'false'}")
     print(f"timezone={context['timezone']}")
 

@@ -5,6 +5,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Mapping
+from zoneinfo import ZoneInfo
 
 from .domain import ContractError
 
@@ -88,6 +89,17 @@ def validate_batch_result(
             market_date
         ):
             raise ContractError("validation batch does not match its market date")
+        asof_at = validation.get("asof_at")
+        if not asof_at:
+            raise ContractError("validation batch is missing settlement asof_at")
+        asof_market_date = (
+            _timestamp(asof_at, "validation.asof_at")
+            .astimezone(ZoneInfo("Asia/Shanghai"))
+            .date()
+            .isoformat()
+        )
+        if asof_market_date != validation.get("market_date"):
+            raise ContractError("validation asof_at does not match its market date")
         for field_name in (
             "trade_count",
             "t_day_verified_count",

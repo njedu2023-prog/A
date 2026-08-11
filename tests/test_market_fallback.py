@@ -4,6 +4,7 @@ import json
 import urllib.parse
 import unittest
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from three_table_quant.domain import SourceIssue
 from three_table_quant.http import HttpError
@@ -20,6 +21,17 @@ from three_table_quant.pipeline import (
     _append_frozen_market_fallback_issue,
     _market_data_provenance,
 )
+
+
+FIXTURES = Path(__file__).with_name("fixtures")
+
+
+def _trends_payload() -> dict:
+    return json.loads(
+        (FIXTURES / "eastmoney_trends2_20260811.json").read_text(
+            encoding="utf-8"
+        )
+    )
 
 
 def _daily_payload(*, key: str = "qfqday", malformed: bool = False) -> dict:
@@ -108,11 +120,13 @@ class RouteHttp:
         raw_daily: dict | None = None,
         query: dict | None = None,
         mkline: dict | None = None,
+        trends: dict | None = None,
     ) -> None:
         self.daily = daily
         self.raw_daily = raw_daily
         self.query = query
         self.mkline = mkline
+        self.trends = trends
         self.urls: list[str] = []
 
     def get_bytes(self, url: str) -> bytes:
@@ -125,6 +139,8 @@ class RouteHttp:
             payload = self.query
         elif "/kline/mkline" in url and self.mkline is not None:
             payload = self.mkline
+        elif "/trends2/get" in url and self.trends is not None:
+            payload = self.trends
         else:
             raise AssertionError(f"unexpected URL: {url}")
         return json.dumps(payload).encode("utf-8")
@@ -204,6 +220,66 @@ class RawFallback:
         )
 
 
+def _five_minute_bars(provider: str) -> list[Bar]:
+    return [
+        Bar(
+            date="20260811",
+            time=f"11:0{offset}",
+            open=11.0,
+            close=11.0,
+            high=11.0,
+            low=11.0,
+            volume=100.0 + offset,
+            amount=(100.0 + offset) * 100.0 * 11.0,
+            volume_unit="LOT",
+            source_time=f"11:0{offset}",
+            time_semantics="INTERVAL_START",
+            provider=provider,
+            price_adjustment="NONE",
+        )
+        for offset in range(5)
+    ]
+
+
+class MinutePrimary:
+    def __init__(
+        self,
+        *,
+        normal_error: Exception | None = None,
+        historical: list[Bar] | None = None,
+    ) -> None:
+        self.normal_error = normal_error
+        self.historical = historical
+        self.minute_calls: list[tuple[str, str]] = []
+        self.historical_calls: list[tuple[str, str]] = []
+
+    def minute_bars(self, ts_code: str, trade_date: str) -> list[Bar]:
+        self.minute_calls.append((ts_code, trade_date))
+        if self.normal_error is not None:
+            raise self.normal_error
+        return _five_minute_bars("EASTMONEY")
+
+    def historical_minute_bars(
+        self, ts_code: str, trade_date: str
+    ) -> list[Bar]:
+        self.historical_calls.append((ts_code, trade_date))
+        if self.historical is None:
+            raise MarketDataError("historical minute unavailable")
+        return self.historical
+
+
+class MinuteFallback:
+    def __init__(self, *, error: Exception | None = None) -> None:
+        self.error = error
+        self.calls: list[tuple[str, str]] = []
+
+    def minute_bars(self, ts_code: str, trade_date: str) -> list[Bar]:
+        self.calls.append((ts_code, trade_date))
+        if self.error is not None:
+            raise self.error
+        return _five_minute_bars("TENCENT")
+
+
 class EastmoneyRawDailyTests(unittest.TestCase):
     def test_raw_daily_uses_fqt_zero_and_exact_unadjusted_bar(self) -> None:
         market = CapturingEastmoneyRaw(
@@ -265,6 +341,124 @@ class EastmoneyFullSessionMinuteShapeTests(unittest.TestCase):
         self.assertEqual(bars[-1].source_time, "15:00")
         self.assertEqual(bars[-1].time, "14:59")
         self.assertTrue(all(item.price_adjustment == "NONE" for item in bars))
+
+
+class EastmoneyHistoricalTrendsTests(unittest.TestCase):
+    def test_exact_window_uses_raw_per_minute_lot_and_amount_values(self) -> None:
+        payload = _trends_payload()
+        http = RouteHttp(trends=payload)
+
+        bars = EastmoneyMarketData(http).historical_minute_bars(
+            "002194.SZ", "20260811"
+        )
+
+        self.assertEqual(
+            [item.time for item in bars],
+            ["11:00", "11:01", "11:02", "11:03", "11:04"],
+        )
+        # These are the provider's individual minute values.  In particular,
+        # the second row is not the first row subtracted from a cumulative row.
+        self.assertEqual(
+            [item.volume for item in bars],
+            [3612.0, 2566.0, 2930.0, 1918.0, 2034.0],
+        )
+        self.assertEqual(
+            [item.amount for item in bars],
+            [3973200.07, 2822600.05, 3223012.69, 2109800.0, 2237400.0],
+        )
+        self.assertTrue(all(item.date == "20260811" for item in bars))
+        self.assertTrue(all(item.volume_unit == "LOT" for item in bars))
+        self.assertTrue(all(item.provider == "EASTMONEY_TRENDS2" for item in bars))
+        self.assertTrue(all(item.price_adjustment == "NONE" for item in bars))
+        self.assertTrue(all(item.time_semantics == "INTERVAL_START" for item in bars))
+
+        params = urllib.parse.parse_qs(
+            urllib.parse.urlsplit(http.urls[0]).query
+        )
+        self.assertEqual(params["secid"], ["0.002194"])
+        self.assertEqual(params["ndays"], ["5"])
+        self.assertEqual(params["fqt"], ["0"])
+        self.assertEqual(params["iscr"], ["0"])
+        self.assertEqual(params["iscca"], ["0"])
+
+    def test_nearby_dates_and_1105_are_never_substituted(self) -> None:
+        payload = _trends_payload()
+        payload["data"]["trends"] = [
+            row.replace("2026-08-11", "2026-08-10")
+            for row in payload["data"]["trends"]
+        ]
+
+        with self.assertRaisesRegex(
+            MarketDataError,
+            "exact five target minutes; missing 11:00,11:01,11:02,11:03,11:04",
+        ):
+            EastmoneyMarketData(RouteHttp(trends=payload)).historical_minute_bars(
+                "002194.SZ", "20260811"
+            )
+
+    def test_missing_or_duplicated_target_minute_fails_closed(self) -> None:
+        missing = _trends_payload()
+        missing["data"]["trends"] = [
+            row
+            for row in missing["data"]["trends"]
+            if not row.startswith("2026-08-11 11:03,")
+        ]
+        with self.assertRaisesRegex(MarketDataError, "missing 11:03"):
+            EastmoneyMarketData(RouteHttp(trends=missing)).historical_minute_bars(
+                "002194.SZ", "20260811"
+            )
+
+        duplicated = _trends_payload()
+        duplicated["data"]["trends"].append(
+            duplicated["data"]["trends"][1]
+        )
+        with self.assertRaisesRegex(MarketDataError, "duplicated target minute 11:00"):
+            EastmoneyMarketData(
+                RouteHttp(trends=duplicated)
+            ).historical_minute_bars("002194.SZ", "20260811")
+
+    def test_security_identity_and_response_status_must_match(self) -> None:
+        rejected = _trends_payload()
+        rejected["rc"] = 1
+        with self.assertRaisesRegex(MarketDataError, "rejected the request"):
+            EastmoneyMarketData(RouteHttp(trends=rejected)).historical_minute_bars(
+                "002194.SZ", "20260811"
+            )
+
+        wrong_code = _trends_payload()
+        wrong_code["data"]["code"] = "002195"
+        with self.assertRaisesRegex(MarketDataError, "different security code"):
+            EastmoneyMarketData(RouteHttp(trends=wrong_code)).historical_minute_bars(
+                "002194.SZ", "20260811"
+            )
+
+        wrong_market = _trends_payload()
+        wrong_market["data"]["market"] = 1
+        with self.assertRaisesRegex(MarketDataError, "different security market"):
+            EastmoneyMarketData(
+                RouteHttp(trends=wrong_market)
+            ).historical_minute_bars("002194.SZ", "20260811")
+
+    def test_ohlc_and_amount_volume_units_are_reconciled(self) -> None:
+        malformed_ohlc = _trends_payload()
+        parts = malformed_ohlc["data"]["trends"][1].split(",")
+        parts[3] = "10.99"
+        malformed_ohlc["data"]["trends"][1] = ",".join(parts)
+        with self.assertRaisesRegex(MarketDataError, "OHLC is inconsistent at 11:00"):
+            EastmoneyMarketData(
+                RouteHttp(trends=malformed_ohlc)
+            ).historical_minute_bars("002194.SZ", "20260811")
+
+        wrong_units = _trends_payload()
+        parts = wrong_units["data"]["trends"][2].split(",")
+        parts[6] = "28226.0005"
+        wrong_units["data"]["trends"][2] = ",".join(parts)
+        with self.assertRaisesRegex(
+            MarketDataError, "amount/volume is inconsistent at 11:01"
+        ):
+            EastmoneyMarketData(
+                RouteHttp(trends=wrong_units)
+            ).historical_minute_bars("002194.SZ", "20260811")
 
 
 class TencentMarketDataTests(unittest.TestCase):
@@ -359,6 +553,68 @@ class TencentMarketDataTests(unittest.TestCase):
 
 
 class ResilientMarketDataTests(unittest.TestCase):
+    def test_minute_normal_primary_success_never_touches_other_routes(self) -> None:
+        primary = MinutePrimary()
+        fallback = MinuteFallback()
+        market = ResilientMarketData(primary=primary, fallback=fallback)
+
+        bars = market.minute_bars("002194.SZ", "20260811")
+
+        self.assertEqual(bars[0].provider, "EASTMONEY")
+        self.assertEqual(primary.minute_calls, [("002194.SZ", "20260811")])
+        self.assertEqual(primary.historical_calls, [])
+        self.assertEqual(fallback.calls, [])
+        self.assertEqual(market.fallback_events, [])
+
+    def test_minute_tencent_success_precedes_historical_route(self) -> None:
+        primary = MinutePrimary(normal_error=HttpError("primary unavailable"))
+        fallback = MinuteFallback()
+        market = ResilientMarketData(primary=primary, fallback=fallback)
+
+        bars = market.minute_bars("002194.SZ", "20260811")
+
+        self.assertEqual(bars[0].provider, "TENCENT")
+        self.assertEqual(primary.historical_calls, [])
+        self.assertEqual(fallback.calls, [("002194.SZ", "20260811")])
+        self.assertEqual(market.fallback_events[0]["fallback_provider"], "TENCENT")
+
+    def test_historical_route_is_used_only_after_both_normal_routes_fail(self) -> None:
+        historical = _five_minute_bars("EASTMONEY_TRENDS2")
+        primary = MinutePrimary(
+            normal_error=HttpError("primary unavailable"), historical=historical
+        )
+        fallback = MinuteFallback(error=MarketDataError("wrong current date"))
+        market = ResilientMarketData(primary=primary, fallback=fallback)
+
+        bars = market.minute_bars("002194.SZ", "20260811")
+
+        self.assertIs(bars, historical)
+        self.assertEqual(primary.minute_calls, [("002194.SZ", "20260811")])
+        self.assertEqual(fallback.calls, [("002194.SZ", "20260811")])
+        self.assertEqual(primary.historical_calls, [("002194.SZ", "20260811")])
+        event = market.fallback_events[0]
+        self.assertEqual(event["tencent_fallback_status"], "MarketDataError:wrong current date")
+        self.assertEqual(event["historical_fallback_status"], "SUCCESS")
+        self.assertEqual(event["fallback_provider"], "EASTMONEY_TRENDS2")
+
+    def test_historical_failure_is_included_and_stays_failed_closed(self) -> None:
+        primary = MinutePrimary(normal_error=HttpError("primary unavailable"))
+        fallback = MinuteFallback(error=MarketDataError("wrong current date"))
+        market = ResilientMarketData(primary=primary, fallback=fallback)
+
+        with self.assertRaisesRegex(
+            MarketDataError,
+            "tencent=MarketDataError:wrong current date; "
+            "eastmoney_trends2=MarketDataError:historical minute unavailable",
+        ):
+            market.minute_bars("002194.SZ", "20260811")
+
+        self.assertEqual(primary.historical_calls, [("002194.SZ", "20260811")])
+        self.assertEqual(
+            market.fallback_events[0]["historical_fallback_status"],
+            "MarketDataError:historical minute unavailable",
+        )
+
     def test_raw_daily_falls_back_and_preserves_exact_none_adjusted_contract(self) -> None:
         primary = RawTransportFails()
         fallback = RawFallback()

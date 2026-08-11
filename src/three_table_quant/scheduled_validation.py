@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
+from .calendar import load_trading_calendar, parse_calendar_date
 from .dashboard import build_dashboard, validate_dashboard
 from .domain import ContractError, normalize_date
 from .http import HttpClient
@@ -33,6 +34,58 @@ def _validation_clock(value: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=zone)
     return parsed.astimezone(zone)
+
+
+def _validation_context(
+    completed_at: str,
+    requested_market_date: str | None,
+    execution: dict[str, Any],
+) -> dict[str, str]:
+    """Resolve an explicit, non-future OPEN-day settlement clock.
+
+    A historical recovery keeps its economic as-of on the requested market
+    date at 19:00 while publication timestamps remain the real wall clock.
+    Same-day validation is forbidden before 19:00 so entry and exit evidence
+    cannot be requested before it exists.
+    """
+
+    now = _validation_clock(completed_at)
+    raw_market_date = requested_market_date or now.strftime("%Y%m%d")
+    market_day = parse_calendar_date(raw_market_date, "market_date")
+    if market_day > now.date():
+        raise ContractError("validation market_date cannot be in the future")
+    calendar_path = execution.get("trading_calendar_path")
+    calendar = (
+        load_trading_calendar(calendar_path)
+        if calendar_path
+        else load_trading_calendar()
+    )
+    if not calendar.is_open(market_day, "validation market_date"):
+        raise ContractError("validation market_date must be an OPEN trading day")
+    try:
+        scheduled_time = datetime.strptime(
+            VALIDATION_SCHEDULE_LOCAL_TIME,
+            "%H:%M",
+        ).time()
+    except ValueError as exc:  # pragma: no cover - module constant
+        raise ContractError("validation schedule must use HH:MM") from exc
+    if market_day == now.date() and now.time().replace(tzinfo=None) < scheduled_time:
+        raise ContractError("same-day validation cannot run before 19:00")
+    if market_day < now.date():
+        asof = datetime(
+            market_day.year,
+            market_day.month,
+            market_day.day,
+            scheduled_time.hour,
+            scheduled_time.minute,
+            tzinfo=ZoneInfo("Asia/Shanghai"),
+        )
+    else:
+        asof = now
+    return {
+        "market_date": market_day.strftime("%Y%m%d"),
+        "asof_at": asof.isoformat(timespec="seconds"),
+    }
 
 
 def _date_due(value: Any, today: str, field_name: str) -> bool:
@@ -267,6 +320,8 @@ def _automation_runs(
     previous_dashboard: dict[str, Any],
     *,
     completed_at: str,
+    market_date: str,
+    asof_at: str,
     state: dict[str, Any],
     validation_summary: dict[str, Any],
 ) -> dict[str, Any]:
@@ -292,7 +347,10 @@ def _automation_runs(
     runs["output"] = output
     runs["validation"] = {
         "scheduled_local_time": VALIDATION_SCHEDULE_LOCAL_TIME,
-        "market_date": _validation_clock(completed_at).date().isoformat(),
+        "market_date": (
+            f"{market_date[:4]}-{market_date[4:6]}-{market_date[6:]}"
+        ),
+        "asof_at": asof_at,
         "last_attempted_at": completed_at,
         "last_completed_at": completed_at,
         "status": "COMPLETED",
@@ -312,6 +370,8 @@ def _automation_runs(
 
 def run_scheduled_validation(
     config_path: str | Path = "config/system.json",
+    *,
+    market_date: str | None = None,
 ) -> dict[str, Any]:
     """Settle every due shadow record without loading or ranking today's sources."""
 
@@ -331,12 +391,17 @@ def run_scheduled_validation(
 
     _ensure_all_candidate_shadow_ledger(state, list(config["tracked_ranks"]))
     generated_at = _now()
+    validation_context = _validation_context(
+        generated_at,
+        market_date,
+        config["execution"],
+    )
     validation_summary = _settle_validation_batch(
         state,
         truth,
         market,
         config["execution"],
-        generated_at,
+        validation_context["asof_at"],
     )
     registry, _, _, registry_issue = _refresh_model_registry(
         state,
@@ -358,6 +423,8 @@ def run_scheduled_validation(
     dashboard["automation_runs"] = _automation_runs(
         previous_dashboard,
         completed_at=generated_at,
+        market_date=validation_context["market_date"],
+        asof_at=validation_context["asof_at"],
         state=state,
         validation_summary=validation_summary,
     )
@@ -373,8 +440,12 @@ def main() -> None:
         description="Validate due shadow records without waiting for three-source output"
     )
     parser.add_argument("--config", default="config/system.json")
+    parser.add_argument(
+        "--market-date",
+        help="OPEN trading day to validate as YYYYMMDD; past days settle at 19:00",
+    )
     args = parser.parse_args()
-    run_scheduled_validation(args.config)
+    run_scheduled_validation(args.config, market_date=args.market_date or None)
 
 
 if __name__ == "__main__":

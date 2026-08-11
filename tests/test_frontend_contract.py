@@ -272,6 +272,36 @@ class FrontendContractTests(unittest.TestCase):
             "steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'validation'",
             source,
         )
+
+    def test_manual_recovery_date_is_explicit_and_never_conflated_with_force(self) -> None:
+        source = Path(".github/workflows/daily-shadow.yml").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("recovery_date:", source)
+        self.assertIn("recovery_date is only supported for validation", source)
+        self.assertIn('args+=(--date "$RECOVERY_DATE")', source)
+        self.assertIn('DATE_RELATION: ${{ steps.market-day.outputs.date_relation }}', source)
+        self.assertIn('if [[ "$DATE_RELATION" == "FUTURE" ]]', source)
+        self.assertIn('if [[ "$DATE_RELATION" == "PAST" ]]', source)
+        self.assertIn('if [[ "$IS_OPEN" != "true" ]]', source)
+        self.assertIn("is_recovery=true", source)
+        self.assertIn('echo "is_recovery=$is_recovery"', source)
+        clock_start = source.index("- name: Wait until the exact batch time")
+        clock_end = source.index("- name: Resolve publication policy", clock_start)
+        clock = source[clock_start:clock_end]
+        self.assertIn(
+            "steps.recovery-mode.outputs.is_recovery != 'true'",
+            clock,
+        )
+        self.assertNotIn("force", clock.lower())
+        self.assertIn(
+            '--market-date "${{ steps.market-day.outputs.market_date }}"',
+            source,
+        )
+        self.assertGreaterEqual(
+            source.count("steps.market-day.outputs.market_date"),
+            4,
+        )
         self.assertIn(
             "steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'output'",
             source,

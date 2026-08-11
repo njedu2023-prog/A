@@ -113,6 +113,8 @@ class EastmoneyMarketData:
     """
 
     endpoint = "https://push2his.eastmoney.com/api/qt/stock/kline/get"
+    trends_endpoint = "https://push2.eastmoney.com/api/qt/stock/trends2/get"
+    execution_interval_starts = ("11:00", "11:01", "11:02", "11:03", "11:04")
 
     def __init__(self, http: HttpClient | Any | None = None) -> None:
         self.http = http or HttpClient()
@@ -123,6 +125,19 @@ class EastmoneyMarketData:
         payload = _json_payload(raw, "Eastmoney")
         if not payload.get("data") or not payload["data"].get("klines"):
             raise MarketDataError(f"market data unavailable: {payload.get('message') or 'empty klines'}")
+        return payload
+
+    def _trends_request(self, params: dict[str, Any]) -> dict[str, Any]:
+        """Fetch raw intraday trends without weakening the normal kline path."""
+
+        query = urllib.parse.urlencode(params)
+        raw = self.http.get_bytes(f"{self.trends_endpoint}?{query}")
+        payload = _json_payload(raw, "Eastmoney trends2")
+        if payload.get("rc") not in (0, "0"):
+            raise MarketDataError("Eastmoney trends2 rejected the request")
+        data = payload.get("data")
+        if not isinstance(data, dict) or not isinstance(data.get("trends"), list):
+            raise MarketDataError("Eastmoney trends2 returned no minute trends")
         return payload
 
     def daily_bars(self, ts_code: str, end_date: str, limit: int = 100) -> list[Bar]:
@@ -297,6 +312,136 @@ class EastmoneyMarketData:
                 )
             )
         return bars
+
+    def historical_minute_bars(self, ts_code: str, trade_date: str) -> list[Bar]:
+        """Return the exact historical 11:00-11:05 cash-price exit window.
+
+        ``trends2`` rows carry per-minute volume (lots) and amount (CNY).  They
+        are not cumulative snapshots and are therefore consumed directly,
+        never differenced.  The endpoint can return several dates, so only the
+        requested date is accepted and all five interval-start rows are
+        required before any bar is returned.
+        """
+
+        normalized_code = normalize_ts_code(ts_code)
+        number, _ = normalized_code.split(".")
+        secid = eastmoney_secid(normalized_code)
+        expected_market = int(secid.split(".", 1)[0])
+        day = normalize_date(trade_date, "trade_date")
+        display_day = f"{day[:4]}-{day[4:6]}-{day[6:]}"
+        payload = self._trends_request(
+            {
+                "secid": secid,
+                "ndays": 5,
+                # Intraday execution evidence is always raw cash price.  Keep
+                # these flags explicit even though trends2 is not a qfq API.
+                "fqt": 0,
+                "iscr": 0,
+                "iscca": 0,
+                "fields1": "f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13",
+                # timestamp, OHLC, per-minute volume, per-minute amount, mean
+                "fields2": "f51,f52,f53,f54,f55,f56,f57,f58",
+            }
+        )
+        data = payload["data"]
+        if str(data.get("code") or "").strip() != number:
+            raise MarketDataError("Eastmoney trends2 returned a different security code")
+        try:
+            response_market = int(data.get("market"))
+        except (TypeError, ValueError) as exc:
+            raise MarketDataError("Eastmoney trends2 returned an invalid market") from exc
+        if response_market != expected_market:
+            raise MarketDataError("Eastmoney trends2 returned a different security market")
+
+        wanted = set(self.execution_interval_starts)
+        selected: dict[str, Bar] = {}
+        for raw_row in data["trends"]:
+            if not isinstance(raw_row, str):
+                continue
+            parts = raw_row.split(",")
+            if len(parts) < 8:
+                if raw_row.startswith(display_day):
+                    raise MarketDataError("Eastmoney trends2 target-date row is malformed")
+                continue
+            timestamp = parts[0].strip()
+            try:
+                parsed_at = datetime.strptime(timestamp, "%Y-%m-%d %H:%M")
+            except ValueError:
+                if timestamp.startswith(display_day):
+                    raise MarketDataError("Eastmoney trends2 target-date timestamp is invalid")
+                continue
+            row_day = parsed_at.strftime("%Y%m%d")
+            minute = parsed_at.strftime("%H:%M")
+            if row_day != day or minute not in wanted:
+                continue
+            if minute in selected:
+                raise MarketDataError(
+                    f"Eastmoney trends2 duplicated target minute {minute}"
+                )
+
+            open_price = _strict_float(
+                parts[1], f"Eastmoney trends2 open {minute}", positive=True
+            )
+            close_price = _strict_float(
+                parts[2], f"Eastmoney trends2 close {minute}", positive=True
+            )
+            high = _strict_float(
+                parts[3], f"Eastmoney trends2 high {minute}", positive=True
+            )
+            low = _strict_float(
+                parts[4], f"Eastmoney trends2 low {minute}", positive=True
+            )
+            volume_lots = _strict_float(
+                parts[5], f"Eastmoney trends2 minute volume {minute}", positive=True
+            )
+            amount_cny = _strict_float(
+                parts[6], f"Eastmoney trends2 minute amount {minute}", positive=True
+            )
+            tick = 0.01
+            tolerance = tick / 2.0 + 1e-9
+            if (
+                high < low
+                or low > min(open_price, close_price) + tolerance
+                or high < max(open_price, close_price) - tolerance
+            ):
+                raise MarketDataError(
+                    f"Eastmoney trends2 OHLC is inconsistent at {minute}"
+                )
+            minute_vwap = amount_cny / (volume_lots * 100.0)
+            if (
+                not math.isfinite(minute_vwap)
+                or minute_vwap < low - tolerance
+                or minute_vwap > high + tolerance
+            ):
+                raise MarketDataError(
+                    f"Eastmoney trends2 amount/volume is inconsistent at {minute}"
+                )
+            selected[minute] = Bar(
+                date=day,
+                time=minute,
+                open=open_price,
+                close=close_price,
+                high=high,
+                low=low,
+                volume=volume_lots,
+                amount=amount_cny,
+                volume_unit="LOT",
+                price_tick=tick,
+                source_time=minute,
+                time_semantics="INTERVAL_START",
+                provider="EASTMONEY_TRENDS2",
+                price_adjustment="NONE",
+            )
+
+        missing = [
+            minute for minute in self.execution_interval_starts if minute not in selected
+        ]
+        if missing:
+            raise MarketDataError(
+                "Eastmoney trends2 requires the exact five target minutes; "
+                f"missing {','.join(missing)} for {day}"
+            )
+        return [selected[minute] for minute in self.execution_interval_starts]
 
 
 class TencentMarketData:
@@ -682,15 +827,39 @@ class ResilientMarketData:
             result = getattr(self.fallback, method)(ts_code, *args)
         except Exception as fallback_error:
             event["fallback_status"] = self._error_summary(fallback_error)
+            if method == "minute_bars" and hasattr(
+                self.primary, "historical_minute_bars"
+            ):
+                event["tencent_fallback_status"] = event["fallback_status"]
+                event["historical_fallback_provider"] = "EASTMONEY_TRENDS2"
+                try:
+                    result = self.primary.historical_minute_bars(ts_code, *args)
+                except Exception as historical_error:
+                    event["historical_fallback_status"] = self._error_summary(
+                        historical_error
+                    )
+                else:
+                    event["historical_fallback_status"] = "SUCCESS"
+                    event["fallback_provider"] = "EASTMONEY_TRENDS2"
+                    event["fallback_status"] = "SUCCESS"
+                    self._fallback_events.append(event)
+                    return result
             self._fallback_events.append(event)
             primary_chain = (
                 self._error_summary(primary_error)
                 if primary_error is not None
                 else "CIRCUIT_OPEN"
             )
+            historical_chain = event.get("historical_fallback_status")
+            historical_suffix = (
+                f"; eastmoney_trends2={historical_chain}"
+                if historical_chain is not None
+                else ""
+            )
             raise MarketDataError(
                 "market data providers failed "
-                f"(eastmoney={primary_chain}; tencent={self._error_summary(fallback_error)})"
+                f"(eastmoney={primary_chain}; tencent={self._error_summary(fallback_error)}"
+                f"{historical_suffix})"
             ) from fallback_error
         event["fallback_status"] = "SUCCESS"
         self._fallback_events.append(event)

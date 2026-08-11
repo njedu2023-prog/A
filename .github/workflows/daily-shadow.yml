@@ -16,6 +16,11 @@ on:
         required: false
         default: false
         type: boolean
+      recovery_date:
+        description: "Validation only: recover a past SSE trading date (YYYYMMDD); empty uses Shanghai today"
+        required: false
+        default: ""
+        type: string
   push:
     branches: [main]
     paths:
@@ -80,12 +85,19 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           SCHEDULE_CRON: ${{ github.event.schedule }}
           DISPATCH_MODE: ${{ inputs.mode }}
+          DISPATCH_RECOVERY_DATE: ${{ inputs.recovery_date }}
         run: |
           if [[ "$EVENT_NAME" == "push" ]]; then
             echo "mode=push" >> "$GITHUB_OUTPUT"
             echo "not_before=" >> "$GITHUB_OUTPUT"
+            echo "recovery_date=" >> "$GITHUB_OUTPUT"
           elif [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            if [[ -n "$DISPATCH_RECOVERY_DATE" && "$DISPATCH_MODE" != "validation" ]]; then
+              echo "recovery_date is only supported for validation" >&2
+              exit 1
+            fi
             echo "mode=$DISPATCH_MODE" >> "$GITHUB_OUTPUT"
+            echo "recovery_date=$DISPATCH_RECOVERY_DATE" >> "$GITHUB_OUTPUT"
             if [[ "$DISPATCH_MODE" == "validation" ]]; then
               echo "not_before=19:00" >> "$GITHUB_OUTPUT"
             else
@@ -96,10 +108,12 @@ jobs:
               "40 10 * * 1-5"|"55 10 * * 1-5"|"10 11 * * 1-5")
                 echo "mode=validation" >> "$GITHUB_OUTPUT"
                 echo "not_before=19:00" >> "$GITHUB_OUTPUT"
+                echo "recovery_date=" >> "$GITHUB_OUTPUT"
                 ;;
               "10 13 * * 1-5"|"25 13 * * 1-5"|"40 13 * * 1-5")
                 echo "mode=output" >> "$GITHUB_OUTPUT"
                 echo "not_before=21:30" >> "$GITHUB_OUTPUT"
+                echo "recovery_date=" >> "$GITHUB_OUTPUT"
                 ;;
               *)
                 echo "Unsupported scheduled cron: $SCHEDULE_CRON" >&2
@@ -110,7 +124,37 @@ jobs:
       - name: Check the official A-share trading calendar
         id: market-day
         if: ${{ github.event_name != 'push' }}
-        run: python -m three_table_quant.schedule_guard --config config/system.json >> "$GITHUB_OUTPUT"
+        env:
+          RECOVERY_DATE: ${{ steps.batch-mode.outputs.recovery_date }}
+        run: |
+          args=(python -m three_table_quant.schedule_guard --config config/system.json)
+          if [[ -n "$RECOVERY_DATE" ]]; then
+            args+=(--date "$RECOVERY_DATE")
+          fi
+          "${args[@]}" >> "$GITHUB_OUTPUT"
+      - name: Classify explicit recovery date
+        id: recovery-mode
+        if: ${{ github.event_name != 'push' }}
+        env:
+          RECOVERY_DATE: ${{ steps.batch-mode.outputs.recovery_date }}
+          DATE_RELATION: ${{ steps.market-day.outputs.date_relation }}
+          IS_OPEN: ${{ steps.market-day.outputs.is_open }}
+        run: |
+          is_recovery=false
+          if [[ -n "$RECOVERY_DATE" ]]; then
+            if [[ "$DATE_RELATION" == "FUTURE" ]]; then
+              echo "recovery_date must not be in the future" >&2
+              exit 1
+            fi
+            if [[ "$DATE_RELATION" == "PAST" ]]; then
+              if [[ "$IS_OPEN" != "true" ]]; then
+                echo "past recovery_date must be an official SSE trading day" >&2
+                exit 1
+              fi
+              is_recovery=true
+            fi
+          fi
+          echo "is_recovery=$is_recovery" >> "$GITHUB_OUTPUT"
       - name: Gate duplicate automated batch attempts
         id: automation-gate
         if: ${{ github.event_name != 'push' && steps.market-day.outputs.is_open == 'true' }}
@@ -134,7 +178,7 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: Wait until the exact batch time
         id: schedule-clock
-        if: ${{ steps.automation-gate.outputs.should_run == 'true' }}
+        if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.recovery-mode.outputs.is_recovery != 'true' }}
         run: >-
           python -m three_table_quant.schedule_clock
           --timezone Asia/Shanghai
@@ -153,7 +197,10 @@ jobs:
         run: echo "started_at=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
       - name: Validate due shadow records without loading the three sources
         if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'validation' }}
-        run: python -m three_table_quant.scheduled_validation --config config/system.json
+        run: >-
+          python -m three_table_quant.scheduled_validation
+          --config config/system.json
+          --market-date "${{ steps.market-day.outputs.market_date }}"
       - name: Self-check validation result before publication
         if: ${{ steps.automation-gate.outputs.should_run == 'true' && steps.batch-mode.outputs.mode == 'validation' }}
         run: >-

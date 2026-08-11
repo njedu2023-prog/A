@@ -5,8 +5,10 @@ import unittest
 from unittest.mock import Mock, patch
 
 from three_table_quant.scheduled_validation import (
+    _automation_runs,
     _due_obligations,
     _settle_validation_batch,
+    _validation_context,
     _validation_clock,
     _validation_summary,
     run_scheduled_validation,
@@ -84,6 +86,10 @@ class ScheduledValidationTests(unittest.TestCase):
 
         ensure.assert_called_once_with(state, [1, 2, 3])
         settle.assert_called_once()
+        self.assertEqual(
+            settle.call_args.kwargs["asof_at"].isoformat(timespec="seconds"),
+            "2026-08-10T19:00:08+08:00",
+        )
         build.assert_called_once()
         validate.assert_called_once_with(result)
         self.assertEqual(save.call_count, 3)
@@ -104,6 +110,10 @@ class ScheduledValidationTests(unittest.TestCase):
         self.assertEqual(
             result["automation_runs"]["validation"]["market_date"],
             "2026-08-10",
+        )
+        self.assertEqual(
+            result["automation_runs"]["validation"]["asof_at"],
+            "2026-08-10T19:00:08+08:00",
         )
         self.assertEqual(
             result["automation_runs"]["validation"]["result_status"],
@@ -179,6 +189,68 @@ class ScheduledValidationTests(unittest.TestCase):
                 "batch_error": None,
             },
         )
+
+    def test_historical_open_day_uses_1900_asof_and_real_completion_time(self) -> None:
+        completed_at = "2026-08-12T00:06:30+08:00"
+        context = _validation_context(
+            completed_at,
+            "20260811",
+            {"trading_calendar_path": "data/trading_calendar_2026.json"},
+        )
+        self.assertEqual(context["market_date"], "20260811")
+        self.assertEqual(context["asof_at"], "2026-08-11T19:00:00+08:00")
+
+        runs = _automation_runs(
+            {},
+            completed_at=completed_at,
+            market_date=context["market_date"],
+            asof_at=context["asof_at"],
+            state={"trades": []},
+            validation_summary={
+                "due": 0,
+                "final": 0,
+                "pending_data": 0,
+                "delayed": 0,
+                "failed": 0,
+                "result_status": "SUCCESS_NO_DUE",
+                "batch_error": None,
+            },
+        )
+        validation = runs["validation"]
+        self.assertEqual(validation["market_date"], "2026-08-11")
+        self.assertEqual(validation["asof_at"], "2026-08-11T19:00:00+08:00")
+        self.assertEqual(validation["last_attempted_at"], completed_at)
+        self.assertEqual(validation["last_completed_at"], completed_at)
+
+    def test_validation_context_rejects_future_closed_and_early_same_day(self) -> None:
+        execution = {"trading_calendar_path": "data/trading_calendar_2026.json"}
+        with self.assertRaisesRegex(ValueError, "future"):
+            _validation_context(
+                "2026-08-12T00:06:30+08:00",
+                "20260813",
+                execution,
+            )
+        with self.assertRaisesRegex(ValueError, "before 19:00"):
+            _validation_context(
+                "2026-08-12T18:59:59+08:00",
+                "20260812",
+                execution,
+            )
+        with self.assertRaisesRegex(ValueError, "OPEN"):
+            _validation_context(
+                "2026-08-12T20:00:00+08:00",
+                "20260809",
+                execution,
+            )
+
+    def test_same_day_at_or_after_1900_uses_real_asof(self) -> None:
+        context = _validation_context(
+            "2026-08-12T19:07:08+08:00",
+            "20260812",
+            {"trading_calendar_path": "data/trading_calendar_2026.json"},
+        )
+        self.assertEqual(context["market_date"], "20260812")
+        self.assertEqual(context["asof_at"], "2026-08-12T19:07:08+08:00")
 
     def test_settlement_exception_rolls_back_and_marks_due_failed(self) -> None:
         state = {

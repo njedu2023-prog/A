@@ -21,6 +21,7 @@ def payload() -> dict:
             "validation": {
                 "scheduled_local_time": "19:00",
                 "market_date": "2026-08-10",
+                "asof_at": "2026-08-10T19:00:08+08:00",
                 "last_attempted_at": "2026-08-10T19:00:08+08:00",
                 "last_completed_at": "2026-08-10T19:00:08+08:00",
                 "status": "COMPLETED",
@@ -83,6 +84,14 @@ class BatchResultTests(unittest.TestCase):
                 "validation",
                 market_date="20260811",
             )
+
+    def test_validation_asof_must_match_market_date(self) -> None:
+        invalid = copy.deepcopy(payload())
+        invalid["automation_runs"]["validation"]["asof_at"] = (
+            "2026-08-09T19:00:00+08:00"
+        )
+        with self.assertRaisesRegex(ContractError, "asof_at"):
+            validate_batch_result(invalid, "validation")
 
     def test_stale_output_is_rejected(self) -> None:
         stale = copy.deepcopy(payload())
