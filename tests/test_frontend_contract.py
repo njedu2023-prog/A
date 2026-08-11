@@ -83,8 +83,8 @@ class FrontendContractTests(unittest.TestCase):
 
     def test_static_assets_are_cache_busted(self) -> None:
         source = Path("index.html").read_text(encoding="utf-8")
-        self.assertIn("styles.css?v=20260811-1", source)
-        self.assertIn("app.js?v=20260811-1", source)
+        self.assertIn("styles.css?v=20260811-2", source)
+        self.assertIn("app.js?v=20260811-2", source)
 
     def test_active_transparent_model_uses_shadow_baseline_display_name(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")
@@ -191,8 +191,21 @@ class FrontendContractTests(unittest.TestCase):
         self.assertIn("D日名单筛选已执行", source)
         self.assertIn("严格交集0支", source)
         self.assertIn("本次执行 ${formatUpdatedAt(run.completed_at)}", source)
-        self.assertIn('ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选")', source)
+        self.assertIn('ledgerFact("收益验证", count ? `${finalCount} / ${count}` : "无候选")', source)
         self.assertIn('if (!count) return "合法空选";', source)
+
+    def test_exit_status_copy_never_claims_unfinished_validation_succeeded(self) -> None:
+        source = Path("assets/app.js").read_text(encoding="utf-8")
+        self.assertIn('EXIT_UNVERIFIABLE: "退出证据待补"', source)
+        self.assertIn('EXIT_DELAYED: "退出验证中"', source)
+        self.assertIn('CLOSED: "收益验证成功"', source)
+        self.assertNotIn('EXIT_UNVERIFIABLE: "退出待核验"', source)
+        self.assertNotIn('EXIT_DELAYED: "延迟退出"', source)
+        self.assertNotIn('CLOSED: "已验证"', source)
+        self.assertIn('ledgerFact("收益验证", count ? `${finalCount} / ${count}` : "无候选")', source)
+        self.assertIn('const netReturn = item.is_final === true && finite(item.net_return)', source)
+        self.assertIn('{text: pct(netReturn), className: tone(netReturn)}', source)
+        self.assertIn('"收益验证"', source)
 
     def test_final_daily_result_shows_directional_return(self) -> None:
         source = Path("assets/app.js").read_text(encoding="utf-8")

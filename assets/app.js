@@ -172,9 +172,9 @@ function statusText(status) {
     BUY_UNVERIFIABLE: "开盘价待补",
     BUY_UNFILLED: "开盘未成交",
     OPEN: "持仓待退出",
-    EXIT_UNVERIFIABLE: "退出待核验",
-    EXIT_DELAYED: "延迟退出",
-    CLOSED: "已验证",
+    EXIT_UNVERIFIABLE: "退出证据待补",
+    EXIT_DELAYED: "退出验证中",
+    CLOSED: "收益验证成功",
     CASH: "现金",
     PENDING: "待验证",
     PROFIT: "盈利",
@@ -1011,7 +1011,7 @@ function renderDaily() {
       ledgerFact("开盘买入日", day.buy_date || "—"),
       ledgerFact("T+1验证日", verifiedDate),
       ledgerFact("股票", `${count} 支`),
-      ledgerFact("已验证", count ? `${finalCount} / ${count}` : "无候选"),
+      ledgerFact("收益验证", count ? `${finalCount} / ${count}` : "无候选"),
       ledgerFact("盈利票", count && (day.is_final === true || finalCount > 0) ? `${profitable} / ${count}` : "—"),
       ledgerFact("当日组合净收益", pct(returnValue), tone(returnValue)),
       ledgerFact("当日结果", dailyResultText(day, count), `daily-result ${tone(returnValue)}`),
@@ -1070,7 +1070,7 @@ function renderDaily() {
         "T+1退出价",
         "净收益",
         "结果",
-        "状态"
+        "收益验证"
       ], childRows, "1760px", `${day.decision_date || "该批次"}候选验证明细`);
       dailyTable.classList.add("daily-detail-table");
       detailWrap.append(dailyTable);

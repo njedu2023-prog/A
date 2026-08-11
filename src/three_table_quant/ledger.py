@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+from copy import deepcopy
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,7 @@ STATE_SCHEMA = "three_table_state_v1"
 T_DAY_PENDING = "PENDING"
 T_DAY_VERIFIED = "VERIFIED"
 T_DAY_UNVERIFIABLE = "UNVERIFIABLE"
+EXIT_LOCK_INFERENCE_VERSION = "PREVIOUS_CLOSE_DIRECTION_V1"
 
 
 def empty_state() -> dict[str, Any]:
@@ -314,17 +316,194 @@ def _legal_sell_price(bar: Any, benchmark: float, execution: dict[str, Any]) -> 
     return price
 
 
-def _is_locked_limit_down(bar: Any, execution: dict[str, Any]) -> bool:
+def _one_price_bar(bar: Any, execution: dict[str, Any]) -> bool:
+    tick = float(getattr(bar, "price_tick", None) or execution.get("price_tick", 0.01))
+    low = float(bar.low)
+    high = float(bar.high)
+    return abs(high - low) < tick / 2.0
+
+
+def _auditable_previous_close(
+    trade: dict[str, Any],
+    provider: Any,
+    attempt_date: str,
+) -> tuple[dict[str, Any] | None, str | None]:
+    """Resolve the close known before one exit session without guessing.
+
+    The planned T+1 session can reuse the already verified T-day close.  Later
+    retry sessions require the exact raw daily record for that date to expose
+    its previous close.  A nearest-date or adjusted value is never accepted.
+    """
+
+    validation = trade.get("t_day_validation")
+    if (
+        attempt_date == trade.get("planned_exit_date")
+        and isinstance(validation, dict)
+        and validation.get("status") == T_DAY_VERIFIED
+        and str(validation.get("trade_date") or "") == str(trade.get("buy_date") or "")
+    ):
+        try:
+            value = float(validation.get("t_close"))
+        except (TypeError, ValueError):
+            value = float("nan")
+        if math.isfinite(value) and value > 0:
+            return (
+                {
+                    "value": value,
+                    "source": "VERIFIED_T_DAY_CLOSE",
+                    "source_date": str(trade["buy_date"]),
+                    "provider": validation.get("provider"),
+                    "price_adjustment": validation.get("price_adjustment"),
+                },
+                None,
+            )
+
+    try:
+        bar = provider.raw_daily_bar(trade["ts_code"], attempt_date)
+    except Exception as exc:
+        return None, f"raw daily previous close unavailable: {type(exc).__name__}: {exc}"
+    try:
+        bar_date = normalize_date(bar.date, "exit raw daily date")
+        adjustment = str(getattr(bar, "price_adjustment", "")).upper()
+        value = float(getattr(bar, "previous_close", None))
+    except Exception as exc:
+        return None, f"raw daily previous close contract failed: {type(exc).__name__}: {exc}"
+    if (
+        bar_date != attempt_date
+        or adjustment != "NONE"
+        or not math.isfinite(value)
+        or value <= 0
+    ):
+        return None, (
+            "raw daily previous close requires the exact attempt date, "
+            "price_adjustment=NONE, and a positive finite previous_close"
+        )
+    return (
+        {
+            "value": value,
+            "source": "RAW_DAILY_PREVIOUS_CLOSE",
+            "source_date": attempt_date,
+            "provider": str(getattr(bar, "provider", "UNSPECIFIED")),
+            "price_adjustment": adjustment,
+        },
+        None,
+    )
+
+
+def _locked_limit_down_decision(
+    bar: Any,
+    execution: dict[str, Any],
+    previous_close: dict[str, Any] | None,
+) -> tuple[bool | None, dict[str, Any] | None]:
+    """Return locked, sellable, or unknown with auditable direction evidence."""
+
     tick = float(getattr(bar, "price_tick", None) or execution.get("price_tick", 0.01))
     low = float(bar.low)
     high = float(bar.high)
     limit_down = getattr(bar, "limit_down", None)
     if limit_down is not None:
-        limit_value = float(limit_down)
-        return high <= limit_value + tick / 2.0 and low <= limit_value + tick / 2.0
-    if bool(execution.get("one_price_bar_is_locked_without_limit", True)):
-        return abs(high - low) < tick / 2.0
-    return False
+        try:
+            limit_value = float(limit_down)
+        except (TypeError, ValueError):
+            limit_value = float("nan")
+        if not math.isfinite(limit_value) or limit_value <= 0:
+            return None, {
+                "decision": "UNVERIFIABLE",
+                "reason": "explicit_limit_down_invalid",
+                "limit_down": limit_down,
+            }
+        locked = high <= limit_value + tick / 2.0 and low <= limit_value + tick / 2.0
+        return locked, {
+            "decision": "LOCKED" if locked else "SELLABLE",
+            "reason": "explicit_limit_down",
+            "limit_down": limit_value,
+        }
+    if not _one_price_bar(bar, execution):
+        return False, None
+    if not bool(execution.get("one_price_bar_is_locked_without_limit", True)):
+        return False, {
+            "decision": "SELLABLE",
+            "reason": "one_price_fallback_disabled",
+        }
+    if previous_close is None:
+        return None, {
+            "decision": "UNVERIFIABLE",
+            "reason": "one_price_previous_close_unavailable",
+        }
+
+    reference = float(previous_close["value"])
+    one_price = (high + low) / 2.0
+    evidence = {
+        "one_price": one_price,
+        "previous_close": reference,
+        "previous_close_source": previous_close["source"],
+        "previous_close_source_date": previous_close["source_date"],
+        "previous_close_provider": previous_close.get("provider"),
+        "price_adjustment": previous_close.get("price_adjustment"),
+    }
+    if one_price > reference + tick / 2.0:
+        return False, {
+            **evidence,
+            "decision": "SELLABLE",
+            "reason": "one_price_up_from_previous_close",
+        }
+    if one_price < reference - tick / 2.0:
+        return True, {
+            **evidence,
+            "decision": "LOCKED",
+            "reason": "one_price_down_from_previous_close_conservative",
+        }
+    return None, {
+        **evidence,
+        "decision": "UNVERIFIABLE",
+        "reason": "one_price_direction_flat_or_unknown",
+    }
+
+
+def _reopen_legacy_ambiguous_locked_windows(
+    trade: dict[str, Any],
+    exit_payload: dict[str, Any],
+) -> None:
+    """Safely recheck legacy all-locked windows that lacked direction proof.
+
+    Legacy code treated every one-price bar without an explicit ``limit_down``
+    as locked.  Only windows with no recorded fill are reopened, so replay can
+    neither duplicate nor erase an execution.  The superseded attempt remains
+    preserved in a separate audit trail before the normal idempotent attempt
+    record is replaced.
+    """
+
+    if trade.get("status") != "EXIT_DELAYED":
+        return
+    processed = exit_payload.setdefault("processed_windows", [])
+    rechecks = exit_payload.setdefault("legacy_lock_rechecks", [])
+    audited_dates = {
+        str(item.get("date") or "")
+        for item in rechecks
+        if item.get("version") == EXIT_LOCK_INFERENCE_VERSION
+    }
+    for attempt in exit_payload.setdefault("attempts", []):
+        attempt_date = str(attempt.get("date") or "")
+        if (
+            not attempt_date
+            or attempt_date not in processed
+            or attempt_date in audited_dates
+            or attempt.get("result") != "DELAYED"
+            or not attempt.get("locked_minutes")
+            or attempt.get("new_fill_ids")
+            or attempt.get("lock_inference_version") == EXIT_LOCK_INFERENCE_VERSION
+        ):
+            continue
+        rechecks.append(
+            {
+                "date": attempt_date,
+                "version": EXIT_LOCK_INFERENCE_VERSION,
+                "reason": "legacy_one_price_lock_lacked_direction_evidence",
+                "previous_attempt": deepcopy(attempt),
+            }
+        )
+        processed.remove(attempt_date)
+        audited_dates.add(attempt_date)
 
 
 def _record_attempt(exit_payload: dict[str, Any], attempt: dict[str, Any]) -> None:
@@ -363,6 +542,12 @@ def _migrate_trade_execution(trade: dict[str, Any], execution: dict[str, Any] | 
         and trade.get("planned_exit_date")
         and (fills or exit_payload.get("benchmark_twap") is not None)
         and trade["planned_exit_date"] not in processed
+        and not any(
+            item.get("date") == trade["planned_exit_date"]
+            and item.get("version") == EXIT_LOCK_INFERENCE_VERSION
+            for item in exit_payload.get("legacy_lock_rechecks", [])
+            if isinstance(item, dict)
+        )
     ):
         processed.append(trade["planned_exit_date"])
     exit_payload.setdefault("benchmark_twaps", [])
@@ -787,12 +972,27 @@ def _settle_exit_window(
             return False
         minute_prices.append(value)
 
+    previous_close: dict[str, Any] | None = None
+    previous_close_error: str | None = None
+    if any(
+        getattr(by_time[minute], "limit_down", None) is None
+        and _one_price_bar(by_time[minute], execution)
+        and bool(execution.get("one_price_bar_is_locked_without_limit", True))
+        for minute in wanted
+    ):
+        previous_close, previous_close_error = _auditable_previous_close(
+            trade,
+            provider,
+            attempt_date,
+        )
+
     remaining = int(exit_payload["remaining_qty"])
     targets = _window_targets(remaining, len(wanted), lot)
     participation = float(execution["max_exit_participation_rate"])
     if not 0 < participation <= 1:
         raise ContractError("max_exit_participation_rate must be in (0, 1]")
     locked_minutes: list[str] = []
+    lock_checks: list[dict[str, Any]] = []
     new_fill_ids: list[str] = []
     pending_fills: list[dict[str, Any]] = []
     existing_fill_ids = {item.get("fill_id") for item in exit_payload["fills"]}
@@ -800,7 +1000,37 @@ def _settle_exit_window(
         if target <= 0 or remaining <= 0:
             continue
         bar = by_time[minute]
-        if _is_locked_limit_down(bar, execution):
+        locked, lock_check = _locked_limit_down_decision(
+            bar,
+            execution,
+            previous_close,
+        )
+        if lock_check is not None:
+            lock_checks.append({"minute": minute, **lock_check})
+        if locked is None:
+            trade["status"] = "EXIT_UNVERIFIABLE"
+            trade["reason"] = "one_price_exit_direction_unverifiable"
+            diagnostic = {
+                "date": attempt_date,
+                "minute": minute,
+                "previous_close_error": previous_close_error,
+                "lock_check": lock_check,
+            }
+            trade["diagnostics"]["exit_lock_direction_error"] = diagnostic
+            _record_attempt(
+                exit_payload,
+                {
+                    "date": attempt_date,
+                    "result": "UNVERIFIABLE",
+                    "reason": trade["reason"],
+                    "minute": minute,
+                    "previous_close_error": previous_close_error,
+                    "lock_inference_version": EXIT_LOCK_INFERENCE_VERSION,
+                    "lock_checks": lock_checks,
+                },
+            )
+            return False
+        if locked:
             locked_minutes.append(minute)
             continue
         volume_shares = _volume_shares(bar, lot)
@@ -861,6 +1091,7 @@ def _settle_exit_window(
         remaining -= quantity
 
     exit_payload["fills"].extend(pending_fills)
+    trade["diagnostics"].pop("exit_lock_direction_error", None)
     benchmark_twap = sum(minute_prices) / len(minute_prices)
     if exit_payload.get("benchmark_twap") is None and attempt_date == trade["planned_exit_date"]:
         exit_payload["benchmark_twap"] = benchmark_twap
@@ -892,6 +1123,8 @@ def _settle_exit_window(
             "benchmark_twap": benchmark_twap,
             "new_fill_ids": new_fill_ids,
             "locked_minutes": locked_minutes,
+            "lock_inference_version": EXIT_LOCK_INFERENCE_VERSION,
+            "lock_checks": lock_checks,
             "remaining_qty": remaining,
             "delay_trading_days": delay_days,
         },
@@ -1190,6 +1423,7 @@ def settle_trades(
             and trade["planned_exit_date"] <= today
         ):
             exit_payload = _ensure_exit_payload(trade, execution)
+            _reopen_legacy_ambiguous_locked_windows(trade, exit_payload)
             for delay_days, attempt_date in enumerate(
                 _exit_dates_through(trade["planned_exit_date"], today, calendar)
             ):

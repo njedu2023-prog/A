@@ -93,6 +93,34 @@ class FakeMarket:
         ]
 
 
+class OnePriceNoLimitMarket(FakeMarket):
+    def __init__(self, price: float, *, limit_down: float | None = None) -> None:
+        super().__init__()
+        self.price = price
+        self.limit_down = limit_down
+
+    def minute_bars(self, code: str, trade_date: str) -> list[Bar]:
+        volume_lots = 10000.0
+        return [
+            Bar(
+                trade_date,
+                minute,
+                self.price,
+                self.price,
+                self.price,
+                self.price,
+                volume_lots,
+                self.price * volume_lots * 100.0,
+                volume_unit="LOT",
+                limit_down=self.limit_down,
+                time_semantics="INTERVAL_START",
+                provider="TEST",
+                price_adjustment="NONE",
+            )
+            for minute in ["11:00", "11:01", "11:02", "11:03", "11:04"]
+        ]
+
+
 class RawOutcomeMarket(FakeMarket):
     def __init__(self, raw_bar: Bar) -> None:
         super().__init__()
@@ -125,6 +153,19 @@ def add_t_day_facts(
             "estimated_up_limit": limit_up,
         },
     }
+
+
+def mark_verified_t_close(trade: dict, value: float) -> None:
+    trade["t_day_validation"].update(
+        {
+            "status": "VERIFIED",
+            "trade_date": trade["buy_date"],
+            "t_close": value,
+            "provider": "TEST_RAW",
+            "price_adjustment": "NONE",
+            "reason": "test_verified_t_close",
+        }
+    )
 
 
 class CapturingEastmoney(EastmoneyMarketData):
@@ -847,6 +888,131 @@ class LedgerDashboardTests(unittest.TestCase):
         fill_count = len(trade["exit"]["fills"])
         settle_trades(state, truth, market, EXECUTION, asof_date="20260806")
         self.assertEqual(len(trade["exit"]["fills"]), fill_count)
+
+    def test_one_price_limit_up_without_explicit_limit_down_is_sellable(self) -> None:
+        state = empty_state()
+        item = signal()
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        trade = state["trades"][0]
+        mark_verified_t_close(trade, 10.0)
+
+        settle_trades(
+            state,
+            {"auctions": {"20260804:600001.SH": auction_truth()}},
+            OnePriceNoLimitMarket(11.0),
+            EXECUTION,
+            asof_date="20260805",
+        )
+
+        self.assertEqual(trade["status"], "CLOSED")
+        self.assertEqual(trade["exit"]["remaining_qty"], 0)
+        self.assertTrue(
+            all(
+                check["reason"] == "one_price_up_from_previous_close"
+                and check["decision"] == "SELLABLE"
+                and check["previous_close"] == 10.0
+                and check["previous_close_source"] == "VERIFIED_T_DAY_CLOSE"
+                for check in trade["exit"]["attempts"][0]["lock_checks"]
+            )
+        )
+
+    def test_one_price_down_without_explicit_limit_down_is_conservatively_delayed(self) -> None:
+        state = empty_state()
+        item = signal()
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        trade = state["trades"][0]
+        mark_verified_t_close(trade, 10.0)
+
+        settle_trades(
+            state,
+            {"auctions": {"20260804:600001.SH": auction_truth()}},
+            OnePriceNoLimitMarket(9.0),
+            EXECUTION,
+            asof_date="20260805",
+        )
+
+        self.assertEqual(trade["status"], "EXIT_DELAYED")
+        self.assertEqual(trade["exit"]["remaining_qty"], 1000)
+        self.assertEqual(trade["exit"]["processed_windows"], ["20260805"])
+        self.assertTrue(
+            all(
+                check["reason"] == "one_price_down_from_previous_close_conservative"
+                and check["decision"] == "LOCKED"
+                for check in trade["exit"]["attempts"][0]["lock_checks"]
+            )
+        )
+
+    def test_one_price_flat_without_direction_truth_fails_closed(self) -> None:
+        state = empty_state()
+        item = signal()
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        trade = state["trades"][0]
+        mark_verified_t_close(trade, 10.0)
+
+        settle_trades(
+            state,
+            {"auctions": {"20260804:600001.SH": auction_truth()}},
+            OnePriceNoLimitMarket(10.0),
+            EXECUTION,
+            asof_date="20260805",
+        )
+
+        self.assertEqual(trade["status"], "EXIT_UNVERIFIABLE")
+        self.assertEqual(trade["reason"], "one_price_exit_direction_unverifiable")
+        self.assertEqual(trade["exit"]["processed_windows"], [])
+        attempt = trade["exit"]["attempts"][0]
+        self.assertEqual(attempt["result"], "UNVERIFIABLE")
+        self.assertEqual(
+            attempt["lock_checks"][0]["reason"],
+            "one_price_direction_flat_or_unknown",
+        )
+
+    def test_legacy_all_locked_window_is_reopened_once_and_audited(self) -> None:
+        state = empty_state()
+        item = signal()
+        state["signals"].append(item)
+        ensure_shadow_trades(state, item, [1, 2, 3])
+        trade = state["trades"][0]
+        mark_verified_t_close(trade, 10.0)
+        truth = {"auctions": {"20260804:600001.SH": auction_truth()}}
+
+        # First create the durable shape emitted by the old all-one-price lock
+        # rule, then remove the new directional evidence to model legacy state.
+        settle_trades(
+            state,
+            truth,
+            OnePriceNoLimitMarket(11.0, limit_down=11.0),
+            EXECUTION,
+            asof_date="20260805",
+        )
+        self.assertEqual(trade["status"], "EXIT_DELAYED")
+        legacy_attempt = trade["exit"]["attempts"][0]
+        legacy_attempt.pop("lock_inference_version")
+        legacy_attempt.pop("lock_checks")
+
+        settle_trades(
+            state,
+            truth,
+            OnePriceNoLimitMarket(11.0),
+            EXECUTION,
+            asof_date="20260805",
+        )
+
+        self.assertEqual(trade["status"], "CLOSED")
+        self.assertEqual(trade["exit"]["processed_windows"], ["20260805"])
+        self.assertEqual(trade["exit"]["attempts"][0]["attempt_count"], 2)
+        self.assertEqual(len(trade["exit"]["legacy_lock_rechecks"]), 1)
+        audit = trade["exit"]["legacy_lock_rechecks"][0]
+        self.assertEqual(
+            audit["reason"],
+            "legacy_one_price_lock_lacked_direction_evidence",
+        )
+        self.assertEqual(audit["previous_attempt"]["result"], "DELAYED")
+        fill_ids = [fill["fill_id"] for fill in trade["exit"]["fills"]]
+        self.assertEqual(len(fill_ids), len(set(fill_ids)))
 
     def test_partial_exit_persists_fills_fees_and_retries_next_trading_day(self) -> None:
         state = empty_state()
