@@ -6952,8 +6952,8 @@
         "maximum_reserved_cash_cny": 94034.14155,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "OPEN",
-      "reason": "waiting_for_t1_exit",
+      "status": "CLOSED",
+      "reason": "shadow_exit_completed",
       "buy": {
         "at": "2026-08-10T09:25:00+08:00",
         "submitted_qty": 900,
@@ -6973,8 +6973,136 @@
         "price_adjustment": "NONE",
         "price_policy": "T_DAILY_UNADJUSTED_OPEN"
       },
-      "exit": null,
-      "pnl": null,
+      "exit": {
+        "target_start": "20260811T11:00:00+08:00",
+        "target_end": "20260811T11:05:00+08:00",
+        "benchmark_twap": 91.22481489696143,
+        "benchmark_twaps": [
+          {
+            "date": "20260811",
+            "value": 91.22481489696143
+          }
+        ],
+        "fills": [
+          {
+            "fill_id": "20260811T11:00",
+            "at": "20260811T11:00:00+08:00",
+            "date": "20260811",
+            "minute": "11:00",
+            "qty": 200,
+            "benchmark_price": 91.58892463235294,
+            "price": 91.54,
+            "amount": 18308.0,
+            "fees": 14.82948,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:01",
+            "at": "20260811T11:01:00+08:00",
+            "date": "20260811",
+            "minute": "11:01",
+            "qty": 200,
+            "benchmark_price": 91.47036046184174,
+            "price": 91.42,
+            "amount": 18284.0,
+            "fees": 14.810039999999999,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:02",
+            "at": "20260811T11:02:00+08:00",
+            "date": "20260811",
+            "minute": "11:02",
+            "qty": 200,
+            "benchmark_price": 91.15720289855072,
+            "price": 91.11,
+            "amount": 18222.0,
+            "fees": 14.759820000000001,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:03",
+            "at": "20260811T11:03:00+08:00",
+            "date": "20260811",
+            "minute": "11:03",
+            "qty": 200,
+            "benchmark_price": 90.9481833090379,
+            "price": 90.9,
+            "amount": 18180.0,
+            "fees": 14.7258,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:04",
+            "at": "20260811T11:04:00+08:00",
+            "date": "20260811",
+            "minute": "11:04",
+            "qty": 100,
+            "benchmark_price": 90.95940318302387,
+            "price": 90.91,
+            "amount": 9091.0,
+            "fees": 9.63641,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          }
+        ],
+        "filled_qty": 900,
+        "remaining_qty": 0,
+        "sell_amount": 82085.0,
+        "fees": 68.76155,
+        "net_proceeds": 82016.23845,
+        "delay_trading_days": 0,
+        "processed_windows": [
+          "20260811"
+        ],
+        "attempts": [
+          {
+            "date": "20260811",
+            "result": "FILLED",
+            "reason": "completed",
+            "benchmark_twap": 91.22481489696143,
+            "new_fill_ids": [
+              "20260811T11:00",
+              "20260811T11:01",
+              "20260811T11:02",
+              "20260811T11:03",
+              "20260811T11:04"
+            ],
+            "locked_minutes": [],
+            "remaining_qty": 0,
+            "delay_trading_days": 0,
+            "attempt_count": 1
+          }
+        ],
+        "actual_exit_at": "20260811T11:04:00+08:00",
+        "actual_exit_date": "20260811",
+        "time_precision": "minute",
+        "label_quality": "CONSERVATIVE",
+        "data_tier": "MINUTE_BAR",
+        "avg_price": 91.20555555555555
+      },
+      "pnl": {
+        "state": "REALIZED",
+        "gross_return": -0.07873176206509536,
+        "net_return_on_invested": -0.07978876211674038,
+        "net_return_on_allocated": -0.07111382549999995,
+        "net_pnl": -7111.382549999995,
+        "asof": "20260811T11:04:00+08:00"
+      },
       "diagnostics": {
         "daily_open_fill": {
           "price": 99.0,
@@ -7037,8 +7165,8 @@
         "maximum_reserved_cash_cny": 95411.56842,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "OPEN",
-      "reason": "waiting_for_t1_exit",
+      "status": "CLOSED",
+      "reason": "shadow_exit_completed",
       "buy": {
         "at": "2026-08-10T09:25:00+08:00",
         "submitted_qty": 1800,
@@ -7058,8 +7186,136 @@
         "price_adjustment": "NONE",
         "price_policy": "T_DAILY_UNADJUSTED_OPEN"
       },
-      "exit": null,
-      "pnl": null,
+      "exit": {
+        "target_start": "20260811T11:00:00+08:00",
+        "target_end": "20260811T11:05:00+08:00",
+        "benchmark_twap": 52.99909714241177,
+        "benchmark_twaps": [
+          {
+            "date": "20260811",
+            "value": 52.99909714241177
+          }
+        ],
+        "fills": [
+          {
+            "fill_id": "20260811T11:00",
+            "at": "20260811T11:00:00+08:00",
+            "date": "20260811",
+            "minute": "11:00",
+            "qty": 400,
+            "benchmark_price": 53.004035005834304,
+            "price": 52.97,
+            "amount": 21188.0,
+            "fees": 17.16228,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:01",
+            "at": "20260811T11:01:00+08:00",
+            "date": "20260811",
+            "minute": "11:01",
+            "qty": 400,
+            "benchmark_price": 52.969596217735756,
+            "price": 52.94,
+            "amount": 21176.0,
+            "fees": 17.15256,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:02",
+            "at": "20260811T11:02:00+08:00",
+            "date": "20260811",
+            "minute": "11:02",
+            "qty": 400,
+            "benchmark_price": 52.856089319069454,
+            "price": 52.82,
+            "amount": 21128.0,
+            "fees": 17.11368,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:03",
+            "at": "20260811T11:03:00+08:00",
+            "date": "20260811",
+            "minute": "11:03",
+            "qty": 300,
+            "benchmark_price": 52.96547750311222,
+            "price": 52.93,
+            "amount": 15879.0,
+            "fees": 13.098289999999999,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260811T11:04",
+            "at": "20260811T11:04:00+08:00",
+            "date": "20260811",
+            "minute": "11:04",
+            "qty": 300,
+            "benchmark_price": 53.200287666307084,
+            "price": 53.17,
+            "amount": 15951.0,
+            "fees": 13.135010000000001,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          }
+        ],
+        "filled_qty": 1800,
+        "remaining_qty": 0,
+        "sell_amount": 95322.0,
+        "fees": 77.66182,
+        "net_proceeds": 95244.33818,
+        "delay_trading_days": 0,
+        "processed_windows": [
+          "20260811"
+        ],
+        "attempts": [
+          {
+            "date": "20260811",
+            "result": "FILLED",
+            "reason": "completed",
+            "benchmark_twap": 52.99909714241177,
+            "new_fill_ids": [
+              "20260811T11:00",
+              "20260811T11:01",
+              "20260811T11:02",
+              "20260811T11:03",
+              "20260811T11:04"
+            ],
+            "locked_minutes": [],
+            "remaining_qty": 0,
+            "delay_trading_days": 0,
+            "attempt_count": 1
+          }
+        ],
+        "actual_exit_at": "20260811T11:04:00+08:00",
+        "actual_exit_date": "20260811",
+        "time_precision": "minute",
+        "label_quality": "CONSERVATIVE",
+        "data_tier": "MINUTE_BAR",
+        "avg_price": 52.95666666666666
+      },
+      "pnl": {
+        "state": "REALIZED",
+        "gross_return": 0.05913333333333326,
+        "net_return_on_invested": 0.057942462058984075,
+        "net_return_on_allocated": 0.05216438180000012,
+        "net_pnl": 5216.438180000012,
+        "asof": "20260811T11:04:00+08:00"
+      },
       "diagnostics": {
         "daily_open_fill": {
           "price": 50.0,
@@ -7122,8 +7378,8 @@
         "maximum_reserved_cash_cny": 98931.65931,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "OPEN",
-      "reason": "waiting_for_t1_exit",
+      "status": "EXIT_DELAYED",
+      "reason": "exit_window_locked_or_capacity_insufficient",
       "buy": {
         "at": "2026-08-10T09:25:00+08:00",
         "submitted_qty": 8100,
@@ -7143,7 +7399,52 @@
         "price_adjustment": "NONE",
         "price_policy": "T_DAILY_UNADJUSTED_OPEN"
       },
-      "exit": null,
+      "exit": {
+        "target_start": "20260811T11:00:00+08:00",
+        "target_end": "20260811T11:05:00+08:00",
+        "benchmark_twap": 11.000150170648464,
+        "benchmark_twaps": [
+          {
+            "date": "20260811",
+            "value": 11.000150170648464
+          }
+        ],
+        "fills": [],
+        "filled_qty": 0,
+        "remaining_qty": 8100,
+        "sell_amount": 0,
+        "fees": 0,
+        "net_proceeds": 0,
+        "delay_trading_days": null,
+        "processed_windows": [
+          "20260811"
+        ],
+        "attempts": [
+          {
+            "date": "20260811",
+            "result": "DELAYED",
+            "reason": "locked_or_capacity_insufficient",
+            "benchmark_twap": 11.000150170648464,
+            "new_fill_ids": [],
+            "locked_minutes": [
+              "11:00",
+              "11:01",
+              "11:02",
+              "11:03",
+              "11:04"
+            ],
+            "remaining_qty": 8100,
+            "delay_trading_days": 0,
+            "attempt_count": 1
+          }
+        ],
+        "actual_exit_at": null,
+        "actual_exit_date": null,
+        "time_precision": "minute",
+        "label_quality": "CONSERVATIVE",
+        "data_tier": "MINUTE_BAR",
+        "avg_price": null
+      },
       "pnl": null,
       "diagnostics": {
         "daily_open_fill": {
@@ -7207,8 +7508,8 @@
         "maximum_reserved_cash_cny": 99920.96590000001,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "OPEN",
-      "reason": "waiting_for_t1_exit",
+      "status": "EXIT_DELAYED",
+      "reason": "exit_window_locked_or_capacity_insufficient",
       "buy": {
         "at": "2026-08-10T09:25:00+08:00",
         "submitted_qty": 7000,
@@ -7228,7 +7529,52 @@
         "price_adjustment": "NONE",
         "price_policy": "T_DAILY_UNADJUSTED_OPEN"
       },
-      "exit": null,
+      "exit": {
+        "target_start": "20260811T11:00:00+08:00",
+        "target_end": "20260811T11:05:00+08:00",
+        "benchmark_twap": 15.7,
+        "benchmark_twaps": [
+          {
+            "date": "20260811",
+            "value": 15.7
+          }
+        ],
+        "fills": [],
+        "filled_qty": 0,
+        "remaining_qty": 7000,
+        "sell_amount": 0,
+        "fees": 0,
+        "net_proceeds": 0,
+        "delay_trading_days": null,
+        "processed_windows": [
+          "20260811"
+        ],
+        "attempts": [
+          {
+            "date": "20260811",
+            "result": "DELAYED",
+            "reason": "locked_or_capacity_insufficient",
+            "benchmark_twap": 15.7,
+            "new_fill_ids": [],
+            "locked_minutes": [
+              "11:00",
+              "11:01",
+              "11:02",
+              "11:03",
+              "11:04"
+            ],
+            "remaining_qty": 7000,
+            "delay_trading_days": 0,
+            "attempt_count": 1
+          }
+        ],
+        "actual_exit_at": null,
+        "actual_exit_date": null,
+        "time_precision": "minute",
+        "label_quality": "CONSERVATIVE",
+        "data_tier": "MINUTE_BAR",
+        "avg_price": null
+      },
       "pnl": null,
       "diagnostics": {
         "daily_open_fill": {
@@ -7292,31 +7638,59 @@
         "maximum_reserved_cash_cny": 99270.7644,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_t_daily_open",
-      "buy": null,
+      "status": "OPEN",
+      "reason": "waiting_for_t1_exit",
+      "buy": {
+        "at": "2026-08-11T09:25:00+08:00",
+        "submitted_qty": 12000,
+        "filled_qty": 12000,
+        "avg_price": 7.76,
+        "amount": 93120.0,
+        "fees": 28.867199999999997,
+        "limit_price": 8.27,
+        "auction_matched_qty": null,
+        "queue_ahead_qty": null,
+        "executable_qty_at_order": 12000,
+        "participation_rate": null,
+        "source": "EASTMONEY",
+        "data_tier": "DAILY_BAR",
+        "label_quality": "SHADOW_OPEN_ASSUMPTION",
+        "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "price_adjustment": "NONE",
+        "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+      },
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_fill": {
+          "price": 7.76,
+          "date": "20260811",
+          "provider": "EASTMONEY",
+          "price_adjustment": "NONE",
+          "counts_as_fill": true,
+          "policy": "T_DAILY_UNADJUSTED_OPEN",
+          "quantity_policy": "FROZEN_ORDER_SPEC"
+        }
+      },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260811",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-11T19:27:56+08:00",
+        "t_close": 8.27,
+        "t_return": 0.09970000000000001,
+        "t_return_source": "PROVIDER_PCT_CHANGE",
+        "reference_close": 7.52,
+        "high": 8.27,
         "limit_up_price": 8.27,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": true,
+        "is_limit_up": true,
+        "is_promoted": true,
         "stage_transition": "2→3",
         "d_close": 7.52,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "EASTMONEY",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     }
   ]
