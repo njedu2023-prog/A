@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-11T19:34:14+08:00",
+  "generated_at": "2026-08-11T19:55:26+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -7090,8 +7090,8 @@
     "validation": {
       "scheduled_local_time": "19:00",
       "market_date": "2026-08-11",
-      "last_attempted_at": "2026-08-11T19:34:14+08:00",
-      "last_completed_at": "2026-08-11T19:34:14+08:00",
+      "last_attempted_at": "2026-08-11T19:55:26+08:00",
+      "last_completed_at": "2026-08-11T19:55:26+08:00",
       "status": "COMPLETED",
       "due": 2,
       "final": 0,
