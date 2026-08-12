@@ -15,13 +15,13 @@
   },
   "promotion_readiness": {
     "status": "INSUFFICIENT_DATA",
-    "mature_candidates": 4,
+    "mature_candidates": 6,
     "fixed_rank_mature_counts": {
-      "1": 2,
+      "1": 3,
       "2": 1,
       "3": 1
     },
-    "mature_decision_days": 2,
+    "mature_decision_days": 3,
     "required": {
       "mature_candidates": 180,
       "per_fixed_rank": 60,

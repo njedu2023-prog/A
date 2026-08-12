@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-12T00:41:14+08:00",
+  "generated_at": "2026-08-12T19:27:52+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -161,12 +161,12 @@
   ],
   "rank_metrics": {
     "1": {
-      "cumulative_return": -0.07030982995370494,
-      "final_days": 4,
-      "pending_days": 2,
+      "cumulative_return": 0.03528822178368807,
+      "final_days": 5,
+      "pending_days": 1,
       "is_provisional": true,
-      "closed_trades": 3,
-      "win_rate": 0.3333333333333333
+      "closed_trades": 4,
+      "win_rate": 0.5
     },
     "2": {
       "cumulative_return": -0.07144870111114898,
@@ -186,9 +186,9 @@
     }
   },
   "portfolio_metrics": {
-    "cumulative_return": -0.026766745946808834,
-    "final_days": 3,
-    "pending_days": 3,
+    "cumulative_return": 0.12973503015059618,
+    "final_days": 5,
+    "pending_days": 1,
     "is_provisional": true,
     "history": [
       {
@@ -237,33 +237,33 @@
         "is_provisional": false
       },
       {
-        "date": "2026-08-11",
+        "date": "2026-08-12",
         "decision_date": "2026-08-07",
         "planned_exit_date": "2026-08-11",
-        "return_date": null,
+        "return_date": "2026-08-12",
         "candidate_count": 4,
-        "final_count": 3,
-        "pending_count": 1,
-        "profitable_count": 2,
-        "portfolio_return": null,
-        "equity_index": null,
-        "result": "PENDING",
-        "is_final": false,
-        "is_provisional": true
+        "final_count": 4,
+        "pending_count": 0,
+        "profitable_count": 3,
+        "portfolio_return": 0.04240532535000006,
+        "equity_index": 1.014503526832756,
+        "result": "PROFIT",
+        "is_final": true,
+        "is_provisional": false
       },
       {
         "date": "2026-08-12",
         "decision_date": "2026-08-10",
         "planned_exit_date": "2026-08-12",
-        "return_date": null,
+        "return_date": "2026-08-12",
         "candidate_count": 1,
-        "final_count": 0,
-        "pending_count": 1,
-        "profitable_count": 0,
-        "portfolio_return": null,
-        "equity_index": null,
-        "result": "PENDING",
-        "is_final": false,
+        "final_count": 1,
+        "pending_count": 0,
+        "profitable_count": 1,
+        "portfolio_return": 0.11358413280000008,
+        "equity_index": 1.1297350301505962,
+        "result": "PROFIT",
+        "is_final": true,
         "is_provisional": false
       },
       {
@@ -284,9 +284,9 @@
     ],
     "by_month": {
       "2026-08": {
-        "cumulative_return": -0.026766745946808834,
-        "final_days": 3,
-        "pending_days": 3,
+        "cumulative_return": 0.12973503015059618,
+        "final_days": 5,
+        "pending_days": 1,
         "is_provisional": true
       }
     }
@@ -4451,8 +4451,8 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260810:600664.SH",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "CLOSED",
+          "reason": "shadow_exit_completed",
           "buy": {
             "at": "2026-08-11T09:25:00+08:00",
             "submitted_qty": 12000,
@@ -4472,8 +4472,138 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
-          "pnl": null,
+          "exit": {
+            "target_start": "20260812T11:00:00+08:00",
+            "target_end": "20260812T11:05:00+08:00",
+            "benchmark_twap": 8.727777279201343,
+            "benchmark_twaps": [
+              {
+                "date": "20260812",
+                "value": 8.727777279201343
+              }
+            ],
+            "fills": [
+              {
+                "fill_id": "20260812T11:00",
+                "at": "20260812T11:00:00+08:00",
+                "date": "20260812",
+                "minute": "11:00",
+                "qty": 2400,
+                "benchmark_price": 8.749567703312083,
+                "price": 8.74,
+                "amount": 20976.0,
+                "fees": 16.99056,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "TENCENT",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260812T11:01",
+                "at": "20260812T11:01:00+08:00",
+                "date": "20260812",
+                "minute": "11:01",
+                "qty": 2400,
+                "benchmark_price": 8.733967761054876,
+                "price": 8.72,
+                "amount": 20928.0,
+                "fees": 16.95168,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "TENCENT",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260812T11:02",
+                "at": "20260812T11:02:00+08:00",
+                "date": "20260812",
+                "minute": "11:02",
+                "qty": 2400,
+                "benchmark_price": 8.723078071939232,
+                "price": 8.71,
+                "amount": 20904.000000000004,
+                "fees": 16.93224,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "TENCENT",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260812T11:03",
+                "at": "20260812T11:03:00+08:00",
+                "date": "20260812",
+                "minute": "11:03",
+                "qty": 2400,
+                "benchmark_price": 8.720366306848346,
+                "price": 8.71,
+                "amount": 20904.000000000004,
+                "fees": 16.93224,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "TENCENT",
+                "price_adjustment": "NONE"
+              },
+              {
+                "fill_id": "20260812T11:04",
+                "at": "20260812T11:04:00+08:00",
+                "date": "20260812",
+                "minute": "11:04",
+                "qty": 2400,
+                "benchmark_price": 8.711906552852177,
+                "price": 8.7,
+                "amount": 20880.0,
+                "fees": 16.912799999999997,
+                "data_tier": "MINUTE_BAR",
+                "label_quality": "CONSERVATIVE",
+                "market_data_provider": "TENCENT",
+                "price_adjustment": "NONE"
+              }
+            ],
+            "filled_qty": 12000,
+            "remaining_qty": 0,
+            "sell_amount": 104592.0,
+            "fees": 84.71951999999999,
+            "net_proceeds": 104507.28048,
+            "delay_trading_days": 0,
+            "processed_windows": [
+              "20260812"
+            ],
+            "attempts": [
+              {
+                "date": "20260812",
+                "result": "FILLED",
+                "reason": "completed",
+                "benchmark_twap": 8.727777279201343,
+                "new_fill_ids": [
+                  "20260812T11:00",
+                  "20260812T11:01",
+                  "20260812T11:02",
+                  "20260812T11:03",
+                  "20260812T11:04"
+                ],
+                "locked_minutes": [],
+                "lock_inference_version": "PREVIOUS_CLOSE_DIRECTION_V1",
+                "lock_checks": [],
+                "remaining_qty": 0,
+                "delay_trading_days": 0,
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": "20260812T11:04:00+08:00",
+            "actual_exit_date": "20260812",
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR",
+            "avg_price": 8.716
+          },
+          "pnl": {
+            "state": "REALIZED",
+            "gross_return": 0.1231958762886598,
+            "net_return_on_invested": 0.12193828675997048,
+            "net_return_on_allocated": 0.11358413280000008,
+            "net_pnl": 11358.413280000008,
+            "asof": "20260812T11:04:00+08:00"
+          },
           "diagnostics": {
             "daily_open_fill": {
               "price": 7.76,
@@ -5311,10 +5441,10 @@
             "snapshot_sha256": "a543bb37c76f5183d15832220e49daea1c5dc9b6073ea11fe2ace452f08d929e"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10058027079303677,
+            "is_limit_up": true,
+            "is_promoted": true
           },
           "rank": 1,
           "model_score": -0.028057124819259767,
@@ -5513,17 +5643,45 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260811:000802.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_t_daily_open",
-          "buy": null,
+          "status": "OPEN",
+          "reason": "waiting_for_t1_exit",
+          "buy": {
+            "at": "2026-08-12T09:25:00+08:00",
+            "submitted_qty": 17500,
+            "filled_qty": 17500,
+            "avg_price": 5.69,
+            "amount": 99575.0,
+            "fees": 30.86825,
+            "limit_price": 5.69,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 17500,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
           "exit": null,
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_fill": {
+              "price": 5.69,
+              "date": "20260812",
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_ORDER_SPEC"
+            }
+          },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10058027079303677,
+            "is_limit_up": true,
+            "is_promoted": true
           }
         },
         "2": {
@@ -5661,11 +5819,11 @@
       "decision_date": "2026-08-10",
       "ranks": {
         "1": {
-          "state": "OPEN",
-          "is_final": false,
-          "daily_return": null,
+          "state": "CLOSED",
+          "is_final": true,
+          "daily_return": 0.11358413280000008,
           "return_date": "2026-08-12",
-          "equity_index": 0.9296901700462951
+          "equity_index": 1.035288221783688
         },
         "2": {
           "state": "CASH",
@@ -5688,11 +5846,11 @@
       "decision_date": "2026-08-11",
       "ranks": {
         "1": {
-          "state": "PENDING_BUY",
+          "state": "OPEN",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-13",
-          "equity_index": 0.9296901700462951
+          "equity_index": 1.035288221783688
         },
         "2": {
           "state": "CASH",
@@ -6067,15 +6225,15 @@
       "decision_date": "2026-08-07",
       "buy_date": "2026-08-10",
       "planned_exit_date": "2026-08-11",
-      "return_date": null,
+      "return_date": "2026-08-12",
       "candidate_count": 4,
-      "final_count": 3,
-      "pending_count": 1,
-      "profitable_count": 2,
-      "portfolio_return": null,
-      "result": "PENDING",
-      "is_final": false,
-      "is_provisional": true,
+      "final_count": 4,
+      "pending_count": 0,
+      "profitable_count": 3,
+      "portfolio_return": 0.04240532535000006,
+      "result": "PROFIT",
+      "is_final": true,
+      "is_provisional": false,
       "model": {
         "engine_version": "formal_ranking_engine_v2",
         "selected_model_id": "transparent_shadow_champion_v2",
@@ -6349,13 +6507,13 @@
             "is_limit_up": true,
             "is_promoted": true
           },
-          "status": "EXIT_DELAYED",
-          "is_final": false,
+          "status": "CLOSED",
+          "is_final": true,
           "buy_price": 14.27,
-          "exit_price": 15.7,
-          "net_return": null,
-          "result": "PENDING",
-          "return_date": "2026-08-11"
+          "exit_price": 16.476285714285716,
+          "net_return": 0.15310736560000004,
+          "result": "PROFIT",
+          "return_date": "2026-08-12"
         }
       ]
     },
@@ -6363,14 +6521,14 @@
       "decision_date": "2026-08-10",
       "buy_date": "2026-08-11",
       "planned_exit_date": "2026-08-12",
-      "return_date": null,
+      "return_date": "2026-08-12",
       "candidate_count": 1,
-      "final_count": 0,
-      "pending_count": 1,
-      "profitable_count": 0,
-      "portfolio_return": null,
-      "result": "PENDING",
-      "is_final": false,
+      "final_count": 1,
+      "pending_count": 0,
+      "profitable_count": 1,
+      "portfolio_return": 0.11358413280000008,
+      "result": "PROFIT",
+      "is_final": true,
       "is_provisional": false,
       "model": {
         "engine_version": "formal_ranking_engine_v2",
@@ -6977,12 +7135,12 @@
             "is_limit_up": true,
             "is_promoted": true
           },
-          "status": "OPEN",
-          "is_final": false,
+          "status": "CLOSED",
+          "is_final": true,
           "buy_price": 7.76,
-          "exit_price": null,
-          "net_return": null,
-          "result": "PENDING",
+          "exit_price": 8.716,
+          "net_return": 0.11358413280000008,
+          "result": "PROFIT",
           "return_date": "2026-08-12"
         }
       ]
@@ -7600,14 +7758,14 @@
             "snapshot_sha256": "a543bb37c76f5183d15832220e49daea1c5dc9b6073ea11fe2ace452f08d929e"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10058027079303677,
+            "is_limit_up": true,
+            "is_promoted": true
           },
-          "status": "PENDING_BUY",
+          "status": "OPEN",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 5.69,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -8355,8 +8513,8 @@
       "return_unit": "decimal",
       "return_basis": "net_return_on_allocated",
       "cohort_count": 4,
-      "cohort_final_count": 3,
-      "is_final": false,
+      "cohort_final_count": 4,
+      "is_final": true,
       "model_order": [
         "603228.SH",
         "600206.SH",
@@ -8390,10 +8548,10 @@
           "denominator_slots": 4,
           "selected_count": 4,
           "cash_slot_count": 0,
-          "final_count": 3,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 4,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.04240532535000006,
           "constituents": [
             {
               "ts_code": "603228.SH",
@@ -8428,8 +8586,8 @@
               "model_rank": 4,
               "borda_rank": 4,
               "borda_score": 0.2857142857142857,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.15310736560000004
             }
           ]
         },
@@ -8702,8 +8860,8 @@
       "return_unit": "decimal",
       "return_basis": "net_return_on_allocated",
       "cohort_count": 1,
-      "cohort_final_count": 0,
-      "is_final": false,
+      "cohort_final_count": 1,
+      "is_final": true,
       "model_order": [
         "600664.SH"
       ],
@@ -8731,10 +8889,10 @@
           "denominator_slots": 1,
           "selected_count": 1,
           "cash_slot_count": 0,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.11358413280000008,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8742,8 +8900,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8754,10 +8912,10 @@
           "denominator_slots": 1,
           "selected_count": 1,
           "cash_slot_count": 0,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.11358413280000008,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8765,8 +8923,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8803,10 +8961,10 @@
           "denominator_slots": 1,
           "selected_count": 1,
           "cash_slot_count": 0,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.11358413280000008,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8814,8 +8972,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8826,10 +8984,10 @@
           "denominator_slots": 1,
           "selected_count": 1,
           "cash_slot_count": 0,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.11358413280000008,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8837,8 +8995,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8849,10 +9007,10 @@
           "denominator_slots": 2,
           "selected_count": 1,
           "cash_slot_count": 1,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.05679206640000004,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8860,8 +9018,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8872,10 +9030,10 @@
           "denominator_slots": 2,
           "selected_count": 1,
           "cash_slot_count": 1,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.05679206640000004,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8883,8 +9041,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8895,10 +9053,10 @@
           "denominator_slots": 3,
           "selected_count": 1,
           "cash_slot_count": 2,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.03786137760000003,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8906,8 +9064,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         },
@@ -8918,10 +9076,10 @@
           "denominator_slots": 3,
           "selected_count": 1,
           "cash_slot_count": 2,
-          "final_count": 0,
-          "pending_count": 1,
-          "is_final": false,
-          "portfolio_return": null,
+          "final_count": 1,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.03786137760000003,
           "constituents": [
             {
               "ts_code": "600664.SH",
@@ -8929,8 +9087,8 @@
               "model_rank": 1,
               "borda_rank": 1,
               "borda_score": 0.7241379310344828,
-              "is_final": false,
-              "net_return_on_allocated": null
+              "is_final": true,
+              "net_return_on_allocated": 0.11358413280000008
             }
           ]
         }
@@ -9180,21 +9338,21 @@
   "automation_runs": {
     "validation": {
       "scheduled_local_time": "19:00",
-      "market_date": "2026-08-11",
-      "asof_at": "2026-08-11T19:00:00+08:00",
-      "last_attempted_at": "2026-08-12T00:41:14+08:00",
-      "last_completed_at": "2026-08-12T00:41:14+08:00",
+      "market_date": "2026-08-12",
+      "asof_at": "2026-08-12T19:27:52+08:00",
+      "last_attempted_at": "2026-08-12T19:27:52+08:00",
+      "last_completed_at": "2026-08-12T19:27:52+08:00",
       "status": "COMPLETED",
-      "due": 2,
-      "final": 1,
+      "due": 4,
+      "final": 4,
       "pending_data": 0,
-      "delayed": 1,
+      "delayed": 0,
       "failed": 0,
-      "result_status": "DEGRADED",
+      "result_status": "SUCCESS",
       "batch_error": null,
       "trade_count": 10,
-      "t_day_verified_count": 9,
-      "closed_trade_count": 7
+      "t_day_verified_count": 10,
+      "closed_trade_count": 9
     },
     "output": {
       "scheduled_local_time": "21:30",
