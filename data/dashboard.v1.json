@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-13T19:57:36+08:00",
+  "generated_at": "2026-08-13T23:32:22+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -45,8 +45,8 @@
     "status": "RANKED",
     "message": "三表严格交集实际保留2支并完成重新排序",
     "completed": true,
-    "completed_at": "2026-08-12T22:24:03+08:00",
-    "decision_date": "2026-08-12",
+    "completed_at": "2026-08-13T23:32:22+08:00",
+    "decision_date": "2026-08-13",
     "outcome": "COMPLETED_RANKED",
     "source_table_counts": {
       "a_top10": 10,
@@ -55,19 +55,19 @@
     },
     "source_dates": {
       "a_top10": {
-        "D": "20260812",
-        "T": "20260813",
+        "D": "20260813",
+        "T": "20260814",
         "T1": null
       },
       "premium_top10": {
-        "D": "20260812",
-        "T": "20260813",
-        "T1": "20260814"
+        "D": "20260813",
+        "T": "20260814",
+        "T1": "20260817"
       },
       "decision_table": {
-        "D": "20260812",
-        "T": "20260813",
-        "T1": "20260814"
+        "D": "20260813",
+        "T": "20260814",
+        "T1": "20260817"
       }
     },
     "intersection_count": 2,
@@ -97,10 +97,10 @@
       "required_lockbox_days": 126,
       "promotion_eligible": false,
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
-      "training_row_count": 7,
+      "training_row_count": 9,
       "excluded_feature_row_count": 3
     },
-    "target_decision_date": "2026-08-12"
+    "target_decision_date": "2026-08-13"
   },
   "source_issues": [
     {
@@ -126,23 +126,22 @@
       }
     },
     {
-      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
+      "code": "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
       "severity": "warning",
-      "source_id": "market_data",
-      "message": "002229.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
+      "source_id": "decision_table",
+      "message": "Decision涨停价使用了可审计的向下舍入口径；本系统已按交易所四舍五入规则规范化到0.01元",
       "details": {
-        "ts_code": "002229.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002229&klt=1&fqt=0&lmt=300&beg=20260812090000&end=20260812150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
-      }
-    },
-    {
-      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
-      "severity": "warning",
-      "source_id": "market_data",
-      "message": "002031.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
-      "details": {
-        "ts_code": "002031.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002031&klt=1&fqt=0&lmt=300&beg=20260812090000&end=20260812150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
+        "candidates": [
+          {
+            "ts_code": "000887.SZ",
+            "name": "中鼎股份",
+            "source_estimated_up_limit": 26.05,
+            "normalized_limit_up_price": 26.06,
+            "d_close": 23.69,
+            "mechanism_limit_pct": 10.0,
+            "rounding_reason": "LOWER_TICK_TRUNCATION"
+          }
+        ]
       }
     }
   ],
@@ -153,7 +152,7 @@
     "1": {
       "cumulative_return": 0.03528822178368807,
       "final_days": 5,
-      "pending_days": 2,
+      "pending_days": 3,
       "is_provisional": true,
       "closed_trades": 4,
       "win_rate": 0.5
@@ -161,14 +160,14 @@
     "2": {
       "cumulative_return": -0.07144870111114898,
       "final_days": 6,
-      "pending_days": 1,
+      "pending_days": 2,
       "is_provisional": true,
       "closed_trades": 2,
       "win_rate": 0.5
     },
     "3": {
       "cumulative_return": -0.0007189995078769051,
-      "final_days": 7,
+      "final_days": 8,
       "pending_days": 0,
       "is_provisional": false,
       "closed_trades": 2,
@@ -178,7 +177,7 @@
   "portfolio_metrics": {
     "cumulative_return": 0.12973503015059618,
     "final_days": 5,
-    "pending_days": 2,
+    "pending_days": 3,
     "is_provisional": true,
     "history": [
       {
@@ -285,13 +284,28 @@
         "result": "PENDING",
         "is_final": false,
         "is_provisional": false
+      },
+      {
+        "date": "2026-08-17",
+        "decision_date": "2026-08-13",
+        "planned_exit_date": "2026-08-17",
+        "return_date": null,
+        "candidate_count": 2,
+        "final_count": 0,
+        "pending_count": 2,
+        "profitable_count": 0,
+        "portfolio_return": null,
+        "equity_index": null,
+        "result": "PENDING",
+        "is_final": false,
+        "is_provisional": false
       }
     ],
     "by_month": {
       "2026-08": {
         "cumulative_return": 0.12973503015059618,
         "final_days": 5,
-        "pending_days": 2,
+        "pending_days": 3,
         "is_provisional": true
       }
     }
@@ -7776,6 +7790,1928 @@
           "t_day_validation": null
         }
       }
+    },
+    {
+      "decision_date": "2026-08-13",
+      "buy_date": "2026-08-14",
+      "planned_exit_date": "2026-08-17",
+      "selection_status": "RANKED",
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "single_stock_research_schema_version": "single_stock_research_audit_v1",
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/aa261b0d0cad818abba5d7dfd75397e91a168ad0/outputs/learning/pred_top10_20260813.csv",
+          "decision_date": "20260813",
+          "content_sha256": "54a7f82f38329fc0114f75eb2772495424961474a970abbb449dab8cd0251389",
+          "repository_commit_sha": "aa261b0d0cad818abba5d7dfd75397e91a168ad0",
+          "generated_at": "2026-08-13T12:27:53Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "603887.SH",
+              "name": "城地香江"
+            },
+            {
+              "rank": 2,
+              "ts_code": "601991.SH",
+              "name": "大唐发电"
+            },
+            {
+              "rank": 3,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 4,
+              "ts_code": "600881.SH",
+              "name": "亚泰集团"
+            },
+            {
+              "rank": 5,
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份"
+            },
+            {
+              "rank": 6,
+              "ts_code": "603330.SH",
+              "name": "天洋新材"
+            },
+            {
+              "rank": 7,
+              "ts_code": "002219.SZ",
+              "name": "新里程"
+            },
+            {
+              "rank": 8,
+              "ts_code": "605179.SH",
+              "name": "一鸣食品"
+            },
+            {
+              "rank": 9,
+              "ts_code": "002437.SZ",
+              "name": "誉衡药业"
+            },
+            {
+              "rank": 10,
+              "ts_code": "603758.SH",
+              "name": "秦安股份"
+            }
+          ]
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/d6ac482fed332fd203f51e11f83afa0a40502238/outputs/premium/premium_top10_20260813.csv",
+          "decision_date": "20260813",
+          "content_sha256": "23133c65c17ee540bc830c56fe893afcc7435c3702dbc64cd12749cf5b666614",
+          "repository_commit_sha": "d6ac482fed332fd203f51e11f83afa0a40502238",
+          "generated_at": "2026-08-13T14:49:17Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "603887.SH",
+              "name": "城地香江"
+            },
+            {
+              "rank": 2,
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份"
+            },
+            {
+              "rank": 3,
+              "ts_code": "603758.SH",
+              "name": "秦安股份"
+            },
+            {
+              "rank": 4,
+              "ts_code": "002219.SZ",
+              "name": "新里程"
+            },
+            {
+              "rank": 5,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002172.SZ",
+              "name": "澳洋健康"
+            },
+            {
+              "rank": 7,
+              "ts_code": "001260.SZ",
+              "name": "坤泰股份"
+            },
+            {
+              "rank": 8,
+              "ts_code": "000936.SZ",
+              "name": "华西股份"
+            },
+            {
+              "rank": 9,
+              "ts_code": "000802.SZ",
+              "name": "北京文化"
+            },
+            {
+              "rank": 10,
+              "ts_code": "600683.SH",
+              "name": "京投发展"
+            }
+          ]
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/d6ac482fed332fd203f51e11f83afa0a40502238/outputs/decision/action_plan_20260814.json",
+          "decision_date": "20260813",
+          "content_sha256": "d2877026c2e415152a5f604c044ef17787197987c30f556e3e7d7ae600a6a373",
+          "repository_commit_sha": "d6ac482fed332fd203f51e11f83afa0a40502238",
+          "generated_at": "2026-08-13T15:00:31+00:00",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "000593.SZ",
+              "name": "德龙汇能"
+            },
+            {
+              "rank": 2,
+              "ts_code": "601886.SH",
+              "name": "江河集团"
+            },
+            {
+              "rank": 3,
+              "ts_code": "603466.SH",
+              "name": "风语筑"
+            },
+            {
+              "rank": 4,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 5,
+              "ts_code": "603191.SH",
+              "name": "望变电气"
+            },
+            {
+              "rank": 6,
+              "ts_code": "600881.SH",
+              "name": "亚泰集团"
+            },
+            {
+              "rank": 7,
+              "ts_code": "000692.SZ",
+              "name": "惠天热电"
+            },
+            {
+              "rank": 8,
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份"
+            },
+            {
+              "rank": 9,
+              "ts_code": "002172.SZ",
+              "name": "澳洋健康"
+            },
+            {
+              "rank": 10,
+              "ts_code": "002437.SZ",
+              "name": "誉衡药业"
+            }
+          ]
+        }
+      ],
+      "market_data_provenance": {
+        "daily_features": {
+          "000887.SZ": {
+            "providers": [
+              "EASTMONEY"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          },
+          "002081.SZ": {
+            "providers": [
+              "EASTMONEY"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          }
+        }
+      },
+      "intersection_count": 2,
+      "candidates": [
+        {
+          "candidate_id": "20260813:002081.SZ",
+          "symbol": "002081.SZ",
+          "name": "金 螳 螂",
+          "stage_transition": "2→3",
+          "industry": "装修装饰",
+          "d_close": 4.81,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 5.29,
+          "model": {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_champion_v2",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-13",
+            "calibrated": false,
+            "fill_probability": 1.0,
+            "conditional_net_return_mean": 0.005861494767134402,
+            "conditional_net_return_p10": -0.09465532366503367,
+            "conditional_net_return_p50": 0.005861494767134402,
+            "conditional_net_return_p90": 0.10637831319930248,
+            "exit_delay_probability": 0.1210873265236175,
+            "expected_exit_delay_days": 1.5318496471144734,
+            "promotion_probability": 0.2663089532625188,
+            "expected_shortfall": 0.13178832315891784,
+            "uncertainty": 0.07245351142812137,
+            "risk_adjusted_utility": -0.02823038444890561,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
+          "single_stock_research": {
+            "schema_version": "single_stock_research_audit_v1",
+            "decision_effect": "AUDIT_ONLY_NO_RANKING_OR_GATE_EFFECT",
+            "availability": "AVAILABLE",
+            "unavailable_reason": null,
+            "decision_date": "20260813",
+            "decision_asof": "2026-08-13T23:32:22+08:00",
+            "ts_code": "002081.SZ",
+            "single_stock": {
+              "schema_version": "single_stock_snapshot_v3",
+              "selection_rule": "STRICT_THREE_TABLE_INTERSECTION",
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "decision_date": "20260813",
+              "decision_asof": "2026-08-13T23:32:22+08:00",
+              "source_ranks": {
+                "a_top10": 3,
+                "premium_top10": 5,
+                "decision_table": 4
+              },
+              "facts": {
+                "classification.industry": {
+                  "value": "装修装饰",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "classification.stage_transition": {
+                  "value": "2→3",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.board_lot": {
+                  "value": 100,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "8f91c3cd28ee7883a7fb7cda1353734db87f56c81015795bc6afe6d79a4ecc75",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.max_order_shares": {
+                  "value": 18800,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "8f91c3cd28ee7883a7fb7cda1353734db87f56c81015795bc6afe6d79a4ecc75",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.d_close": {
+                  "value": 4.81,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_mechanism_pct": {
+                  "value": 10.0,
+                  "missing_reason": null,
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_price": {
+                  "value": 5.29,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.price_tick": {
+                  "value": 0.01,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "8f91c3cd28ee7883a7fb7cda1353734db87f56c81015795bc6afe6d79a4ecc75",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.pricing_verified": {
+                  "value": null,
+                  "missing_reason": "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_SOURCE_AND_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "pricing_cross_check_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "78b45fe4607650187de292d210df0a9b6ec69586b60bef00e179cd515536ff2f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "research.limit_lifecycle_input": {
+                  "value": {
+                    "bar_count": 240,
+                    "bars_content_sha256": "ffa14922ca3eca1c9d81249b76422672505422954efd988636d4adb3317f0f68",
+                    "decision_date": "20260813",
+                    "fetch_failed": false,
+                    "minute_artifact": {
+                      "artifact_schema_version": "single_stock_minute_archive_v1",
+                      "artifact_sha256": "e2a85c715eece39d2f2840cc518c781fca3d59fce56f8479008f5e594d73de8a",
+                      "bar_count": 240,
+                      "bar_schema_version": "canonical_ohlcv_minute_v1",
+                      "bars_content_sha256": "ffa14922ca3eca1c9d81249b76422672505422954efd988636d4adb3317f0f68",
+                      "captured_at": "2026-08-13T23:32:22+08:00",
+                      "content_encoding": "gzip",
+                      "decision_date": "20260813",
+                      "full_session": true,
+                      "providers": [
+                        "EASTMONEY"
+                      ],
+                      "relative_path": "2026/20260813/002081.SZ/e2a85c715eece39d2f2840cc518c781fca3d59fce56f8479008f5e594d73de8a.json.gz",
+                      "schema_version": "single_stock_minute_archive_ref_v1",
+                      "ts_code": "002081.SZ"
+                    },
+                    "providers": [
+                      "EASTMONEY"
+                    ],
+                    "ts_code": "002081.SZ"
+                  },
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "MARKET_MINUTE_ADAPTER",
+                    "dataset_version": "d_day_minute_close_proxy_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "d0619e115795cecf4dfafd9a82026298f969feb93758837a6fac4c6dde37d84d",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.board": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_delisting_period": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_st": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_suspended": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_limit_pct": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_tick": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.trading_rules_verified": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                }
+              },
+              "hard_gate": {
+                "status": "UNKNOWN",
+                "reasons": [
+                  "REQUIRED_GATE_EVIDENCE_MISSING"
+                ],
+                "unknown_fields": [
+                  "security.is_suspended",
+                  "security.is_st",
+                  "security.is_delisting_period",
+                  "security.trading_rules_verified",
+                  "security.board",
+                  "security.price_limit_pct",
+                  "security.price_tick",
+                  "market.pricing_verified"
+                ]
+              }
+            },
+            "candidate_analysis": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "candidate": {
+                  "action": {
+                    "missing_reason": null,
+                    "value": "SHADOW"
+                  },
+                  "action_reason": {
+                    "missing_reason": null,
+                    "value": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order"
+                  },
+                  "rank": {
+                    "missing_reason": null,
+                    "value": 1
+                  }
+                },
+                "features": {
+                  "avg_amount_20d": {
+                    "missing_reason": null,
+                    "value": 339677655.002
+                  },
+                  "avg_volume_20d": {
+                    "missing_reason": null,
+                    "value": 897889.4
+                  },
+                  "cvar_loss_10pct": {
+                    "missing_reason": null,
+                    "value": 0.07909708729207976
+                  },
+                  "downside_volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.016778208651573298
+                  },
+                  "feature_asof_date": {
+                    "missing_reason": null,
+                    "value": "20260813"
+                  },
+                  "feature_coverage": {
+                    "missing_reason": null,
+                    "value": 1.0
+                  },
+                  "feature_schema_version": {
+                    "missing_reason": null,
+                    "value": "formal_features_v2"
+                  },
+                  "market_data_invalid_reasons": {
+                    "missing_reason": null,
+                    "value": []
+                  },
+                  "market_data_valid": {
+                    "missing_reason": null,
+                    "value": true
+                  },
+                  "max_drawdown_20d": {
+                    "missing_reason": null,
+                    "value": -0.07651715039577833
+                  },
+                  "rank_consensus": {
+                    "missing_reason": null,
+                    "value": 0.6666666666666666
+                  },
+                  "rank_disagreement": {
+                    "missing_reason": null,
+                    "value": 0.18144368465060579
+                  },
+                  "ret_1d": {
+                    "missing_reason": null,
+                    "value": 0.10068649885583514
+                  },
+                  "ret_20d": {
+                    "missing_reason": null,
+                    "value": 0.2691292875989444
+                  },
+                  "ret_5d": {
+                    "missing_reason": null,
+                    "value": 0.2024999999999999
+                  },
+                  "stage_transition": {
+                    "missing_reason": null,
+                    "value": "2→3"
+                  },
+                  "volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.037787274490892316
+                  }
+                },
+                "metrics": {
+                  "conditional_net_return_mean": {
+                    "missing_reason": null,
+                    "value": 0.005861494767134402
+                  },
+                  "conditional_net_return_q10": {
+                    "missing_reason": null,
+                    "value": -0.09465532366503367
+                  },
+                  "conditional_net_return_q50": {
+                    "missing_reason": null,
+                    "value": 0.005861494767134402
+                  },
+                  "conditional_net_return_q90": {
+                    "missing_reason": null,
+                    "value": 0.10637831319930248
+                  },
+                  "expected_delay_days": {
+                    "missing_reason": null,
+                    "value": 1.5318496471144734
+                  },
+                  "expected_net_return": {
+                    "missing_reason": null,
+                    "value": 0.005861494767134402
+                  },
+                  "expected_shortfall_10pct": {
+                    "missing_reason": null,
+                    "value": 0.13178832315891784
+                  },
+                  "gate_decision": {
+                    "missing_reason": null,
+                    "value": "NO_TRADE"
+                  },
+                  "gate_reasons": {
+                    "missing_reason": null,
+                    "value": [
+                      "conditional_return_lcb_not_positive",
+                      "risk_adjusted_utility_not_positive"
+                    ]
+                  },
+                  "model_id": {
+                    "missing_reason": null,
+                    "value": "transparent_shadow_champion_v2"
+                  },
+                  "model_stage": {
+                    "missing_reason": null,
+                    "value": "CHAMPION_BASELINE"
+                  },
+                  "p_exit_delay": {
+                    "missing_reason": null,
+                    "value": 0.1210873265236175
+                  },
+                  "p_promotion": {
+                    "missing_reason": null,
+                    "value": 0.2663089532625188
+                  },
+                  "prediction_schema_version": {
+                    "missing_reason": null,
+                    "value": "ranking_prediction_v2"
+                  },
+                  "ranking_fallback": {
+                    "missing_reason": null,
+                    "value": false
+                  },
+                  "uncertainty": {
+                    "missing_reason": null,
+                    "value": 0.07245351142812137
+                  },
+                  "utility_score": {
+                    "missing_reason": null,
+                    "value": -0.02823038444890561
+                  }
+                }
+              },
+              "unavailable_reason": null
+            },
+            "order_spec": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "decision_date": {
+                  "missing_reason": null,
+                  "value": "20260813"
+                },
+                "event_time": {
+                  "missing_reason": null,
+                  "value": "09:25"
+                },
+                "execution_mode": {
+                  "missing_reason": null,
+                  "value": "SHADOW_ONLY"
+                },
+                "limit_price": {
+                  "missing_reason": null,
+                  "value": 5.29
+                },
+                "limit_price_policy": {
+                  "missing_reason": null,
+                  "value": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT"
+                },
+                "lot_size": {
+                  "missing_reason": null,
+                  "value": 100
+                },
+                "maximum_reserved_cash_cny": {
+                  "missing_reason": null,
+                  "value": 99482.83012
+                },
+                "order_type": {
+                  "missing_reason": null,
+                  "value": "LIMIT"
+                },
+                "phase": {
+                  "missing_reason": null,
+                  "value": "OPENING_CALL_AUCTION"
+                },
+                "price_limit_source": {
+                  "missing_reason": null,
+                  "value": "DECISION_FROZEN_LIMIT_PRICE"
+                },
+                "quantity_unit": {
+                  "missing_reason": null,
+                  "value": "SHARES"
+                },
+                "schema_version": {
+                  "missing_reason": null,
+                  "value": "shadow_order_spec_v1"
+                },
+                "side": {
+                  "missing_reason": null,
+                  "value": "BUY"
+                },
+                "slot_capital_cny": {
+                  "missing_reason": null,
+                  "value": 100000.0
+                },
+                "submitted_qty": {
+                  "missing_reason": null,
+                  "value": 18800
+                },
+                "trade_date": {
+                  "missing_reason": null,
+                  "value": "20260814"
+                }
+              },
+              "unavailable_reason": null
+            },
+            "limit_lifecycle": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "break_count": 0,
+                "closed_at_limit": false,
+                "coverage_ratio": 1.0,
+                "decision_date": "20260813",
+                "evidence_level": "MINUTE_CLOSE_PROXY",
+                "expected_minutes": 240,
+                "first_seal_time": null,
+                "invalid_reasons": [],
+                "last_seal_time": null,
+                "limit_price": 5.29,
+                "observed_minutes": 240,
+                "one_price_limit_proxy": false,
+                "price_tick": 0.01,
+                "reseal_count": 0,
+                "schema_version": "limit_lifecycle_v1",
+                "sealed_minutes": 0,
+                "tail_sealed_minutes": 0,
+                "touched_limit": false,
+                "valid": true
+              },
+              "unavailable_reason": null
+            },
+            "snapshot_sha256": "1fe3d40a3b9b6bfbb59c40de184f231d456c41d406150fd01e1054f37f50c58d"
+          },
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
+          "rank": 1,
+          "model_score": -0.02823038444890561,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order",
+          "action_audit": [],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "source_ranks": {
+            "a_top10": 3,
+            "premium_top10": 5,
+            "decision_table": 4
+          },
+          "metrics": {
+            "p_fill_0925": 1.0,
+            "expected_gross_return": 0.007481494767134402,
+            "expected_net_return": 0.005861494767134402,
+            "cvar_loss_10pct": 0.07909708729207976,
+            "p_exit_delay": 0.1210873265236175,
+            "uncertainty": 0.07245351142812137,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.02823038444890561,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false,
+            "prediction": {
+              "schema_version": "ranking_prediction_v2",
+              "model_id": "transparent_shadow_champion_v2",
+              "model_stage": "CHAMPION_BASELINE",
+              "feature_schema_version": "formal_features_v2",
+              "prediction_status": "SCORED",
+              "p_fill": 1.0,
+              "expected_fill_ratio": 1.0,
+              "conditional_net_return_mean": 0.005861494767134402,
+              "conditional_net_return_q10": -0.09465532366503367,
+              "conditional_net_return_q50": 0.005861494767134402,
+              "conditional_net_return_q90": 0.10637831319930248,
+              "p_exit_delay": 0.1210873265236175,
+              "expected_delay_days": 1.5318496471144734,
+              "p_promotion": 0.2663089532625188,
+              "uncertainty": 0.07245351142812137,
+              "expected_shortfall": 0.13178832315891784,
+              "utility": -0.02823038444890561,
+              "gate_decision": "NO_TRADE",
+              "gate_reasons": [
+                "conditional_return_lcb_not_positive",
+                "risk_adjusted_utility_not_positive"
+              ],
+              "ranking_fallback": false
+            },
+            "model_id": "transparent_shadow_champion_v2",
+            "model_stage": "CHAMPION_BASELINE",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_schema_version": "ranking_prediction_v2",
+            "expected_fill_ratio": 1.0,
+            "conditional_net_return_mean": 0.005861494767134402,
+            "conditional_net_return_q10": -0.09465532366503367,
+            "conditional_net_return_q50": 0.005861494767134402,
+            "conditional_net_return_q90": 0.10637831319930248,
+            "expected_shortfall_10pct": 0.13178832315891784,
+            "expected_delay_days": 1.5318496471144734,
+            "p_promotion": 0.2663089532625188,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ],
+            "ranking_fallback": false,
+            "model_resolution_fallback": false,
+            "model_resolution_reason": null
+          },
+          "features": {
+            "ret_1d": 0.10068649885583514,
+            "ret_3d": 0.19950124688279303,
+            "ret_5d": 0.2024999999999999,
+            "ret_10d": 0.3178082191780822,
+            "ret_20d": 0.2691292875989444,
+            "volatility_5d": 0.05145206182905987,
+            "volatility_20d": 0.037787274490892316,
+            "downside_volatility_20d": 0.016778208651573298,
+            "atr_14d": 0.03682803682803683,
+            "amplitude_20d": 0.043269319886977145,
+            "cvar_loss_10pct": 0.07909708729207976,
+            "max_drawdown_20d": -0.07651715039577833,
+            "avg_amount_20d": 339677655.002,
+            "avg_volume_20d": 897889.4,
+            "avg_turnover_20d": 3.396,
+            "bar_count": 100.0,
+            "market_data_providers": [
+              "EASTMONEY"
+            ],
+            "daily_price_adjustments": [
+              "QFQ"
+            ],
+            "rank_percentile_a_top10": 0.7777777777777778,
+            "rank_percentile_premium_top10": 0.5555555555555556,
+            "rank_percentile_decision_table": 0.6666666666666667,
+            "rank_consensus": 0.6666666666666666,
+            "rank_disagreement": 0.18144368465060579,
+            "rank_borda": 0.7,
+            "stage_transition": "2→3",
+            "stage_from": 2.0,
+            "stage_to": 3.0,
+            "stage_is_2_to_3": 1.0,
+            "stage_is_3_to_4": 0.0,
+            "src_a_top10__StrengthScore": 62.68,
+            "src_a_top10__ThemeBoost": 0.0164,
+            "src_a_top10__auction_strength_score": 1.0,
+            "src_a_top10__final_score": 0.303235,
+            "src_a_top10__intraday_available": 1.0,
+            "src_a_top10__intraday_confidence_score": 1.0,
+            "src_a_top10__intraday_hard_risk_flag": 0.0,
+            "src_a_top10__intraday_quality_score": 0.858,
+            "src_a_top10__intraday_risk_score": 0.07,
+            "src_a_top10__intraday_soft_risk_score": 0.07,
+            "src_a_top10__late_withdraw_score": 0.0,
+            "src_a_top10__limit_times": 2.0,
+            "src_a_top10__open_board_count": 0.0,
+            "src_a_top10__p_limit_up_calibrated": 0.2649122992062971,
+            "src_a_top10__prob_final": 0.2649122992062971,
+            "src_a_top10__rank_score": 0.2649122992062971,
+            "src_a_top10__regime_score": 0.4975,
+            "src_a_top10__regime_smooth": 0.4975,
+            "src_a_top10__reseal_score": 0.65,
+            "src_a_top10__stage_prior": 0.35,
+            "src_a_top10__stage_quality_weight": 0.92,
+            "src_a_top10__stage_risk_penalty": 0.000825,
+            "src_premium_top10__auction_amount": 32194686.42,
+            "src_premium_top10__factor_auction_available": 1.0,
+            "src_premium_top10__factor_auction_strength": 1.0,
+            "src_premium_top10__factor_intraday_quality": 0.858,
+            "src_premium_top10__factor_intraday_risk_penalty": 0.046900000000000004,
+            "src_premium_top10__is_st_like": 0.0,
+            "src_premium_top10__max_drawdown_20d": -0.0353260869565218,
+            "src_premium_top10__mkt_amount_sum": 2567652179.91525,
+            "src_premium_top10__mkt_avg_ret": -0.010612773554698054,
+            "src_premium_top10__mkt_median_ret": -0.014788949524375095,
+            "src_premium_top10__mkt_strong_ratio": 0.014084507042253521,
+            "src_premium_top10__mkt_touch_strong_ratio": 0.03755868544600939,
+            "src_premium_top10__mkt_up_ratio": 0.20585048754062837,
+            "src_premium_top10__premium_final_score": 49.2505,
+            "src_premium_top10__premium_rank_score": 56.1538,
+            "src_premium_top10__r_p05": -0.07953943240451083,
+            "src_premium_top10__r_p25": -0.011882225916418875,
+            "src_premium_top10__r_p50": 0.035145588581712565,
+            "src_premium_top10__r_p75": 0.082173403079844,
+            "src_premium_top10__r_p95": 0.1498306095679372,
+            "src_premium_top10__risk_penalty_score": 0.132668,
+            "src_premium_top10__score_ev": 0.303235,
+            "src_premium_top10__t1_accept_prob_blend": 0.515876,
+            "src_premium_top10__t1_accept_score": 50.0,
+            "src_premium_top10__t1_big_drawdown_prob_blend": 0.147647,
+            "src_premium_top10__t1_fail_prob_blend": 0.476354,
+            "src_premium_top10__t_close_ret_pred": 0.06589124244658359,
+            "src_premium_top10__t_intraday_ret_pred": 0.08215245535732223,
+            "src_premium_top10__t_limitup_prob_calibrated": 0.230847,
+            "src_premium_top10__t_up_attack_score": 66.7153,
+            "src_premium_top10__tail_risk_score": 0.0888783849421226,
+            "src_premium_top10__turnover_rate": 1.0319,
+            "src_premium_top10__turnover_rate_f": 2.0393,
+            "src_premium_top10__volatility_10d": 0.0382862523683702,
+            "src_premium_top10__volatility_20d": 0.0377872744908923,
+            "src_premium_top10__volatility_5d": 0.0514520618290598,
+            "src_premium_top10__volume_ratio": 0.32,
+            "src_decision_table__decision_cost": 0.002245215,
+            "src_decision_table__decision_e_ret": 0.0155602905,
+            "src_decision_table__decision_ev": -0.002884301,
+            "src_decision_table__decision_p_fill": 0.6733737575,
+            "src_decision_table__decision_risk_penalty": 0.0111169773,
+            "src_decision_table__mechanism_limit_pct": 10.0,
+            "src_decision_table__path_data_coverage": 1.0,
+            "src_decision_table__path_strength_delta": 0.1944545455,
+            "src_decision_table__path_strength_latest": 1.0,
+            "src_decision_table__predicted_big_loss_probability": 0.3507004979,
+            "src_decision_table__predicted_continuation_limit_up_probability": 0.3785654756,
+            "src_decision_table__predicted_exit_probability": 0.9950930802,
+            "src_decision_table__predicted_fill_probability": 0.1476570787,
+            "src_decision_table__predicted_net_return": -0.0167616932,
+            "src_decision_table__predicted_profit_probability": 0.3526434204,
+            "src_decision_table__predicted_return_lcb": -0.1082162311,
+            "src_decision_table__predicted_return_ucb": 0.0977889156,
+            "src_decision_table__same_industry_stage_count": 2.0,
+            "src_decision_table__stage_recent_promotion_rate": 0.1923076923,
+            "src_decision_table__stage_recent_promotion_samples": 104.0,
+            "src_decision_table__predicted_exit_delay_probability": 0.00490691980000002,
+            "source_strength": 0.43614374159577246,
+            "feature_schema_version": "formal_features_v2",
+            "feature_asof_date": "20260813",
+            "feature_coverage": 1.0,
+            "market_data_valid": true,
+            "market_data_invalid_reasons": []
+          }
+        },
+        {
+          "candidate_id": "20260813:000887.SZ",
+          "symbol": "000887.SZ",
+          "name": "中鼎股份",
+          "stage_transition": "2→3",
+          "industry": "汽车零部件",
+          "d_close": 23.69,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 26.06,
+          "model": {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_champion_v2",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-13",
+            "calibrated": false,
+            "fill_probability": 1.0,
+            "conditional_net_return_mean": 0.006014812920138281,
+            "conditional_net_return_p10": -0.09865605779701991,
+            "conditional_net_return_p50": 0.006014812920138281,
+            "conditional_net_return_p90": 0.11068568363729647,
+            "exit_delay_probability": 0.12990686735134785,
+            "expected_exit_delay_days": 1.7611903031657774,
+            "promotion_probability": 0.21566590906377012,
+            "expected_shortfall": 0.1373236504445881,
+            "uncertainty": 0.17236750782947405,
+            "risk_adjusted_utility": -0.02997715578996635,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
+          "single_stock_research": {
+            "schema_version": "single_stock_research_audit_v1",
+            "decision_effect": "AUDIT_ONLY_NO_RANKING_OR_GATE_EFFECT",
+            "availability": "AVAILABLE",
+            "unavailable_reason": null,
+            "decision_date": "20260813",
+            "decision_asof": "2026-08-13T23:32:22+08:00",
+            "ts_code": "000887.SZ",
+            "single_stock": {
+              "schema_version": "single_stock_snapshot_v3",
+              "selection_rule": "STRICT_THREE_TABLE_INTERSECTION",
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "decision_date": "20260813",
+              "decision_asof": "2026-08-13T23:32:22+08:00",
+              "source_ranks": {
+                "a_top10": 5,
+                "premium_top10": 2,
+                "decision_table": 8
+              },
+              "facts": {
+                "classification.industry": {
+                  "value": "汽车零部件",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "classification.stage_transition": {
+                  "value": "2→3",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.board_lot": {
+                  "value": 100,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "ec67fde2e374cb59798824091da9147524b8e08937866283fb986eb6b1760059",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.max_order_shares": {
+                  "value": 3800,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "ec67fde2e374cb59798824091da9147524b8e08937866283fb986eb6b1760059",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.d_close": {
+                  "value": 23.69,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_mechanism_pct": {
+                  "value": 10.0,
+                  "missing_reason": null,
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_price": {
+                  "value": 26.06,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.price_tick": {
+                  "value": 0.01,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "ec67fde2e374cb59798824091da9147524b8e08937866283fb986eb6b1760059",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.pricing_verified": {
+                  "value": null,
+                  "missing_reason": "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_SOURCE_AND_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "pricing_cross_check_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "d95540d58bfa2431cba8d6a8fbe300bc058b0595a9d8b6e75e270c515708832f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "research.limit_lifecycle_input": {
+                  "value": {
+                    "bar_count": 240,
+                    "bars_content_sha256": "ef36e2cd8f60fcc9cc7a476c23f63724f5b56e01dba0848f9f31773592db047b",
+                    "decision_date": "20260813",
+                    "fetch_failed": false,
+                    "minute_artifact": {
+                      "artifact_schema_version": "single_stock_minute_archive_v1",
+                      "artifact_sha256": "011682a33e956dc3a1c1ff16b37297e84df2543e6459ba7a1e52c76996f22c74",
+                      "bar_count": 240,
+                      "bar_schema_version": "canonical_ohlcv_minute_v1",
+                      "bars_content_sha256": "ef36e2cd8f60fcc9cc7a476c23f63724f5b56e01dba0848f9f31773592db047b",
+                      "captured_at": "2026-08-13T23:32:22+08:00",
+                      "content_encoding": "gzip",
+                      "decision_date": "20260813",
+                      "full_session": true,
+                      "providers": [
+                        "EASTMONEY"
+                      ],
+                      "relative_path": "2026/20260813/000887.SZ/011682a33e956dc3a1c1ff16b37297e84df2543e6459ba7a1e52c76996f22c74.json.gz",
+                      "schema_version": "single_stock_minute_archive_ref_v1",
+                      "ts_code": "000887.SZ"
+                    },
+                    "providers": [
+                      "EASTMONEY"
+                    ],
+                    "ts_code": "000887.SZ"
+                  },
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "MARKET_MINUTE_ADAPTER",
+                    "dataset_version": "d_day_minute_close_proxy_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "fc31ad63df4d9c8cf428f1b27f4b993ad5c2fb39208b29d34b06f6ea8ad565ef",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.board": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_delisting_period": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_st": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_suspended": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_limit_pct": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_tick": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.trading_rules_verified": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                }
+              },
+              "hard_gate": {
+                "status": "UNKNOWN",
+                "reasons": [
+                  "REQUIRED_GATE_EVIDENCE_MISSING"
+                ],
+                "unknown_fields": [
+                  "security.is_suspended",
+                  "security.is_st",
+                  "security.is_delisting_period",
+                  "security.trading_rules_verified",
+                  "security.board",
+                  "security.price_limit_pct",
+                  "security.price_tick",
+                  "market.pricing_verified"
+                ]
+              }
+            },
+            "candidate_analysis": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "candidate": {
+                  "action": {
+                    "missing_reason": null,
+                    "value": "SHADOW"
+                  },
+                  "action_reason": {
+                    "missing_reason": null,
+                    "value": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order"
+                  },
+                  "rank": {
+                    "missing_reason": null,
+                    "value": 2
+                  }
+                },
+                "features": {
+                  "avg_amount_20d": {
+                    "missing_reason": null,
+                    "value": 673817561.925
+                  },
+                  "avg_volume_20d": {
+                    "missing_reason": null,
+                    "value": 362475.6
+                  },
+                  "cvar_loss_10pct": {
+                    "missing_reason": null,
+                    "value": 0.06636691199601126
+                  },
+                  "downside_volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.024725978878937332
+                  },
+                  "feature_asof_date": {
+                    "missing_reason": null,
+                    "value": "20260813"
+                  },
+                  "feature_coverage": {
+                    "missing_reason": null,
+                    "value": 1.0
+                  },
+                  "feature_schema_version": {
+                    "missing_reason": null,
+                    "value": "formal_features_v2"
+                  },
+                  "market_data_invalid_reasons": {
+                    "missing_reason": null,
+                    "value": []
+                  },
+                  "market_data_valid": {
+                    "missing_reason": null,
+                    "value": true
+                  },
+                  "max_drawdown_20d": {
+                    "missing_reason": null,
+                    "value": -0.13783927621075043
+                  },
+                  "rank_consensus": {
+                    "missing_reason": null,
+                    "value": 0.5555555555555555
+                  },
+                  "rank_disagreement": {
+                    "missing_reason": null,
+                    "value": 0.5443310539518174
+                  },
+                  "ret_1d": {
+                    "missing_reason": null,
+                    "value": 0.09981429897864458
+                  },
+                  "ret_20d": {
+                    "missing_reason": null,
+                    "value": 0.2607770090473658
+                  },
+                  "ret_5d": {
+                    "missing_reason": null,
+                    "value": 0.25743099787685786
+                  },
+                  "stage_transition": {
+                    "missing_reason": null,
+                    "value": "2→3"
+                  },
+                  "volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.04345905931669077
+                  }
+                },
+                "metrics": {
+                  "conditional_net_return_mean": {
+                    "missing_reason": null,
+                    "value": 0.006014812920138281
+                  },
+                  "conditional_net_return_q10": {
+                    "missing_reason": null,
+                    "value": -0.09865605779701991
+                  },
+                  "conditional_net_return_q50": {
+                    "missing_reason": null,
+                    "value": 0.006014812920138281
+                  },
+                  "conditional_net_return_q90": {
+                    "missing_reason": null,
+                    "value": 0.11068568363729647
+                  },
+                  "expected_delay_days": {
+                    "missing_reason": null,
+                    "value": 1.7611903031657774
+                  },
+                  "expected_net_return": {
+                    "missing_reason": null,
+                    "value": 0.006014812920138281
+                  },
+                  "expected_shortfall_10pct": {
+                    "missing_reason": null,
+                    "value": 0.1373236504445881
+                  },
+                  "gate_decision": {
+                    "missing_reason": null,
+                    "value": "NO_TRADE"
+                  },
+                  "gate_reasons": {
+                    "missing_reason": null,
+                    "value": [
+                      "conditional_return_lcb_not_positive",
+                      "risk_adjusted_utility_not_positive"
+                    ]
+                  },
+                  "model_id": {
+                    "missing_reason": null,
+                    "value": "transparent_shadow_champion_v2"
+                  },
+                  "model_stage": {
+                    "missing_reason": null,
+                    "value": "CHAMPION_BASELINE"
+                  },
+                  "p_exit_delay": {
+                    "missing_reason": null,
+                    "value": 0.12990686735134785
+                  },
+                  "p_promotion": {
+                    "missing_reason": null,
+                    "value": 0.21566590906377012
+                  },
+                  "prediction_schema_version": {
+                    "missing_reason": null,
+                    "value": "ranking_prediction_v2"
+                  },
+                  "ranking_fallback": {
+                    "missing_reason": null,
+                    "value": false
+                  },
+                  "uncertainty": {
+                    "missing_reason": null,
+                    "value": 0.17236750782947405
+                  },
+                  "utility_score": {
+                    "missing_reason": null,
+                    "value": -0.02997715578996635
+                  }
+                }
+              },
+              "unavailable_reason": null
+            },
+            "order_spec": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "decision_date": {
+                  "missing_reason": null,
+                  "value": "20260813"
+                },
+                "event_time": {
+                  "missing_reason": null,
+                  "value": "09:25"
+                },
+                "execution_mode": {
+                  "missing_reason": null,
+                  "value": "SHADOW_ONLY"
+                },
+                "limit_price": {
+                  "missing_reason": null,
+                  "value": 26.06
+                },
+                "limit_price_policy": {
+                  "missing_reason": null,
+                  "value": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT"
+                },
+                "lot_size": {
+                  "missing_reason": null,
+                  "value": 100
+                },
+                "maximum_reserved_cash_cny": {
+                  "missing_reason": null,
+                  "value": 99058.69868
+                },
+                "order_type": {
+                  "missing_reason": null,
+                  "value": "LIMIT"
+                },
+                "phase": {
+                  "missing_reason": null,
+                  "value": "OPENING_CALL_AUCTION"
+                },
+                "price_limit_source": {
+                  "missing_reason": null,
+                  "value": "D_CLOSE_MECHANISM_ROUND_HALF_UP"
+                },
+                "quantity_unit": {
+                  "missing_reason": null,
+                  "value": "SHARES"
+                },
+                "schema_version": {
+                  "missing_reason": null,
+                  "value": "shadow_order_spec_v1"
+                },
+                "side": {
+                  "missing_reason": null,
+                  "value": "BUY"
+                },
+                "slot_capital_cny": {
+                  "missing_reason": null,
+                  "value": 100000.0
+                },
+                "submitted_qty": {
+                  "missing_reason": null,
+                  "value": 3800
+                },
+                "trade_date": {
+                  "missing_reason": null,
+                  "value": "20260814"
+                }
+              },
+              "unavailable_reason": null
+            },
+            "limit_lifecycle": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "break_count": 0,
+                "closed_at_limit": false,
+                "coverage_ratio": 1.0,
+                "decision_date": "20260813",
+                "evidence_level": "MINUTE_CLOSE_PROXY",
+                "expected_minutes": 240,
+                "first_seal_time": null,
+                "invalid_reasons": [],
+                "last_seal_time": null,
+                "limit_price": 26.06,
+                "observed_minutes": 240,
+                "one_price_limit_proxy": false,
+                "price_tick": 0.01,
+                "reseal_count": 0,
+                "schema_version": "limit_lifecycle_v1",
+                "sealed_minutes": 0,
+                "tail_sealed_minutes": 0,
+                "touched_limit": false,
+                "valid": true
+              },
+              "unavailable_reason": null
+            },
+            "snapshot_sha256": "258d7ddaf9bf7045a1019523351b940ef9bb5a9ef304b5826309786dae65f1bd"
+          },
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
+          "rank": 2,
+          "model_score": -0.02997715578996635,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order",
+          "action_audit": [],
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          },
+          "source_ranks": {
+            "a_top10": 5,
+            "premium_top10": 2,
+            "decision_table": 8
+          },
+          "metrics": {
+            "p_fill_0925": 1.0,
+            "expected_gross_return": 0.007634812920138281,
+            "expected_net_return": 0.006014812920138281,
+            "cvar_loss_10pct": 0.06636691199601126,
+            "p_exit_delay": 0.12990686735134785,
+            "uncertainty": 0.17236750782947405,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.02997715578996635,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false,
+            "prediction": {
+              "schema_version": "ranking_prediction_v2",
+              "model_id": "transparent_shadow_champion_v2",
+              "model_stage": "CHAMPION_BASELINE",
+              "feature_schema_version": "formal_features_v2",
+              "prediction_status": "SCORED",
+              "p_fill": 1.0,
+              "expected_fill_ratio": 1.0,
+              "conditional_net_return_mean": 0.006014812920138281,
+              "conditional_net_return_q10": -0.09865605779701991,
+              "conditional_net_return_q50": 0.006014812920138281,
+              "conditional_net_return_q90": 0.11068568363729647,
+              "p_exit_delay": 0.12990686735134785,
+              "expected_delay_days": 1.7611903031657774,
+              "p_promotion": 0.21566590906377012,
+              "uncertainty": 0.17236750782947405,
+              "expected_shortfall": 0.1373236504445881,
+              "utility": -0.02997715578996635,
+              "gate_decision": "NO_TRADE",
+              "gate_reasons": [
+                "conditional_return_lcb_not_positive",
+                "risk_adjusted_utility_not_positive"
+              ],
+              "ranking_fallback": false
+            },
+            "model_id": "transparent_shadow_champion_v2",
+            "model_stage": "CHAMPION_BASELINE",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_schema_version": "ranking_prediction_v2",
+            "expected_fill_ratio": 1.0,
+            "conditional_net_return_mean": 0.006014812920138281,
+            "conditional_net_return_q10": -0.09865605779701991,
+            "conditional_net_return_q50": 0.006014812920138281,
+            "conditional_net_return_q90": 0.11068568363729647,
+            "expected_shortfall_10pct": 0.1373236504445881,
+            "expected_delay_days": 1.7611903031657774,
+            "p_promotion": 0.21566590906377012,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ],
+            "ranking_fallback": false,
+            "model_resolution_fallback": false,
+            "model_resolution_reason": null
+          },
+          "features": {
+            "ret_1d": 0.09981429897864458,
+            "ret_3d": 0.2293720809548523,
+            "ret_5d": 0.25743099787685786,
+            "ret_10d": 0.4101190476190477,
+            "ret_20d": 0.2607770090473658,
+            "volatility_5d": 0.043618317550402914,
+            "volatility_20d": 0.04345905931669077,
+            "downside_volatility_20d": 0.024725978878937332,
+            "atr_14d": 0.037900259301694515,
+            "amplitude_20d": 0.044703183145543335,
+            "cvar_loss_10pct": 0.06636691199601126,
+            "max_drawdown_20d": -0.13783927621075043,
+            "avg_amount_20d": 673817561.925,
+            "avg_volume_20d": 362475.6,
+            "avg_turnover_20d": 2.7585,
+            "bar_count": 100.0,
+            "market_data_providers": [
+              "EASTMONEY"
+            ],
+            "daily_price_adjustments": [
+              "QFQ"
+            ],
+            "rank_percentile_a_top10": 0.5555555555555556,
+            "rank_percentile_premium_top10": 0.8888888888888888,
+            "rank_percentile_decision_table": 0.2222222222222222,
+            "rank_consensus": 0.5555555555555555,
+            "rank_disagreement": 0.5443310539518174,
+            "rank_borda": 0.6,
+            "stage_transition": "2→3",
+            "stage_from": 2.0,
+            "stage_to": 3.0,
+            "stage_is_2_to_3": 1.0,
+            "stage_is_3_to_4": 0.0,
+            "src_a_top10__StrengthScore": 59.9636,
+            "src_a_top10__ThemeBoost": 0.679305707944409,
+            "src_a_top10__auction_strength_score": 1.0,
+            "src_a_top10__final_score": 0.328459,
+            "src_a_top10__intraday_available": 1.0,
+            "src_a_top10__intraday_confidence_score": 1.0,
+            "src_a_top10__intraday_hard_risk_flag": 0.0,
+            "src_a_top10__intraday_quality_score": 0.78058,
+            "src_a_top10__intraday_risk_score": 0.1365262,
+            "src_a_top10__intraday_soft_risk_score": 0.136526,
+            "src_a_top10__late_withdraw_score": 0.150838,
+            "src_a_top10__limit_times": 2.0,
+            "src_a_top10__open_board_count": 0.0,
+            "src_a_top10__p_limit_up_calibrated": 0.2358603933094253,
+            "src_a_top10__prob_final": 0.2358603933094253,
+            "src_a_top10__rank_score": 0.2358603933094253,
+            "src_a_top10__regime_score": 0.4975,
+            "src_a_top10__regime_smooth": 0.4975,
+            "src_a_top10__reseal_score": 0.543626,
+            "src_a_top10__stage_prior": 0.35,
+            "src_a_top10__stage_quality_weight": 0.92,
+            "src_a_top10__stage_risk_penalty": 0.000825,
+            "src_premium_top10__auction_amount": 189619968.0,
+            "src_premium_top10__board_crowding_rank": 2.0,
+            "src_premium_top10__board_limit_up_count": 4.0,
+            "src_premium_top10__factor_auction_available": 1.0,
+            "src_premium_top10__factor_auction_strength": 1.0,
+            "src_premium_top10__factor_intraday_quality": 0.78058,
+            "src_premium_top10__factor_intraday_risk_penalty": 0.12164007,
+            "src_premium_top10__is_st_like": 0.0,
+            "src_premium_top10__max_drawdown_20d": -0.0657439446366782,
+            "src_premium_top10__mkt_amount_sum": 2567652179.91525,
+            "src_premium_top10__mkt_avg_ret": -0.010612773554698054,
+            "src_premium_top10__mkt_median_ret": -0.014788949524375095,
+            "src_premium_top10__mkt_strong_ratio": 0.014084507042253521,
+            "src_premium_top10__mkt_touch_strong_ratio": 0.03755868544600939,
+            "src_premium_top10__mkt_up_ratio": 0.20585048754062837,
+            "src_premium_top10__premium_final_score": 49.243,
+            "src_premium_top10__premium_rank_score": 57.2336,
+            "src_premium_top10__r_p05": -0.09073077205476596,
+            "src_premium_top10__r_p25": -0.011469138734626294,
+            "src_premium_top10__r_p50": 0.043624791122712746,
+            "src_premium_top10__r_p75": 0.09871872098005179,
+            "src_premium_top10__r_p95": 0.1779803543001929,
+            "src_premium_top10__risk_penalty_score": 0.145006,
+            "src_premium_top10__score_ev": 0.328459,
+            "src_premium_top10__t1_accept_prob_blend": 0.520412,
+            "src_premium_top10__t1_accept_score": 50.0,
+            "src_premium_top10__t1_big_drawdown_prob_blend": 0.14833,
+            "src_premium_top10__t1_fail_prob_blend": 0.469322,
+            "src_premium_top10__t_close_ret_pred": 0.023307163140891558,
+            "src_premium_top10__t_intraday_ret_pred": 0.06989780166797188,
+            "src_premium_top10__t_limitup_prob_calibrated": 0.232871,
+            "src_premium_top10__t_up_attack_score": 68.7505,
+            "src_premium_top10__tail_risk_score": 0.1370295328752691,
+            "src_premium_top10__turnover_rate": 5.8574,
+            "src_premium_top10__turnover_rate_f": 9.8491,
+            "src_premium_top10__volatility_10d": 0.0360701593180357,
+            "src_premium_top10__volatility_20d": 0.0434590593166907,
+            "src_premium_top10__volatility_5d": 0.0436183175504029,
+            "src_premium_top10__volume_ratio": 2.11,
+            "src_decision_table__decision_cost": 0.001294991,
+            "src_decision_table__decision_e_ret": 0.0149377928,
+            "src_decision_table__decision_ev": -0.005512772,
+            "src_decision_table__decision_p_fill": 0.6796300647,
+            "src_decision_table__decision_risk_penalty": 0.0143699541,
+            "src_decision_table__mechanism_limit_pct": 10.0,
+            "src_decision_table__path_data_coverage": 1.0,
+            "src_decision_table__path_strength_delta": 0.2507107693,
+            "src_decision_table__path_strength_latest": 0.8990697674,
+            "src_decision_table__predicted_big_loss_probability": 0.3900036385,
+            "src_decision_table__predicted_continuation_limit_up_probability": 0.1814300664,
+            "src_decision_table__predicted_exit_probability": 0.9986298385,
+            "src_decision_table__predicted_fill_probability": 0.1476570787,
+            "src_decision_table__predicted_net_return": 0.0020332444,
+            "src_decision_table__predicted_profit_probability": 0.3526434204,
+            "src_decision_table__predicted_return_lcb": -0.0894212935,
+            "src_decision_table__predicted_return_ucb": 0.1165838532,
+            "src_decision_table__same_industry_stage_count": 2.0,
+            "src_decision_table__stage_recent_promotion_rate": 0.1923076923,
+            "src_decision_table__stage_recent_promotion_samples": 104.0,
+            "src_decision_table__predicted_exit_delay_probability": 0.0013701615000000222,
+            "source_strength": 0.42459866720786255,
+            "feature_schema_version": "formal_features_v2",
+            "feature_asof_date": "20260813",
+            "feature_coverage": 1.0,
+            "market_data_valid": true,
+            "market_data_invalid_reasons": []
+          }
+        }
+      ],
+      "rank_slots": {
+        "1": {
+          "candidate_id": "20260813:002081.SZ",
+          "status": "PENDING_BUY",
+          "reason": "waiting_for_t_daily_open",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "diagnostics": {},
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          }
+        },
+        "2": {
+          "candidate_id": "20260813:000887.SZ",
+          "status": "PENDING_BUY",
+          "reason": "waiting_for_t_daily_open",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "diagnostics": {},
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          }
+        },
+        "3": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        }
+      }
     }
   ],
   "rank_daily": [
@@ -7964,6 +9900,33 @@
           "is_final": true,
           "daily_return": 0.0,
           "return_date": "2026-08-14",
+          "equity_index": 0.9992810004921231
+        }
+      }
+    },
+    {
+      "date": "2026-08-17",
+      "decision_date": "2026-08-13",
+      "ranks": {
+        "1": {
+          "state": "PENDING_BUY",
+          "is_final": false,
+          "daily_return": null,
+          "return_date": "2026-08-17",
+          "equity_index": 1.035288221783688
+        },
+        "2": {
+          "state": "PENDING_BUY",
+          "is_final": false,
+          "daily_return": null,
+          "return_date": "2026-08-17",
+          "equity_index": 0.928551298888851
+        },
+        "3": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-17",
           "equity_index": 0.9992810004921231
         }
       }
@@ -11100,6 +13063,1326 @@
           "return_date": "2026-08-14"
         }
       ]
+    },
+    {
+      "decision_date": "2026-08-13",
+      "buy_date": "2026-08-14",
+      "planned_exit_date": "2026-08-17",
+      "return_date": null,
+      "candidate_count": 2,
+      "final_count": 0,
+      "pending_count": 2,
+      "profitable_count": 0,
+      "portfolio_return": null,
+      "result": "PENDING",
+      "is_final": false,
+      "is_provisional": false,
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "candidates": [
+        {
+          "candidate_id": "20260813:002081.SZ",
+          "rank": 1,
+          "symbol": "002081.SZ",
+          "name": "金 螳 螂",
+          "stage_transition": "2→3",
+          "industry": "装修装饰",
+          "d_close": 4.81,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 5.29,
+          "source_ranks": {
+            "a_top10": 3,
+            "premium_top10": 5,
+            "decision_table": 4
+          },
+          "model": {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_champion_v2",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-13",
+            "calibrated": false,
+            "fill_probability": 1.0,
+            "conditional_net_return_mean": 0.005861494767134402,
+            "conditional_net_return_p10": -0.09465532366503367,
+            "conditional_net_return_p50": 0.005861494767134402,
+            "conditional_net_return_p90": 0.10637831319930248,
+            "exit_delay_probability": 0.1210873265236175,
+            "expected_exit_delay_days": 1.5318496471144734,
+            "promotion_probability": 0.2663089532625188,
+            "expected_shortfall": 0.13178832315891784,
+            "uncertainty": 0.07245351142812137,
+            "risk_adjusted_utility": -0.02823038444890561,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
+          "single_stock_research": {
+            "schema_version": "single_stock_research_audit_v1",
+            "decision_effect": "AUDIT_ONLY_NO_RANKING_OR_GATE_EFFECT",
+            "availability": "AVAILABLE",
+            "unavailable_reason": null,
+            "decision_date": "20260813",
+            "decision_asof": "2026-08-13T23:32:22+08:00",
+            "ts_code": "002081.SZ",
+            "single_stock": {
+              "schema_version": "single_stock_snapshot_v3",
+              "selection_rule": "STRICT_THREE_TABLE_INTERSECTION",
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "decision_date": "20260813",
+              "decision_asof": "2026-08-13T23:32:22+08:00",
+              "source_ranks": {
+                "a_top10": 3,
+                "premium_top10": 5,
+                "decision_table": 4
+              },
+              "facts": {
+                "classification.industry": {
+                  "value": "装修装饰",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "classification.stage_transition": {
+                  "value": "2→3",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.board_lot": {
+                  "value": 100,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "8f91c3cd28ee7883a7fb7cda1353734db87f56c81015795bc6afe6d79a4ecc75",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.max_order_shares": {
+                  "value": 18800,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "8f91c3cd28ee7883a7fb7cda1353734db87f56c81015795bc6afe6d79a4ecc75",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.d_close": {
+                  "value": 4.81,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_mechanism_pct": {
+                  "value": 10.0,
+                  "missing_reason": null,
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_price": {
+                  "value": 5.29,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "cbf028699356b0cead40a9c6eae41e942b2547a3e952b72b19ff2ea2920947d1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.price_tick": {
+                  "value": 0.01,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "8f91c3cd28ee7883a7fb7cda1353734db87f56c81015795bc6afe6d79a4ecc75",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.pricing_verified": {
+                  "value": null,
+                  "missing_reason": "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_SOURCE_AND_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "pricing_cross_check_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "78b45fe4607650187de292d210df0a9b6ec69586b60bef00e179cd515536ff2f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "research.limit_lifecycle_input": {
+                  "value": {
+                    "bar_count": 240,
+                    "bars_content_sha256": "ffa14922ca3eca1c9d81249b76422672505422954efd988636d4adb3317f0f68",
+                    "decision_date": "20260813",
+                    "fetch_failed": false,
+                    "minute_artifact": {
+                      "artifact_schema_version": "single_stock_minute_archive_v1",
+                      "artifact_sha256": "e2a85c715eece39d2f2840cc518c781fca3d59fce56f8479008f5e594d73de8a",
+                      "bar_count": 240,
+                      "bar_schema_version": "canonical_ohlcv_minute_v1",
+                      "bars_content_sha256": "ffa14922ca3eca1c9d81249b76422672505422954efd988636d4adb3317f0f68",
+                      "captured_at": "2026-08-13T23:32:22+08:00",
+                      "content_encoding": "gzip",
+                      "decision_date": "20260813",
+                      "full_session": true,
+                      "providers": [
+                        "EASTMONEY"
+                      ],
+                      "relative_path": "2026/20260813/002081.SZ/e2a85c715eece39d2f2840cc518c781fca3d59fce56f8479008f5e594d73de8a.json.gz",
+                      "schema_version": "single_stock_minute_archive_ref_v1",
+                      "ts_code": "002081.SZ"
+                    },
+                    "providers": [
+                      "EASTMONEY"
+                    ],
+                    "ts_code": "002081.SZ"
+                  },
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "MARKET_MINUTE_ADAPTER",
+                    "dataset_version": "d_day_minute_close_proxy_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "d0619e115795cecf4dfafd9a82026298f969feb93758837a6fac4c6dde37d84d",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.board": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_delisting_period": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_st": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_suspended": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_limit_pct": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_tick": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.trading_rules_verified": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                }
+              },
+              "hard_gate": {
+                "status": "UNKNOWN",
+                "reasons": [
+                  "REQUIRED_GATE_EVIDENCE_MISSING"
+                ],
+                "unknown_fields": [
+                  "security.is_suspended",
+                  "security.is_st",
+                  "security.is_delisting_period",
+                  "security.trading_rules_verified",
+                  "security.board",
+                  "security.price_limit_pct",
+                  "security.price_tick",
+                  "market.pricing_verified"
+                ]
+              }
+            },
+            "candidate_analysis": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "candidate": {
+                  "action": {
+                    "missing_reason": null,
+                    "value": "SHADOW"
+                  },
+                  "action_reason": {
+                    "missing_reason": null,
+                    "value": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order"
+                  },
+                  "rank": {
+                    "missing_reason": null,
+                    "value": 1
+                  }
+                },
+                "features": {
+                  "avg_amount_20d": {
+                    "missing_reason": null,
+                    "value": 339677655.002
+                  },
+                  "avg_volume_20d": {
+                    "missing_reason": null,
+                    "value": 897889.4
+                  },
+                  "cvar_loss_10pct": {
+                    "missing_reason": null,
+                    "value": 0.07909708729207976
+                  },
+                  "downside_volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.016778208651573298
+                  },
+                  "feature_asof_date": {
+                    "missing_reason": null,
+                    "value": "20260813"
+                  },
+                  "feature_coverage": {
+                    "missing_reason": null,
+                    "value": 1.0
+                  },
+                  "feature_schema_version": {
+                    "missing_reason": null,
+                    "value": "formal_features_v2"
+                  },
+                  "market_data_invalid_reasons": {
+                    "missing_reason": null,
+                    "value": []
+                  },
+                  "market_data_valid": {
+                    "missing_reason": null,
+                    "value": true
+                  },
+                  "max_drawdown_20d": {
+                    "missing_reason": null,
+                    "value": -0.07651715039577833
+                  },
+                  "rank_consensus": {
+                    "missing_reason": null,
+                    "value": 0.6666666666666666
+                  },
+                  "rank_disagreement": {
+                    "missing_reason": null,
+                    "value": 0.18144368465060579
+                  },
+                  "ret_1d": {
+                    "missing_reason": null,
+                    "value": 0.10068649885583514
+                  },
+                  "ret_20d": {
+                    "missing_reason": null,
+                    "value": 0.2691292875989444
+                  },
+                  "ret_5d": {
+                    "missing_reason": null,
+                    "value": 0.2024999999999999
+                  },
+                  "stage_transition": {
+                    "missing_reason": null,
+                    "value": "2→3"
+                  },
+                  "volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.037787274490892316
+                  }
+                },
+                "metrics": {
+                  "conditional_net_return_mean": {
+                    "missing_reason": null,
+                    "value": 0.005861494767134402
+                  },
+                  "conditional_net_return_q10": {
+                    "missing_reason": null,
+                    "value": -0.09465532366503367
+                  },
+                  "conditional_net_return_q50": {
+                    "missing_reason": null,
+                    "value": 0.005861494767134402
+                  },
+                  "conditional_net_return_q90": {
+                    "missing_reason": null,
+                    "value": 0.10637831319930248
+                  },
+                  "expected_delay_days": {
+                    "missing_reason": null,
+                    "value": 1.5318496471144734
+                  },
+                  "expected_net_return": {
+                    "missing_reason": null,
+                    "value": 0.005861494767134402
+                  },
+                  "expected_shortfall_10pct": {
+                    "missing_reason": null,
+                    "value": 0.13178832315891784
+                  },
+                  "gate_decision": {
+                    "missing_reason": null,
+                    "value": "NO_TRADE"
+                  },
+                  "gate_reasons": {
+                    "missing_reason": null,
+                    "value": [
+                      "conditional_return_lcb_not_positive",
+                      "risk_adjusted_utility_not_positive"
+                    ]
+                  },
+                  "model_id": {
+                    "missing_reason": null,
+                    "value": "transparent_shadow_champion_v2"
+                  },
+                  "model_stage": {
+                    "missing_reason": null,
+                    "value": "CHAMPION_BASELINE"
+                  },
+                  "p_exit_delay": {
+                    "missing_reason": null,
+                    "value": 0.1210873265236175
+                  },
+                  "p_promotion": {
+                    "missing_reason": null,
+                    "value": 0.2663089532625188
+                  },
+                  "prediction_schema_version": {
+                    "missing_reason": null,
+                    "value": "ranking_prediction_v2"
+                  },
+                  "ranking_fallback": {
+                    "missing_reason": null,
+                    "value": false
+                  },
+                  "uncertainty": {
+                    "missing_reason": null,
+                    "value": 0.07245351142812137
+                  },
+                  "utility_score": {
+                    "missing_reason": null,
+                    "value": -0.02823038444890561
+                  }
+                }
+              },
+              "unavailable_reason": null
+            },
+            "order_spec": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "decision_date": {
+                  "missing_reason": null,
+                  "value": "20260813"
+                },
+                "event_time": {
+                  "missing_reason": null,
+                  "value": "09:25"
+                },
+                "execution_mode": {
+                  "missing_reason": null,
+                  "value": "SHADOW_ONLY"
+                },
+                "limit_price": {
+                  "missing_reason": null,
+                  "value": 5.29
+                },
+                "limit_price_policy": {
+                  "missing_reason": null,
+                  "value": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT"
+                },
+                "lot_size": {
+                  "missing_reason": null,
+                  "value": 100
+                },
+                "maximum_reserved_cash_cny": {
+                  "missing_reason": null,
+                  "value": 99482.83012
+                },
+                "order_type": {
+                  "missing_reason": null,
+                  "value": "LIMIT"
+                },
+                "phase": {
+                  "missing_reason": null,
+                  "value": "OPENING_CALL_AUCTION"
+                },
+                "price_limit_source": {
+                  "missing_reason": null,
+                  "value": "DECISION_FROZEN_LIMIT_PRICE"
+                },
+                "quantity_unit": {
+                  "missing_reason": null,
+                  "value": "SHARES"
+                },
+                "schema_version": {
+                  "missing_reason": null,
+                  "value": "shadow_order_spec_v1"
+                },
+                "side": {
+                  "missing_reason": null,
+                  "value": "BUY"
+                },
+                "slot_capital_cny": {
+                  "missing_reason": null,
+                  "value": 100000.0
+                },
+                "submitted_qty": {
+                  "missing_reason": null,
+                  "value": 18800
+                },
+                "trade_date": {
+                  "missing_reason": null,
+                  "value": "20260814"
+                }
+              },
+              "unavailable_reason": null
+            },
+            "limit_lifecycle": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "break_count": 0,
+                "closed_at_limit": false,
+                "coverage_ratio": 1.0,
+                "decision_date": "20260813",
+                "evidence_level": "MINUTE_CLOSE_PROXY",
+                "expected_minutes": 240,
+                "first_seal_time": null,
+                "invalid_reasons": [],
+                "last_seal_time": null,
+                "limit_price": 5.29,
+                "observed_minutes": 240,
+                "one_price_limit_proxy": false,
+                "price_tick": 0.01,
+                "reseal_count": 0,
+                "schema_version": "limit_lifecycle_v1",
+                "sealed_minutes": 0,
+                "tail_sealed_minutes": 0,
+                "touched_limit": false,
+                "valid": true
+              },
+              "unavailable_reason": null
+            },
+            "snapshot_sha256": "1fe3d40a3b9b6bfbb59c40de184f231d456c41d406150fd01e1054f37f50c58d"
+          },
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-17"
+        },
+        {
+          "candidate_id": "20260813:000887.SZ",
+          "rank": 2,
+          "symbol": "000887.SZ",
+          "name": "中鼎股份",
+          "stage_transition": "2→3",
+          "industry": "汽车零部件",
+          "d_close": 23.69,
+          "mechanism_limit_pct": 10.0,
+          "estimated_up_limit": 26.06,
+          "source_ranks": {
+            "a_top10": 5,
+            "premium_top10": 2,
+            "decision_table": 8
+          },
+          "model": {
+            "engine_version": "formal_ranking_engine_v2",
+            "selected_model_id": "transparent_shadow_champion_v2",
+            "selected_model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "label_schema_version": "training_dataset_v1",
+            "prediction_stage": "D_PRIOR",
+            "training_cutoff": null,
+            "calibrated": false,
+            "fallback_active": false,
+            "fallback_reason": null
+          },
+          "prediction": {
+            "model_id": "transparent_shadow_champion_v2",
+            "model_kind": "transparent_baseline",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_stage": "D_PRIOR",
+            "as_of": "2026-08-13",
+            "calibrated": false,
+            "fill_probability": 1.0,
+            "conditional_net_return_mean": 0.006014812920138281,
+            "conditional_net_return_p10": -0.09865605779701991,
+            "conditional_net_return_p50": 0.006014812920138281,
+            "conditional_net_return_p90": 0.11068568363729647,
+            "exit_delay_probability": 0.12990686735134785,
+            "expected_exit_delay_days": 1.7611903031657774,
+            "promotion_probability": 0.21566590906377012,
+            "expected_shortfall": 0.1373236504445881,
+            "uncertainty": 0.17236750782947405,
+            "risk_adjusted_utility": -0.02997715578996635,
+            "feature_coverage": null,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ]
+          },
+          "single_stock_research": {
+            "schema_version": "single_stock_research_audit_v1",
+            "decision_effect": "AUDIT_ONLY_NO_RANKING_OR_GATE_EFFECT",
+            "availability": "AVAILABLE",
+            "unavailable_reason": null,
+            "decision_date": "20260813",
+            "decision_asof": "2026-08-13T23:32:22+08:00",
+            "ts_code": "000887.SZ",
+            "single_stock": {
+              "schema_version": "single_stock_snapshot_v3",
+              "selection_rule": "STRICT_THREE_TABLE_INTERSECTION",
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "decision_date": "20260813",
+              "decision_asof": "2026-08-13T23:32:22+08:00",
+              "source_ranks": {
+                "a_top10": 5,
+                "premium_top10": 2,
+                "decision_table": 8
+              },
+              "facts": {
+                "classification.industry": {
+                  "value": "汽车零部件",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "classification.stage_transition": {
+                  "value": "2→3",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.board_lot": {
+                  "value": 100,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "ec67fde2e374cb59798824091da9147524b8e08937866283fb986eb6b1760059",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.max_order_shares": {
+                  "value": 3800,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "ec67fde2e374cb59798824091da9147524b8e08937866283fb986eb6b1760059",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.d_close": {
+                  "value": 23.69,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_mechanism_pct": {
+                  "value": 10.0,
+                  "missing_reason": null,
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_price": {
+                  "value": 26.06,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "4ea814778dc8586efa2967af019404db6879b386999dca6fc38a3626a49d3e39",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.price_tick": {
+                  "value": 0.01,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "ec67fde2e374cb59798824091da9147524b8e08937866283fb986eb6b1760059",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.pricing_verified": {
+                  "value": null,
+                  "missing_reason": "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_SOURCE_AND_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "pricing_cross_check_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "d95540d58bfa2431cba8d6a8fbe300bc058b0595a9d8b6e75e270c515708832f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "research.limit_lifecycle_input": {
+                  "value": {
+                    "bar_count": 240,
+                    "bars_content_sha256": "ef36e2cd8f60fcc9cc7a476c23f63724f5b56e01dba0848f9f31773592db047b",
+                    "decision_date": "20260813",
+                    "fetch_failed": false,
+                    "minute_artifact": {
+                      "artifact_schema_version": "single_stock_minute_archive_v1",
+                      "artifact_sha256": "011682a33e956dc3a1c1ff16b37297e84df2543e6459ba7a1e52c76996f22c74",
+                      "bar_count": 240,
+                      "bar_schema_version": "canonical_ohlcv_minute_v1",
+                      "bars_content_sha256": "ef36e2cd8f60fcc9cc7a476c23f63724f5b56e01dba0848f9f31773592db047b",
+                      "captured_at": "2026-08-13T23:32:22+08:00",
+                      "content_encoding": "gzip",
+                      "decision_date": "20260813",
+                      "full_session": true,
+                      "providers": [
+                        "EASTMONEY"
+                      ],
+                      "relative_path": "2026/20260813/000887.SZ/011682a33e956dc3a1c1ff16b37297e84df2543e6459ba7a1e52c76996f22c74.json.gz",
+                      "schema_version": "single_stock_minute_archive_ref_v1",
+                      "ts_code": "000887.SZ"
+                    },
+                    "providers": [
+                      "EASTMONEY"
+                    ],
+                    "ts_code": "000887.SZ"
+                  },
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "MARKET_MINUTE_ADAPTER",
+                    "dataset_version": "d_day_minute_close_proxy_v1",
+                    "known_at": "2026-08-13T23:32:22+08:00",
+                    "fetched_at": "2026-08-13T23:32:22+08:00",
+                    "content_sha256": "fc31ad63df4d9c8cf428f1b27f4b993ad5c2fb39208b29d34b06f6ea8ad565ef",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.board": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_delisting_period": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_st": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_suspended": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_limit_pct": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_tick": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.trading_rules_verified": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                }
+              },
+              "hard_gate": {
+                "status": "UNKNOWN",
+                "reasons": [
+                  "REQUIRED_GATE_EVIDENCE_MISSING"
+                ],
+                "unknown_fields": [
+                  "security.is_suspended",
+                  "security.is_st",
+                  "security.is_delisting_period",
+                  "security.trading_rules_verified",
+                  "security.board",
+                  "security.price_limit_pct",
+                  "security.price_tick",
+                  "market.pricing_verified"
+                ]
+              }
+            },
+            "candidate_analysis": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "candidate": {
+                  "action": {
+                    "missing_reason": null,
+                    "value": "SHADOW"
+                  },
+                  "action_reason": {
+                    "missing_reason": null,
+                    "value": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order"
+                  },
+                  "rank": {
+                    "missing_reason": null,
+                    "value": 2
+                  }
+                },
+                "features": {
+                  "avg_amount_20d": {
+                    "missing_reason": null,
+                    "value": 673817561.925
+                  },
+                  "avg_volume_20d": {
+                    "missing_reason": null,
+                    "value": 362475.6
+                  },
+                  "cvar_loss_10pct": {
+                    "missing_reason": null,
+                    "value": 0.06636691199601126
+                  },
+                  "downside_volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.024725978878937332
+                  },
+                  "feature_asof_date": {
+                    "missing_reason": null,
+                    "value": "20260813"
+                  },
+                  "feature_coverage": {
+                    "missing_reason": null,
+                    "value": 1.0
+                  },
+                  "feature_schema_version": {
+                    "missing_reason": null,
+                    "value": "formal_features_v2"
+                  },
+                  "market_data_invalid_reasons": {
+                    "missing_reason": null,
+                    "value": []
+                  },
+                  "market_data_valid": {
+                    "missing_reason": null,
+                    "value": true
+                  },
+                  "max_drawdown_20d": {
+                    "missing_reason": null,
+                    "value": -0.13783927621075043
+                  },
+                  "rank_consensus": {
+                    "missing_reason": null,
+                    "value": 0.5555555555555555
+                  },
+                  "rank_disagreement": {
+                    "missing_reason": null,
+                    "value": 0.5443310539518174
+                  },
+                  "ret_1d": {
+                    "missing_reason": null,
+                    "value": 0.09981429897864458
+                  },
+                  "ret_20d": {
+                    "missing_reason": null,
+                    "value": 0.2607770090473658
+                  },
+                  "ret_5d": {
+                    "missing_reason": null,
+                    "value": 0.25743099787685786
+                  },
+                  "stage_transition": {
+                    "missing_reason": null,
+                    "value": "2→3"
+                  },
+                  "volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.04345905931669077
+                  }
+                },
+                "metrics": {
+                  "conditional_net_return_mean": {
+                    "missing_reason": null,
+                    "value": 0.006014812920138281
+                  },
+                  "conditional_net_return_q10": {
+                    "missing_reason": null,
+                    "value": -0.09865605779701991
+                  },
+                  "conditional_net_return_q50": {
+                    "missing_reason": null,
+                    "value": 0.006014812920138281
+                  },
+                  "conditional_net_return_q90": {
+                    "missing_reason": null,
+                    "value": 0.11068568363729647
+                  },
+                  "expected_delay_days": {
+                    "missing_reason": null,
+                    "value": 1.7611903031657774
+                  },
+                  "expected_net_return": {
+                    "missing_reason": null,
+                    "value": 0.006014812920138281
+                  },
+                  "expected_shortfall_10pct": {
+                    "missing_reason": null,
+                    "value": 0.1373236504445881
+                  },
+                  "gate_decision": {
+                    "missing_reason": null,
+                    "value": "NO_TRADE"
+                  },
+                  "gate_reasons": {
+                    "missing_reason": null,
+                    "value": [
+                      "conditional_return_lcb_not_positive",
+                      "risk_adjusted_utility_not_positive"
+                    ]
+                  },
+                  "model_id": {
+                    "missing_reason": null,
+                    "value": "transparent_shadow_champion_v2"
+                  },
+                  "model_stage": {
+                    "missing_reason": null,
+                    "value": "CHAMPION_BASELINE"
+                  },
+                  "p_exit_delay": {
+                    "missing_reason": null,
+                    "value": 0.12990686735134785
+                  },
+                  "p_promotion": {
+                    "missing_reason": null,
+                    "value": 0.21566590906377012
+                  },
+                  "prediction_schema_version": {
+                    "missing_reason": null,
+                    "value": "ranking_prediction_v2"
+                  },
+                  "ranking_fallback": {
+                    "missing_reason": null,
+                    "value": false
+                  },
+                  "uncertainty": {
+                    "missing_reason": null,
+                    "value": 0.17236750782947405
+                  },
+                  "utility_score": {
+                    "missing_reason": null,
+                    "value": -0.02997715578996635
+                  }
+                }
+              },
+              "unavailable_reason": null
+            },
+            "order_spec": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "decision_date": {
+                  "missing_reason": null,
+                  "value": "20260813"
+                },
+                "event_time": {
+                  "missing_reason": null,
+                  "value": "09:25"
+                },
+                "execution_mode": {
+                  "missing_reason": null,
+                  "value": "SHADOW_ONLY"
+                },
+                "limit_price": {
+                  "missing_reason": null,
+                  "value": 26.06
+                },
+                "limit_price_policy": {
+                  "missing_reason": null,
+                  "value": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT"
+                },
+                "lot_size": {
+                  "missing_reason": null,
+                  "value": 100
+                },
+                "maximum_reserved_cash_cny": {
+                  "missing_reason": null,
+                  "value": 99058.69868
+                },
+                "order_type": {
+                  "missing_reason": null,
+                  "value": "LIMIT"
+                },
+                "phase": {
+                  "missing_reason": null,
+                  "value": "OPENING_CALL_AUCTION"
+                },
+                "price_limit_source": {
+                  "missing_reason": null,
+                  "value": "D_CLOSE_MECHANISM_ROUND_HALF_UP"
+                },
+                "quantity_unit": {
+                  "missing_reason": null,
+                  "value": "SHARES"
+                },
+                "schema_version": {
+                  "missing_reason": null,
+                  "value": "shadow_order_spec_v1"
+                },
+                "side": {
+                  "missing_reason": null,
+                  "value": "BUY"
+                },
+                "slot_capital_cny": {
+                  "missing_reason": null,
+                  "value": 100000.0
+                },
+                "submitted_qty": {
+                  "missing_reason": null,
+                  "value": 3800
+                },
+                "trade_date": {
+                  "missing_reason": null,
+                  "value": "20260814"
+                }
+              },
+              "unavailable_reason": null
+            },
+            "limit_lifecycle": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "break_count": 0,
+                "closed_at_limit": false,
+                "coverage_ratio": 1.0,
+                "decision_date": "20260813",
+                "evidence_level": "MINUTE_CLOSE_PROXY",
+                "expected_minutes": 240,
+                "first_seal_time": null,
+                "invalid_reasons": [],
+                "last_seal_time": null,
+                "limit_price": 26.06,
+                "observed_minutes": 240,
+                "one_price_limit_proxy": false,
+                "price_tick": 0.01,
+                "reseal_count": 0,
+                "schema_version": "limit_lifecycle_v1",
+                "sealed_minutes": 0,
+                "tail_sealed_minutes": 0,
+                "touched_limit": false,
+                "valid": true
+              },
+              "unavailable_reason": null
+            },
+            "snapshot_sha256": "258d7ddaf9bf7045a1019523351b940ef9bb5a9ef304b5826309786dae65f1bd"
+          },
+          "t_day_validation": {
+            "status": "PENDING",
+            "t_return": null,
+            "is_limit_up": null,
+            "is_promoted": null
+          },
+          "status": "PENDING_BUY",
+          "is_final": false,
+          "buy_price": null,
+          "exit_price": null,
+          "net_return": null,
+          "result": "PENDING",
+          "return_date": "2026-08-17"
+        }
+      ]
     }
   ],
   "benchmark_daily": [
@@ -12958,6 +16241,303 @@
           ]
         }
       }
+    },
+    {
+      "schema_version": "batch_benchmarks_v1",
+      "decision_date": "2026-08-13",
+      "return_unit": "decimal",
+      "return_basis": "net_return_on_allocated",
+      "cohort_count": 2,
+      "cohort_final_count": 0,
+      "is_final": false,
+      "model_order": [
+        "002081.SZ",
+        "000887.SZ"
+      ],
+      "borda_order": [
+        "002081.SZ",
+        "000887.SZ"
+      ],
+      "policies": {
+        "cash": {
+          "policy_id": "cash",
+          "label": "现金",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "all_candidates_equal_weight": {
+          "policy_id": "all_candidates_equal_weight",
+          "label": "全部候选等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 2,
+          "selected_count": 2,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 2,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            },
+            {
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "model_rank": 2,
+              "borda_rank": 2,
+              "borda_score": 0.6,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "fixed_model_rank_1": {
+          "policy_id": "fixed_model_rank_1",
+          "label": "固定TOP1",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 1,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 1,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "fixed_model_rank_2": {
+          "policy_id": "fixed_model_rank_2",
+          "label": "固定TOP2",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 1,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 1,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "model_rank": 2,
+              "borda_rank": 2,
+              "borda_score": 0.6,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "fixed_model_rank_3": {
+          "policy_id": "fixed_model_rank_3",
+          "label": "固定TOP3",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "model_top1_equal_weight": {
+          "policy_id": "model_top1_equal_weight",
+          "label": "模型序TOP1等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 1,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 1,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "borda_top1_equal_weight": {
+          "policy_id": "borda_top1_equal_weight",
+          "label": "Borda序TOP1等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 1,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 1,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "model_top2_equal_weight": {
+          "policy_id": "model_top2_equal_weight",
+          "label": "模型序TOP2等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 2,
+          "selected_count": 2,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 2,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            },
+            {
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "model_rank": 2,
+              "borda_rank": 2,
+              "borda_score": 0.6,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "borda_top2_equal_weight": {
+          "policy_id": "borda_top2_equal_weight",
+          "label": "Borda序TOP2等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 2,
+          "selected_count": 2,
+          "cash_slot_count": 0,
+          "final_count": 0,
+          "pending_count": 2,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            },
+            {
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "model_rank": 2,
+              "borda_rank": 2,
+              "borda_score": 0.6,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "model_top3_equal_weight": {
+          "policy_id": "model_top3_equal_weight",
+          "label": "模型序TOP3等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 3,
+          "selected_count": 2,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 2,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            },
+            {
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "model_rank": 2,
+              "borda_rank": 2,
+              "borda_score": 0.6,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        },
+        "borda_top3_equal_weight": {
+          "policy_id": "borda_top3_equal_weight",
+          "label": "Borda序TOP3等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 3,
+          "selected_count": 2,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 2,
+          "is_final": false,
+          "portfolio_return": null,
+          "constituents": [
+            {
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂",
+              "model_rank": 1,
+              "borda_rank": 1,
+              "borda_score": 0.7,
+              "is_final": false,
+              "net_return_on_allocated": null
+            },
+            {
+              "ts_code": "000887.SZ",
+              "name": "中鼎股份",
+              "model_rank": 2,
+              "borda_rank": 2,
+              "borda_score": 0.6,
+              "is_final": false,
+              "net_return_on_allocated": null
+            }
+          ]
+        }
+      }
     }
   ],
   "automation_runs": {
@@ -12981,9 +16561,9 @@
     },
     "output": {
       "scheduled_local_time": "21:30",
-      "last_attempted_at": "2026-08-12T22:24:03+08:00",
+      "last_attempted_at": "2026-08-13T23:32:22+08:00",
       "status": "COMPLETED",
-      "last_completed_at": "2026-08-12T22:24:03+08:00"
+      "last_completed_at": "2026-08-13T23:32:22+08:00"
     }
   }
 }

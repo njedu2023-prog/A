@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-12T22:24:03+08:00",
+  "generated_at": "2026-08-13T23:32:22+08:00",
   "issues": [
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
@@ -25,23 +25,22 @@
       }
     },
     {
-      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
+      "code": "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
       "severity": "warning",
-      "source_id": "market_data",
-      "message": "002229.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
+      "source_id": "decision_table",
+      "message": "Decision涨停价使用了可审计的向下舍入口径；本系统已按交易所四舍五入规则规范化到0.01元",
       "details": {
-        "ts_code": "002229.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002229&klt=1&fqt=0&lmt=300&beg=20260812090000&end=20260812150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
-      }
-    },
-    {
-      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
-      "severity": "warning",
-      "source_id": "market_data",
-      "message": "002031.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
-      "details": {
-        "ts_code": "002031.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002031&klt=1&fqt=0&lmt=300&beg=20260812090000&end=20260812150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
+        "candidates": [
+          {
+            "ts_code": "000887.SZ",
+            "name": "中鼎股份",
+            "source_estimated_up_limit": 26.05,
+            "normalized_limit_up_price": 26.06,
+            "d_close": 23.69,
+            "mechanism_limit_pct": 10.0,
+            "rounding_reason": "LOWER_TICK_TRUNCATION"
+          }
+        ]
       }
     }
   ]
