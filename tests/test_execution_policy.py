@@ -81,6 +81,29 @@ class ExecutionPolicyTests(unittest.TestCase):
             "D_CLOSE_MECHANISM_ROUND_HALF_UP",
         )
 
+    def test_lower_tick_source_price_freezes_exchange_rounded_limit(self) -> None:
+        item = candidate()
+        item.source_values["decision_table"].update(
+            {
+                "d_close": 23.69,
+                "estimated_up_limit": 26.05,
+            }
+        )
+        item.source_values["premium_top10"]["close_T"] = 23.69
+
+        spec = build_order_spec(
+            item,
+            decision_date="20260813",
+            buy_date="20260814",
+            execution=EXECUTION,
+        )
+
+        self.assertEqual(spec["limit_price"], 26.06)
+        self.assertEqual(
+            spec["price_limit_source"],
+            "D_CLOSE_MECHANISM_ROUND_HALF_UP",
+        )
+
     def test_truth_must_match_frozen_quantity_and_limit_price(self) -> None:
         spec = build_order_spec(
             candidate(),

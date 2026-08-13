@@ -1238,7 +1238,13 @@ def strict_intersection(tables: list[SourceTable]) -> list[Candidate]:
             source_ranks={source_id: row.rank for source_id, row in source_rows.items()},
             source_values={source_id: row.values for source_id, row in source_rows.items()},
         )
-        candidate_validation_inputs(candidate)
+        try:
+            candidate_validation_inputs(candidate)
+        except ContractError as exc:
+            # Preserve the all-or-nothing intersection contract, but make the
+            # offending frozen member immediately identifiable in automation
+            # logs and public source-issue evidence.  Never skip the row.
+            raise ContractError(f"{code}: {exc}") from exc
         candidates.append(candidate)
     return candidates
 

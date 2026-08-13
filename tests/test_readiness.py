@@ -110,6 +110,30 @@ class SourceReadinessTests(unittest.TestCase):
             ],
         )
 
+    def test_strict_intersection_contract_block_retries_without_faking_zero(self) -> None:
+        blocked = dashboard(
+            "INPUT_BLOCKED",
+            completed=False,
+            error_codes=("STRICT_INTERSECTION_CONTRACT_FAILED",),
+            intersection_count=None,
+        )
+        ranked = dashboard("RANKED", completed=True, intersection_count=2)
+        results = iter((blocked, ranked))
+        sleeps: list[float] = []
+
+        result = run_when_sources_ready(
+            "config/system.json",
+            attempts=2,
+            interval_seconds=1,
+            runner=lambda _: next(results),
+            sleeper=sleeps.append,
+            emit=lambda _: None,
+        )
+
+        self.assertIsNone(blocked["current_run"]["intersection_count"])
+        self.assertEqual(result["current_run"]["intersection_count"], 2)
+        self.assertEqual(sleeps, [1])
+
     def test_timeout_returns_latest_blocked_dashboard_for_publication(self) -> None:
         blocked = dashboard(
             "INPUT_BLOCKED",

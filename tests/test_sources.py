@@ -346,7 +346,7 @@ class SourceContractTests(unittest.TestCase):
         invalid["estimated_up_limit"] = 11.26
         with self.assertRaisesRegex(
             ContractError,
-            "estimated_up_limit disagrees",
+            r"600000\.SH: candidate: estimated_up_limit disagrees",
         ):
             strict_intersection(
                 [
@@ -375,9 +375,137 @@ class SourceContractTests(unittest.TestCase):
         self.assertEqual(facts["limit_up_price"], 104.45)
         self.assertTrue(facts["limit_up_rounding_adjusted"])
         self.assertEqual(
+            facts["limit_up_rounding_reason"],
+            "HALF_EVEN_LOWER_TICK",
+        )
+        self.assertEqual(
             facts["limit_up_source"],
             "D_CLOSE_MECHANISM_ROUND_HALF_UP",
         )
+
+    def test_lower_tick_truncation_is_normalized_to_exchange_rule(self) -> None:
+        row = decision_row(1, "000887.SZ")
+        row["d_close"] = 23.69
+        row["estimated_up_limit"] = 26.05
+        a = parse_a_top10(a_csv(["000887.SZ"]), "a.csv")
+        premium = parse_premium(
+            premium_csv(["000887.SZ"], close_T=23.69),
+            "premium.csv",
+        )
+
+        candidate = strict_intersection(
+            [a, premium, self.decision([row])]
+        )[0]
+        facts = candidate_validation_inputs(candidate)
+
+        self.assertEqual(facts["source_estimated_up_limit"], 26.05)
+        self.assertEqual(facts["estimated_up_limit"], 26.06)
+        self.assertEqual(facts["limit_up_price"], 26.06)
+        self.assertTrue(facts["limit_up_rounding_adjusted"])
+        self.assertEqual(
+            facts["limit_up_rounding_reason"],
+            "LOWER_TICK_TRUNCATION",
+        )
+        self.assertEqual(
+            facts["limit_up_source"],
+            "D_CLOSE_MECHANISM_ROUND_HALF_UP",
+        )
+
+    def test_20260813_incident_keeps_both_actual_intersection_members(self) -> None:
+        a_codes = [
+            "603887.SH", "601991.SH", "002081.SZ", "600881.SH", "000887.SZ",
+            "603330.SH", "002219.SZ", "605179.SH", "002437.SZ", "603758.SH",
+        ]
+        premium_codes = [
+            "603887.SH", "000887.SZ", "603758.SH", "002219.SZ", "002081.SZ",
+            "002172.SZ", "001260.SZ", "000936.SZ", "000802.SZ", "600683.SH",
+        ]
+        decision_codes = [
+            "000593.SZ", "601886.SH", "603466.SH", "002081.SZ", "603191.SH",
+            "600881.SH", "000692.SZ", "000887.SZ", "002172.SZ", "002437.SZ",
+        ]
+        a = parse_a_top10(
+            a_csv(a_codes, decision_date="20260813", buy_date="20260814"),
+            "a.csv",
+        )
+        premium = parse_premium(
+            premium_csv(
+                premium_codes,
+                decision_date="20260813",
+                buy_date="20260814",
+                exit_date="20260817",
+                close_T=23.69,
+            ),
+            "premium.csv",
+        )
+        # Preserve the real 8/13 source ranks and overwrite the independent
+        # Premium close for the second intersection member below.
+        premium_rows = list(premium.rows)
+        premium_rows[4] = replace(
+            premium_rows[4],
+            values={**premium_rows[4].values, "close_T": "4.81"},
+        )
+        premium = replace(premium, rows=tuple(premium_rows))
+        decision_rows = [
+            decision_row(rank, code)
+            for rank, code in enumerate(decision_codes, start=1)
+        ]
+        for row in decision_rows:
+            if row["ts_code"] == "002081.SZ":
+                row.update(d_close=4.81, estimated_up_limit=5.29)
+            elif row["ts_code"] == "000887.SZ":
+                row.update(d_close=23.69, estimated_up_limit=26.05)
+        decision = parse_decision(
+            decision_bytes(
+                decision_rows,
+                decision_date="20260813",
+                buy_date="20260814",
+                exit_date="20260817",
+            ),
+            "decision.json",
+        )
+
+        result = strict_intersection([a, premium, decision])
+
+        self.assertEqual(
+            {item.ts_code for item in result},
+            {"002081.SZ", "000887.SZ"},
+        )
+        by_code = {item.ts_code: item for item in result}
+        self.assertEqual(
+            by_code["002081.SZ"].source_ranks,
+            {SOURCE_A: 3, SOURCE_PREMIUM: 5, SOURCE_DECISION: 4},
+        )
+        self.assertEqual(
+            by_code["000887.SZ"].source_ranks,
+            {SOURCE_A: 5, SOURCE_PREMIUM: 2, SOURCE_DECISION: 8},
+        )
+        facts = candidate_validation_inputs(by_code["000887.SZ"])
+        self.assertEqual(facts["source_estimated_up_limit"], 26.05)
+        self.assertEqual(facts["limit_up_price"], 26.06)
+        self.assertEqual(
+            facts["limit_up_rounding_reason"],
+            "LOWER_TICK_TRUNCATION",
+        )
+
+    def test_lower_two_ticks_and_higher_one_tick_remain_blocked(self) -> None:
+        a = parse_a_top10(a_csv(["000887.SZ"]), "a.csv")
+        premium = parse_premium(
+            premium_csv(["000887.SZ"], close_T=23.69),
+            "premium.csv",
+        )
+        for source_limit in (26.04, 26.07):
+            with self.subTest(source_limit=source_limit):
+                row = decision_row(1, "000887.SZ")
+                row["d_close"] = 23.69
+                row["estimated_up_limit"] = source_limit
+                with self.assertRaisesRegex(
+                    ContractError,
+                    "estimated_up_limit disagrees",
+                ):
+                    strict_intersection(
+                        [a, premium, self.decision([row])]
+                    )
 
     def test_non_half_tick_one_tick_error_remains_blocked(self) -> None:
         row = decision_row(1, "600000.SH")
@@ -397,10 +525,10 @@ class SourceContractTests(unittest.TestCase):
 
     def test_limit_price_must_align_to_one_cent_tick(self) -> None:
         row = decision_row(1, "600000.SH")
-        row["d_close"] = 94.95
-        row["estimated_up_limit"] = 104.445
+        row["d_close"] = 23.69
+        row["estimated_up_limit"] = 26.055
         premium = parse_premium(
-            premium_csv(["600000.SH"], close_T=94.95),
+            premium_csv(["600000.SH"], close_T=23.69),
             "premium.csv",
         )
         with self.assertRaisesRegex(ContractError, "align to the 0.01 price tick"):

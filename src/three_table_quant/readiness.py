@@ -18,6 +18,10 @@ RETRYABLE_SOURCE_CODES = frozenset(
         "BUY_DATE_MISMATCH",
         "EXIT_DATE_MISMATCH",
         "SOURCE_TARGET_DATE_NOT_READY",
+        # The three memberships are present, but one frozen candidate field
+        # is temporarily inconsistent.  Retry the whole batch; never drop the
+        # offending stock or reinterpret it as a valid zero intersection.
+        "STRICT_INTERSECTION_CONTRACT_FAILED",
     }
 )
 COMPLETED_STATUSES = frozenset({"RANKED", "NO_CANDIDATE"})

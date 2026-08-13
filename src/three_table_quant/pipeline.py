@@ -13,7 +13,7 @@ from zoneinfo import ZoneInfo
 from .candidate_facts import candidate_validation_inputs
 from .calendar import parse_calendar_date
 from .dashboard import build_dashboard, validate_dashboard
-from .domain import Candidate, Signal, SourceIssue, iso_date
+from .domain import Candidate, ContractError, Signal, SourceIssue, iso_date
 from .execution_policy import build_order_spec
 from .http import HttpClient
 from .ledger import (
@@ -256,6 +256,7 @@ def _append_limit_rounding_issues(
                 "normalized_limit_up_price": facts.get("limit_up_price"),
                 "d_close": facts.get("d_close"),
                 "mechanism_limit_pct": facts.get("mechanism_limit_pct"),
+                "rounding_reason": facts.get("limit_up_rounding_reason"),
             }
         )
     if adjusted:
@@ -264,11 +265,58 @@ def _append_limit_rounding_issues(
                 "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
                 "warning",
                 "decision_table",
-                "Decision涨停价位于半价位边界且使用了向下偶数舍入；"
+                "Decision涨停价使用了可审计的向下舍入口径；"
                 "本系统已按交易所四舍五入规则规范化到0.01元",
                 {"candidates": adjusted},
             )
         )
+
+
+def _strict_intersection_or_issue(
+    tables: list[Any],
+    source_issues: list[SourceIssue],
+    current_run: dict[str, Any],
+) -> list[Candidate] | None:
+    """Return the complete intersection or record one publishable blocker.
+
+    A malformed member must never be silently removed and must never become a
+    fabricated zero-candidate day.  Returning ``None`` is deliberately
+    distinct from the valid empty list returned for a real zero intersection.
+    """
+
+    try:
+        return strict_intersection(tables)
+    except ContractError as exc:
+        decision_dates = sorted(
+            {
+                str(getattr(table, "decision_date", "") or "")
+                for table in tables
+                if getattr(table, "decision_date", None)
+            }
+        )
+        source_issues.append(
+            SourceIssue(
+                "STRICT_INTERSECTION_CONTRACT_FAILED",
+                "error",
+                "aggregate",
+                "三表成员已对齐，但候选冻结字段未通过合约校验；整批阻断且不删票、不伪造0支",
+                {
+                    "error": str(exc),
+                    "decision_dates": decision_dates,
+                },
+            )
+        )
+        current_run.update(
+            {
+                "status": "INPUT_BLOCKED",
+                "message": "三表严格交集字段校验失败；保留完整成员并等待源数据修复",
+                "completed": False,
+                "completed_at": None,
+                "outcome": "INPUT_BLOCKED",
+                "intersection_count": None,
+            }
+        )
+        return None
 
 
 def _market_data_provenance(bars_by_code: dict[str, list[Any]]) -> dict[str, Any]:
@@ -1073,9 +1121,18 @@ def run_pipeline(
         current_run["target_decision_date"] = iso_date(normalized_target)
 
     if not any(item.severity == "error" for item in source_issues):
-        candidates = strict_intersection(tables)
-        _append_limit_rounding_issues(source_issues, candidates)
-        current_run["intersection_count"] = len(candidates)
+        candidates = _strict_intersection_or_issue(
+            tables,
+            source_issues,
+            current_run,
+        )
+        if candidates is not None:
+            _append_limit_rounding_issues(source_issues, candidates)
+            current_run["intersection_count"] = len(candidates)
+    else:
+        candidates = None
+
+    if candidates is not None:
         by_id = {table.source_id: table for table in tables}
         decision_date = tables[0].decision_date
         buy_date = tables[0].buy_date

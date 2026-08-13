@@ -129,6 +129,7 @@ def candidate_validation_inputs(candidate: Any) -> dict[str, Any]:
     )
     estimated_up_limit = source_estimated_up_limit
     limit_up_rounding_adjusted = False
+    limit_up_rounding_reason = None
     source_limit_decimal = (
         Decimal(str(decision.get("estimated_up_limit")).strip())
         if source_estimated_up_limit is not None
@@ -167,13 +168,23 @@ def candidate_validation_inputs(candidate: Any) -> dict[str, Any]:
                 and expected_limit_decimal == lower_tick + PRICE_TICK
                 and source_limit_decimal == lower_tick
             )
-            if not is_legacy_half_even_lower:
+            is_lower_tick_truncation = (
+                not is_exact_half_tick
+                and expected_limit_decimal == lower_tick + PRICE_TICK
+                and source_limit_decimal == lower_tick
+            )
+            if not (is_legacy_half_even_lower or is_lower_tick_truncation):
                 raise ContractError(
                     "candidate: estimated_up_limit disagrees with frozen D close "
                     f"and mechanism ({source_estimated_up_limit} vs "
                     f"{float(expected_limit_decimal)})"
                 )
             limit_up_rounding_adjusted = True
+            limit_up_rounding_reason = (
+                "HALF_EVEN_LOWER_TICK"
+                if is_legacy_half_even_lower
+                else "LOWER_TICK_TRUNCATION"
+            )
         estimated_up_limit = float(expected_limit_decimal)
 
     return {
@@ -187,6 +198,7 @@ def candidate_validation_inputs(candidate: Any) -> dict[str, Any]:
         "estimated_up_limit": estimated_up_limit,
         "limit_up_price": estimated_up_limit,
         "limit_up_rounding_adjusted": limit_up_rounding_adjusted,
+        "limit_up_rounding_reason": limit_up_rounding_reason,
         "limit_up_source": (
             (
                 "D_CLOSE_MECHANISM_ROUND_HALF_UP"
