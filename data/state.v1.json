@@ -12475,7 +12475,8 @@
         "time_precision": "minute",
         "label_quality": "CONSERVATIVE",
         "data_tier": "MINUTE_BAR",
-        "avg_price": 6.26
+        "avg_price": 6.26,
+        "legacy_lock_rechecks": []
       },
       "pnl": null,
       "diagnostics": {
