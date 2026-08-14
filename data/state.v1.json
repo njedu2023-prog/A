@@ -12844,6 +12844,231 @@
       "single_stock_research_schema_version": "single_stock_research_audit_v1",
       "single_stock_research_collection_status": "COMPLETE",
       "single_stock_research_completed_at": "2026-08-13T23:32:22+08:00"
+    },
+    {
+      "signal_id": "20260814-13e1ad355352",
+      "decision_date": "20260814",
+      "buy_date": "20260817",
+      "exit_date": "20260818",
+      "generated_at": "2026-08-14T22:19:17+08:00",
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/991e05c6dc72d4fb408d73e8a8652549ccd6519f/outputs/learning/pred_top10_20260814.csv",
+          "decision_date": "20260814",
+          "content_sha256": "dc10181e3bf5b71fc8c85591eaa3973102427cfecc295ae27f583309d5a3f3e9",
+          "repository_commit_sha": "991e05c6dc72d4fb408d73e8a8652549ccd6519f",
+          "generated_at": "2026-08-14T12:25:38Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "603881.SH",
+              "name": "数据港"
+            },
+            {
+              "rank": 2,
+              "ts_code": "000620.SZ",
+              "name": "盈新发展"
+            },
+            {
+              "rank": 3,
+              "ts_code": "600487.SH",
+              "name": "亨通光电"
+            },
+            {
+              "rank": 4,
+              "ts_code": "603989.SH",
+              "name": "艾华集团"
+            },
+            {
+              "rank": 5,
+              "ts_code": "603618.SH",
+              "name": "杭电股份"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600353.SH",
+              "name": "旭光电子"
+            },
+            {
+              "rank": 8,
+              "ts_code": "600186.SH",
+              "name": "莲花控股"
+            },
+            {
+              "rank": 9,
+              "ts_code": "603083.SH",
+              "name": "剑桥科技"
+            },
+            {
+              "rank": 10,
+              "ts_code": "603186.SH",
+              "name": "华正新材"
+            }
+          ]
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9/outputs/premium/premium_top10_20260814.csv",
+          "decision_date": "20260814",
+          "content_sha256": "f8b752c268afd0d3eae66b84f6624e5a59320416e06a99398c88f7e52886ae54",
+          "repository_commit_sha": "e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9",
+          "generated_at": "2026-08-14T12:35:29Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "002724.SZ",
+              "name": "海洋王"
+            },
+            {
+              "rank": 2,
+              "ts_code": "001260.SZ",
+              "name": "坤泰股份"
+            },
+            {
+              "rank": 3,
+              "ts_code": "000936.SZ",
+              "name": "华西股份"
+            },
+            {
+              "rank": 4,
+              "ts_code": "603118.SH",
+              "name": "共进股份"
+            },
+            {
+              "rank": 5,
+              "ts_code": "603330.SH",
+              "name": "天洋新材"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002172.SZ",
+              "name": "澳洋健康"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600353.SH",
+              "name": "旭光电子"
+            },
+            {
+              "rank": 8,
+              "ts_code": "603989.SH",
+              "name": "艾华集团"
+            },
+            {
+              "rank": 9,
+              "ts_code": "002907.SZ",
+              "name": "华森制药"
+            },
+            {
+              "rank": 10,
+              "ts_code": "603881.SH",
+              "name": "数据港"
+            }
+          ]
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9/outputs/decision/action_plan_20260817.json",
+          "decision_date": "20260814",
+          "content_sha256": "400dd0fd6779c1f5a26c25adcd886f3054e71988348eaed10e9742d2fb7e8dda",
+          "repository_commit_sha": "e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9",
+          "generated_at": "2026-08-14T12:21:07+00:00",
+          "row_count": 9,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "603118.SH",
+              "name": "共进股份"
+            },
+            {
+              "rank": 2,
+              "ts_code": "002322.SZ",
+              "name": "理工能科"
+            },
+            {
+              "rank": 3,
+              "ts_code": "000936.SZ",
+              "name": "华西股份"
+            },
+            {
+              "rank": 4,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 5,
+              "ts_code": "002172.SZ",
+              "name": "澳洋健康"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002724.SZ",
+              "name": "海洋王"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600613.SH",
+              "name": "神奇制药"
+            },
+            {
+              "rank": 8,
+              "ts_code": "603330.SH",
+              "name": "天洋新材"
+            },
+            {
+              "rank": 9,
+              "ts_code": "001260.SZ",
+              "name": "坤泰股份"
+            }
+          ]
+        }
+      ],
+      "candidates": [],
+      "model_version": "transparent_shadow_champion_v2",
+      "status": "NO_CANDIDATE",
+      "market_data_provenance": {
+        "daily_features": {}
+      },
+      "ranking_engine": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_schema_version": "ranking_prediction_v2",
+        "prediction_stage": "D_PRIOR",
+        "status": "BASELINE_ACTIVE",
+        "status_label": "基线运行 · 样本积累中",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null,
+        "mature_candidates": 9,
+        "required_mature_candidates": 180,
+        "mature_rank_counts": {
+          "1": 5,
+          "2": 2,
+          "3": 1
+        },
+        "required_rank_samples": 60,
+        "lockbox_days": 5,
+        "required_lockbox_days": 126,
+        "promotion_eligible": false,
+        "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
+        "training_row_count": 11,
+        "excluded_feature_row_count": 3
+      },
+      "single_stock_research_schema_version": "single_stock_research_audit_v1",
+      "single_stock_research_collection_status": "COMPLETE",
+      "single_stock_research_completed_at": "2026-08-14T22:19:17+08:00"
     }
   ],
   "trades": [

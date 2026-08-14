@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-13T23:32:22+08:00",
+  "generated_at": "2026-08-14T22:19:17+08:00",
   "issues": [
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
@@ -21,26 +21,7 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 10
-      }
-    },
-    {
-      "code": "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision涨停价使用了可审计的向下舍入口径；本系统已按交易所四舍五入规则规范化到0.01元",
-      "details": {
-        "candidates": [
-          {
-            "ts_code": "000887.SZ",
-            "name": "中鼎股份",
-            "source_estimated_up_limit": 26.05,
-            "normalized_limit_up_price": 26.06,
-            "d_close": 23.69,
-            "mechanism_limit_pct": 10.0,
-            "rounding_reason": "LOWER_TICK_TRUNCATION"
-          }
-        ]
+        "row_count": 9
       }
     }
   ]

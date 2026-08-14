@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-14T19:25:55+08:00",
+  "generated_at": "2026-08-14T22:19:17+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -28,49 +28,49 @@
     "calibrated": false,
     "fallback_active": false,
     "fallback_reason": null,
-    "mature_candidates": 6,
+    "mature_candidates": 9,
     "required_mature_candidates": 180,
     "mature_rank_counts": {
-      "1": 3,
-      "2": 1,
+      "1": 5,
+      "2": 2,
       "3": 1
     },
     "required_rank_samples": 60,
-    "lockbox_days": 3,
+    "lockbox_days": 5,
     "required_lockbox_days": 126,
     "promotion_eligible": false,
     "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126"
   },
   "current_run": {
-    "status": "RANKED",
-    "message": "三表严格交集实际保留2支并完成重新排序",
+    "status": "NO_CANDIDATE",
+    "message": "D日名单筛选已执行；三表严格交集0支，合法空选且不补票",
     "completed": true,
-    "completed_at": "2026-08-13T23:32:22+08:00",
-    "decision_date": "2026-08-13",
-    "outcome": "COMPLETED_RANKED",
+    "completed_at": "2026-08-14T22:19:17+08:00",
+    "decision_date": "2026-08-14",
+    "outcome": "COMPLETED_ZERO_INTERSECTION",
     "source_table_counts": {
       "a_top10": 10,
       "premium_top10": 10,
-      "decision_table": 10
+      "decision_table": 9
     },
     "source_dates": {
       "a_top10": {
-        "D": "20260813",
-        "T": "20260814",
+        "D": "20260814",
+        "T": "20260817",
         "T1": null
       },
       "premium_top10": {
-        "D": "20260813",
-        "T": "20260814",
-        "T1": "20260817"
+        "D": "20260814",
+        "T": "20260817",
+        "T1": "20260818"
       },
       "decision_table": {
-        "D": "20260813",
-        "T": "20260814",
-        "T1": "20260817"
+        "D": "20260814",
+        "T": "20260817",
+        "T1": "20260818"
       }
     },
-    "intersection_count": 2,
+    "intersection_count": 0,
     "ranking_engine": {
       "engine_version": "formal_ranking_engine_v2",
       "selected_model_id": "transparent_shadow_champion_v2",
@@ -85,22 +85,22 @@
       "calibrated": false,
       "fallback_active": false,
       "fallback_reason": null,
-      "mature_candidates": 6,
+      "mature_candidates": 9,
       "required_mature_candidates": 180,
       "mature_rank_counts": {
-        "1": 3,
-        "2": 1,
+        "1": 5,
+        "2": 2,
         "3": 1
       },
       "required_rank_samples": 60,
-      "lockbox_days": 3,
+      "lockbox_days": 5,
       "required_lockbox_days": 126,
       "promotion_eligible": false,
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
-      "training_row_count": 9,
+      "training_row_count": 11,
       "excluded_feature_row_count": 3
     },
-    "target_decision_date": "2026-08-13"
+    "target_decision_date": "2026-08-14"
   },
   "source_issues": [
     {
@@ -122,26 +122,7 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 10
-      }
-    },
-    {
-      "code": "DECISION_LIMIT_PRICE_ROUNDING_NORMALIZED",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision涨停价使用了可审计的向下舍入口径；本系统已按交易所四舍五入规则规范化到0.01元",
-      "details": {
-        "candidates": [
-          {
-            "ts_code": "000887.SZ",
-            "name": "中鼎股份",
-            "source_estimated_up_limit": 26.05,
-            "normalized_limit_up_price": 26.06,
-            "d_close": 23.69,
-            "mechanism_limit_pct": 10.0,
-            "rounding_reason": "LOWER_TICK_TRUNCATION"
-          }
-        ]
+        "row_count": 9
       }
     }
   ],
@@ -151,7 +132,7 @@
   "rank_metrics": {
     "1": {
       "cumulative_return": 0.01376240052507649,
-      "final_days": 7,
+      "final_days": 8,
       "pending_days": 1,
       "is_provisional": true,
       "closed_trades": 6,
@@ -159,7 +140,7 @@
     },
     "2": {
       "cumulative_return": -0.17078858571969768,
-      "final_days": 7,
+      "final_days": 8,
       "pending_days": 1,
       "is_provisional": true,
       "closed_trades": 3,
@@ -167,7 +148,7 @@
     },
     "3": {
       "cumulative_return": -0.0007189995078769051,
-      "final_days": 8,
+      "final_days": 9,
       "pending_days": 0,
       "is_provisional": false,
       "closed_trades": 2,
@@ -176,7 +157,7 @@
   },
   "portfolio_metrics": {
     "cumulative_return": 0.10339862380794096,
-    "final_days": 7,
+    "final_days": 8,
     "pending_days": 1,
     "is_provisional": true,
     "history": [
@@ -299,12 +280,27 @@
         "result": "PENDING",
         "is_final": false,
         "is_provisional": false
+      },
+      {
+        "date": "2026-08-18",
+        "decision_date": "2026-08-14",
+        "planned_exit_date": "2026-08-18",
+        "return_date": "2026-08-18",
+        "candidate_count": 0,
+        "final_count": 0,
+        "pending_count": 0,
+        "profitable_count": 0,
+        "portfolio_return": 0.0,
+        "equity_index": 1.103398623807941,
+        "result": "FLAT",
+        "is_final": true,
+        "is_provisional": false
       }
     ],
     "by_month": {
       "2026-08": {
         "cumulative_return": 0.10339862380794096,
-        "final_days": 7,
+        "final_days": 8,
         "pending_days": 1,
         "is_provisional": true
       }
@@ -10134,6 +10130,239 @@
           "t_day_validation": null
         }
       }
+    },
+    {
+      "decision_date": "2026-08-14",
+      "buy_date": "2026-08-17",
+      "planned_exit_date": "2026-08-18",
+      "selection_status": "NO_CANDIDATE",
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "single_stock_research_schema_version": "single_stock_research_audit_v1",
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/991e05c6dc72d4fb408d73e8a8652549ccd6519f/outputs/learning/pred_top10_20260814.csv",
+          "decision_date": "20260814",
+          "content_sha256": "dc10181e3bf5b71fc8c85591eaa3973102427cfecc295ae27f583309d5a3f3e9",
+          "repository_commit_sha": "991e05c6dc72d4fb408d73e8a8652549ccd6519f",
+          "generated_at": "2026-08-14T12:25:38Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "603881.SH",
+              "name": "数据港"
+            },
+            {
+              "rank": 2,
+              "ts_code": "000620.SZ",
+              "name": "盈新发展"
+            },
+            {
+              "rank": 3,
+              "ts_code": "600487.SH",
+              "name": "亨通光电"
+            },
+            {
+              "rank": 4,
+              "ts_code": "603989.SH",
+              "name": "艾华集团"
+            },
+            {
+              "rank": 5,
+              "ts_code": "603618.SH",
+              "name": "杭电股份"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600353.SH",
+              "name": "旭光电子"
+            },
+            {
+              "rank": 8,
+              "ts_code": "600186.SH",
+              "name": "莲花控股"
+            },
+            {
+              "rank": 9,
+              "ts_code": "603083.SH",
+              "name": "剑桥科技"
+            },
+            {
+              "rank": 10,
+              "ts_code": "603186.SH",
+              "name": "华正新材"
+            }
+          ]
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9/outputs/premium/premium_top10_20260814.csv",
+          "decision_date": "20260814",
+          "content_sha256": "f8b752c268afd0d3eae66b84f6624e5a59320416e06a99398c88f7e52886ae54",
+          "repository_commit_sha": "e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9",
+          "generated_at": "2026-08-14T12:35:29Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "002724.SZ",
+              "name": "海洋王"
+            },
+            {
+              "rank": 2,
+              "ts_code": "001260.SZ",
+              "name": "坤泰股份"
+            },
+            {
+              "rank": 3,
+              "ts_code": "000936.SZ",
+              "name": "华西股份"
+            },
+            {
+              "rank": 4,
+              "ts_code": "603118.SH",
+              "name": "共进股份"
+            },
+            {
+              "rank": 5,
+              "ts_code": "603330.SH",
+              "name": "天洋新材"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002172.SZ",
+              "name": "澳洋健康"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600353.SH",
+              "name": "旭光电子"
+            },
+            {
+              "rank": 8,
+              "ts_code": "603989.SH",
+              "name": "艾华集团"
+            },
+            {
+              "rank": 9,
+              "ts_code": "002907.SZ",
+              "name": "华森制药"
+            },
+            {
+              "rank": 10,
+              "ts_code": "603881.SH",
+              "name": "数据港"
+            }
+          ]
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9/outputs/decision/action_plan_20260817.json",
+          "decision_date": "20260814",
+          "content_sha256": "400dd0fd6779c1f5a26c25adcd886f3054e71988348eaed10e9742d2fb7e8dda",
+          "repository_commit_sha": "e8f810494b9bfcf5b4bd4949ad85dde509c5c3f9",
+          "generated_at": "2026-08-14T12:21:07+00:00",
+          "row_count": 9,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "603118.SH",
+              "name": "共进股份"
+            },
+            {
+              "rank": 2,
+              "ts_code": "002322.SZ",
+              "name": "理工能科"
+            },
+            {
+              "rank": 3,
+              "ts_code": "000936.SZ",
+              "name": "华西股份"
+            },
+            {
+              "rank": 4,
+              "ts_code": "002081.SZ",
+              "name": "金 螳 螂"
+            },
+            {
+              "rank": 5,
+              "ts_code": "002172.SZ",
+              "name": "澳洋健康"
+            },
+            {
+              "rank": 6,
+              "ts_code": "002724.SZ",
+              "name": "海洋王"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600613.SH",
+              "name": "神奇制药"
+            },
+            {
+              "rank": 8,
+              "ts_code": "603330.SH",
+              "name": "天洋新材"
+            },
+            {
+              "rank": 9,
+              "ts_code": "001260.SZ",
+              "name": "坤泰股份"
+            }
+          ]
+        }
+      ],
+      "market_data_provenance": {
+        "daily_features": {}
+      },
+      "intersection_count": 0,
+      "candidates": [],
+      "rank_slots": {
+        "1": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        },
+        "2": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        },
+        "3": {
+          "candidate_id": null,
+          "status": "NOT_AVAILABLE",
+          "reason": "NO_CANDIDATE_FOR_FIXED_RANK",
+          "buy": null,
+          "exit": null,
+          "pnl": null,
+          "t_day_validation": null
+        }
+      }
     }
   ],
   "rank_daily": [
@@ -10349,6 +10578,33 @@
           "is_final": true,
           "daily_return": 0.0,
           "return_date": "2026-08-17",
+          "equity_index": 0.9992810004921231
+        }
+      }
+    },
+    {
+      "date": "2026-08-18",
+      "decision_date": "2026-08-14",
+      "ranks": {
+        "1": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-18",
+          "equity_index": 1.0137624005250765
+        },
+        "2": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-18",
+          "equity_index": 0.8292114142803023
+        },
+        "3": {
+          "state": "CASH",
+          "is_final": true,
+          "daily_return": 0.0,
+          "return_date": "2026-08-18",
           "equity_index": 0.9992810004921231
         }
       }
@@ -14805,6 +15061,33 @@
           "return_date": "2026-08-17"
         }
       ]
+    },
+    {
+      "decision_date": "2026-08-14",
+      "buy_date": "2026-08-17",
+      "planned_exit_date": "2026-08-18",
+      "return_date": "2026-08-18",
+      "candidate_count": 0,
+      "final_count": 0,
+      "pending_count": 0,
+      "profitable_count": 0,
+      "portfolio_return": 0.0,
+      "result": "FLAT",
+      "is_final": true,
+      "is_provisional": false,
+      "model": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_stage": "D_PRIOR",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null
+      },
+      "candidates": []
     }
   ],
   "benchmark_daily": [
@@ -16960,6 +17243,162 @@
           ]
         }
       }
+    },
+    {
+      "schema_version": "batch_benchmarks_v1",
+      "decision_date": "2026-08-14",
+      "return_unit": "decimal",
+      "return_basis": "net_return_on_allocated",
+      "cohort_count": 0,
+      "cohort_final_count": 0,
+      "is_final": true,
+      "model_order": [],
+      "borda_order": [],
+      "policies": {
+        "cash": {
+          "policy_id": "cash",
+          "label": "现金",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "all_candidates_equal_weight": {
+          "policy_id": "all_candidates_equal_weight",
+          "label": "全部候选等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "fixed_model_rank_1": {
+          "policy_id": "fixed_model_rank_1",
+          "label": "固定TOP1",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "fixed_model_rank_2": {
+          "policy_id": "fixed_model_rank_2",
+          "label": "固定TOP2",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "fixed_model_rank_3": {
+          "policy_id": "fixed_model_rank_3",
+          "label": "固定TOP3",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "model_top1_equal_weight": {
+          "policy_id": "model_top1_equal_weight",
+          "label": "模型序TOP1等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "borda_top1_equal_weight": {
+          "policy_id": "borda_top1_equal_weight",
+          "label": "Borda序TOP1等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 1,
+          "selected_count": 0,
+          "cash_slot_count": 1,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "model_top2_equal_weight": {
+          "policy_id": "model_top2_equal_weight",
+          "label": "模型序TOP2等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 2,
+          "selected_count": 0,
+          "cash_slot_count": 2,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "borda_top2_equal_weight": {
+          "policy_id": "borda_top2_equal_weight",
+          "label": "Borda序TOP2等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 2,
+          "selected_count": 0,
+          "cash_slot_count": 2,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "model_top3_equal_weight": {
+          "policy_id": "model_top3_equal_weight",
+          "label": "模型序TOP3等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 3,
+          "selected_count": 0,
+          "cash_slot_count": 3,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        },
+        "borda_top3_equal_weight": {
+          "policy_id": "borda_top3_equal_weight",
+          "label": "Borda序TOP3等权",
+          "return_basis": "net_return_on_allocated",
+          "denominator_slots": 3,
+          "selected_count": 0,
+          "cash_slot_count": 3,
+          "final_count": 0,
+          "pending_count": 0,
+          "is_final": true,
+          "portfolio_return": 0.0,
+          "constituents": []
+        }
+      }
     }
   ],
   "automation_runs": {
@@ -16983,9 +17422,9 @@
     },
     "output": {
       "scheduled_local_time": "21:30",
-      "last_attempted_at": "2026-08-13T23:32:22+08:00",
+      "last_attempted_at": "2026-08-14T22:19:17+08:00",
       "status": "COMPLETED",
-      "last_completed_at": "2026-08-13T23:32:22+08:00"
+      "last_completed_at": "2026-08-14T22:19:17+08:00"
     }
   }
 }
