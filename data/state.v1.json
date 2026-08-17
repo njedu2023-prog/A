@@ -16000,8 +16000,8 @@
         "maximum_reserved_cash_cny": 99482.83012,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "EXIT_DELAYED",
-      "reason": "exit_window_locked_or_capacity_insufficient",
+      "status": "EXIT_UNVERIFIABLE",
+      "reason": "five_complete_exit_minutes_required",
       "buy": {
         "at": "2026-08-14T09:25:00+08:00",
         "submitted_qty": 18800,
@@ -16192,6 +16192,16 @@
             "remaining_qty": 6900,
             "delay_trading_days": 0,
             "attempt_count": 1
+          },
+          {
+            "date": "20260818",
+            "result": "UNVERIFIABLE",
+            "reason": "five_complete_exit_minutes_required",
+            "available_minutes": [],
+            "duplicate_minutes": [],
+            "invalid_time_semantics": [],
+            "invalid_price_adjustments": [],
+            "attempt_count": 1
           }
         ],
         "actual_exit_at": null,
@@ -16212,7 +16222,8 @@
           "counts_as_fill": true,
           "policy": "T_DAILY_UNADJUSTED_OPEN",
           "quantity_policy": "FROZEN_ORDER_SPEC"
-        }
+        },
+        "available_exit_minutes": []
       },
       "t_day_validation": {
         "status": "VERIFIED",
