@@ -1,15 +1,14 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-18T00:05:13+08:00",
+  "generated_at": "2026-08-18T23:53:45+08:00",
   "issues": [
     {
       "code": "SOURCE_LOAD_FAILED",
       "severity": "error",
-      "source_id": "premium_top10",
-      "message": "GET failed after 3 attempts: https://raw.githubusercontent.com/njedu2023-prog/top10-decision/5e9ad7e83738bc2de20911d0bf346edd9dc3f6ec/outputs/premium/_last_run.txt: HTTP Error 429: Too Many Requests",
+      "source_id": "decision_table",
+      "message": "decision_table: missing required columns ['d_close', 'estimated_up_limit']",
       "details": {
-        "pointer": {},
-        "repository_commit_sha": "5e9ad7e83738bc2de20911d0bf346edd9dc3f6ec"
+        "repository_commit_sha": "6d78406bb6c2db784345ee6d2bd2d98571081ee3"
       }
     },
     {
@@ -20,7 +19,7 @@
       "details": {
         "available": [
           "a_top10",
-          "decision_table"
+          "premium_top10"
         ],
         "required": [
           "a_top10",
@@ -30,40 +29,11 @@
       }
     },
     {
-      "code": "A_TOP10_INTRADAY_COVERAGE_ZERO",
+      "code": "PREMIUM_NO_ELIGIBLE_ROWS",
       "severity": "warning",
-      "source_id": "a_top10",
-      "message": "当前展示行的 intraday_available 全为0；成员关系仍可读取，但分时证据缺失",
+      "source_id": "premium_top10",
+      "message": "当前 Premium 展示行的 premium_eligible 全为0；保留其表内成员关系，但不把该状态视为交易背书",
       "details": {
-        "row_count": 10
-      }
-    },
-    {
-      "code": "DECISION_AUXILIARY_COVERAGE_INCOMPLETE",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "Decision辅助模型字段存在缺失；实际展示成员继续参与交集，缺失值不作为数值特征",
-      "details": {
-        "row_count": 10,
-        "non_null_counts": {
-          "decision_p_fill": 6,
-          "decision_e_ret": 6,
-          "decision_ev": 6,
-          "decision_cost": 6,
-          "decision_risk_penalty": 6
-        }
-      }
-    },
-    {
-      "code": "DECISION_NO_FORMAL_BUY",
-      "severity": "warning",
-      "source_id": "decision_table",
-      "message": "当前 Decision 表没有正式 BUY 行；这里只使用成员关系与辅助特征",
-      "details": {
-        "actions": [
-          "REJECT",
-          "SHADOW_ONLY"
-        ],
         "row_count": 10
       }
     }
