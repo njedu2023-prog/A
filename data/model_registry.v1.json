@@ -15,9 +15,9 @@
   },
   "promotion_readiness": {
     "status": "INSUFFICIENT_DATA",
-    "mature_candidates": 10,
+    "mature_candidates": 11,
     "fixed_rank_mature_counts": {
-      "1": 5,
+      "1": 6,
       "2": 3,
       "3": 1
     },

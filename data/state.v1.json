@@ -16000,8 +16000,8 @@
         "maximum_reserved_cash_cny": 99482.83012,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "EXIT_UNVERIFIABLE",
-      "reason": "five_complete_exit_minutes_required",
+      "status": "CLOSED",
+      "reason": "shadow_exit_completed",
       "buy": {
         "at": "2026-08-14T09:25:00+08:00",
         "submitted_qty": 18800,
@@ -16029,6 +16029,10 @@
           {
             "date": "20260817",
             "value": 5.82
+          },
+          {
+            "date": "20260818",
+            "value": 6.399043348281017
           }
         ],
         "fills": [
@@ -16106,16 +16110,92 @@
             "label_quality": "CONSERVATIVE",
             "market_data_provider": "EASTMONEY",
             "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260818T11:00",
+            "at": "20260818T11:00:00+08:00",
+            "date": "20260818",
+            "minute": "11:00",
+            "qty": 1400,
+            "benchmark_price": 6.395216741405082,
+            "price": 6.4,
+            "amount": 8960.0,
+            "fees": 9.569600000000001,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260818T11:01",
+            "at": "20260818T11:01:00+08:00",
+            "date": "20260818",
+            "minute": "11:01",
+            "qty": 1400,
+            "benchmark_price": 6.4,
+            "price": 6.4,
+            "amount": 8960.0,
+            "fees": 9.569600000000001,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260818T11:02",
+            "at": "20260818T11:02:00+08:00",
+            "date": "20260818",
+            "minute": "11:02",
+            "qty": 1400,
+            "benchmark_price": 6.4,
+            "price": 6.4,
+            "amount": 8960.0,
+            "fees": 9.569600000000001,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260818T11:03",
+            "at": "20260818T11:03:00+08:00",
+            "date": "20260818",
+            "minute": "11:03",
+            "qty": 1400,
+            "benchmark_price": 6.4,
+            "price": 6.4,
+            "amount": 8960.0,
+            "fees": 9.569600000000001,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260818T11:04",
+            "at": "20260818T11:04:00+08:00",
+            "date": "20260818",
+            "minute": "11:04",
+            "qty": 1300,
+            "benchmark_price": 6.4,
+            "price": 6.4,
+            "amount": 8320.0,
+            "fees": 9.2432,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "EASTMONEY",
+            "price_adjustment": "NONE"
           }
         ],
-        "filled_qty": 11900,
-        "remaining_qty": 6900,
-        "sell_amount": 69258.0,
-        "fees": 61.956379999999996,
-        "net_proceeds": 69196.04362,
-        "delay_trading_days": null,
+        "filled_qty": 18800,
+        "remaining_qty": 0,
+        "sell_amount": 113418.0,
+        "fees": 109.47798,
+        "net_proceeds": 113308.52202,
+        "delay_trading_days": 1,
         "processed_windows": [
-          "20260817"
+          "20260817",
+          "20260818"
         ],
         "attempts": [
           {
@@ -16195,24 +16275,96 @@
           },
           {
             "date": "20260818",
-            "result": "UNVERIFIABLE",
-            "reason": "five_complete_exit_minutes_required",
-            "available_minutes": [],
-            "duplicate_minutes": [],
-            "invalid_time_semantics": [],
-            "invalid_price_adjustments": [],
-            "attempt_count": 1
+            "result": "FILLED",
+            "reason": "completed",
+            "benchmark_twap": 6.399043348281017,
+            "new_fill_ids": [
+              "20260818T11:00",
+              "20260818T11:01",
+              "20260818T11:02",
+              "20260818T11:03",
+              "20260818T11:04"
+            ],
+            "locked_minutes": [],
+            "lock_inference_version": "PREVIOUS_CLOSE_DIRECTION_V1",
+            "lock_checks": [
+              {
+                "minute": "11:00",
+                "one_price": 6.4,
+                "previous_close": 5.819999999999999,
+                "previous_close_source": "RAW_DAILY_PREVIOUS_CLOSE",
+                "previous_close_source_date": "20260818",
+                "previous_close_provider": "EASTMONEY",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:01",
+                "one_price": 6.4,
+                "previous_close": 5.819999999999999,
+                "previous_close_source": "RAW_DAILY_PREVIOUS_CLOSE",
+                "previous_close_source_date": "20260818",
+                "previous_close_provider": "EASTMONEY",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:02",
+                "one_price": 6.4,
+                "previous_close": 5.819999999999999,
+                "previous_close_source": "RAW_DAILY_PREVIOUS_CLOSE",
+                "previous_close_source_date": "20260818",
+                "previous_close_provider": "EASTMONEY",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:03",
+                "one_price": 6.4,
+                "previous_close": 5.819999999999999,
+                "previous_close_source": "RAW_DAILY_PREVIOUS_CLOSE",
+                "previous_close_source_date": "20260818",
+                "previous_close_provider": "EASTMONEY",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:04",
+                "one_price": 6.4,
+                "previous_close": 5.819999999999999,
+                "previous_close_source": "RAW_DAILY_PREVIOUS_CLOSE",
+                "previous_close_source_date": "20260818",
+                "previous_close_provider": "EASTMONEY",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              }
+            ],
+            "remaining_qty": 0,
+            "delay_trading_days": 1,
+            "attempt_count": 2
           }
         ],
-        "actual_exit_at": null,
-        "actual_exit_date": null,
+        "actual_exit_at": "20260818T11:04:00+08:00",
+        "actual_exit_date": "20260818",
         "time_precision": "minute",
         "label_quality": "CONSERVATIVE",
         "data_tier": "MINUTE_BAR",
-        "avg_price": 5.82,
+        "avg_price": 6.0328723404255316,
         "legacy_lock_rechecks": []
       },
-      "pnl": null,
+      "pnl": {
+        "state": "REALIZED",
+        "gross_return": 0.14042955395567702,
+        "net_return_on_invested": 0.13897565925017338,
+        "net_return_on_allocated": 0.13825691900000006,
+        "net_pnl": 13825.691900000005,
+        "asof": "20260818T11:04:00+08:00"
+      },
       "diagnostics": {
         "daily_open_fill": {
           "price": 5.29,
