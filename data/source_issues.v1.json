@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-19T01:55:03+08:00",
+  "generated_at": "2026-08-19T23:54:33+08:00",
   "issues": [
     {
       "code": "SOURCE_LOAD_FAILED",
@@ -8,7 +8,7 @@
       "source_id": "decision_table",
       "message": "decision_table: missing required columns ['d_close', 'estimated_up_limit']",
       "details": {
-        "repository_commit_sha": "6d78406bb6c2db784345ee6d2bd2d98571081ee3"
+        "repository_commit_sha": "3101e027c0b5595f46441b4eccc85c35cbd91b60"
       }
     },
     {

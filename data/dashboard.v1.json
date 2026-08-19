@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-19T19:00:23+08:00",
+  "generated_at": "2026-08-19T23:54:33+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -54,14 +54,14 @@
     },
     "source_dates": {
       "a_top10": {
-        "D": "20260818",
-        "T": "20260819",
+        "D": "20260819",
+        "T": "20260820",
         "T1": null
       },
       "premium_top10": {
-        "D": "20260818",
-        "T": "20260819",
-        "T1": "20260820"
+        "D": "20260819",
+        "T": "20260820",
+        "T1": "20260821"
       }
     },
     "intersection_count": null,
@@ -94,7 +94,7 @@
       "training_row_count": 11,
       "excluded_feature_row_count": 3
     },
-    "target_decision_date": "2026-08-18"
+    "target_decision_date": "2026-08-19"
   },
   "source_issues": [
     {
@@ -103,7 +103,7 @@
       "source_id": "decision_table",
       "message": "decision_table: missing required columns ['d_close', 'estimated_up_limit']",
       "details": {
-        "repository_commit_sha": "6d78406bb6c2db784345ee6d2bd2d98571081ee3"
+        "repository_commit_sha": "3101e027c0b5595f46441b4eccc85c35cbd91b60"
       }
     },
     {
@@ -17902,7 +17902,7 @@
     },
     "output": {
       "scheduled_local_time": "21:30",
-      "last_attempted_at": "2026-08-19T01:55:03+08:00",
+      "last_attempted_at": "2026-08-19T23:54:33+08:00",
       "status": "INPUT_BLOCKED",
       "last_completed_at": "2026-08-14T22:19:17+08:00"
     }
