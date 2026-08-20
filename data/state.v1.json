@@ -13069,6 +13069,1437 @@
       "single_stock_research_schema_version": "single_stock_research_audit_v1",
       "single_stock_research_collection_status": "COMPLETE",
       "single_stock_research_completed_at": "2026-08-14T22:19:17+08:00"
+    },
+    {
+      "signal_id": "20260820-b84e77c95af8",
+      "decision_date": "20260820",
+      "buy_date": "20260821",
+      "exit_date": "20260824",
+      "generated_at": "2026-08-20T21:55:13+08:00",
+      "source_snapshots": [
+        {
+          "source_id": "a_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/a-top10/e1065e10709639935f2fb6b3dead127ede91be4d/outputs/learning/pred_top10_20260820.csv",
+          "decision_date": "20260820",
+          "content_sha256": "88f054d41e36cf65c2a394fd351fbb946c47742c9ede9cfd3bf14bf6f31f0ed3",
+          "repository_commit_sha": "e1065e10709639935f2fb6b3dead127ede91be4d",
+          "generated_at": "2026-08-20T11:56:11Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "001277.SZ",
+              "name": "速达股份"
+            },
+            {
+              "rank": 2,
+              "ts_code": "002552.SZ",
+              "name": "宝鼎科技"
+            },
+            {
+              "rank": 3,
+              "ts_code": "002880.SZ",
+              "name": "卫光生物"
+            },
+            {
+              "rank": 4,
+              "ts_code": "002491.SZ",
+              "name": "通鼎互联"
+            },
+            {
+              "rank": 5,
+              "ts_code": "600613.SH",
+              "name": "神奇制药"
+            },
+            {
+              "rank": 6,
+              "ts_code": "600250.SH",
+              "name": "南京商旅"
+            },
+            {
+              "rank": 7,
+              "ts_code": "600683.SH",
+              "name": "京投发展"
+            },
+            {
+              "rank": 8,
+              "ts_code": "002940.SZ",
+              "name": "昂利康"
+            },
+            {
+              "rank": 9,
+              "ts_code": "601877.SH",
+              "name": "正泰电器"
+            },
+            {
+              "rank": 10,
+              "ts_code": "600539.SH",
+              "name": "狮头股份"
+            }
+          ]
+        },
+        {
+          "source_id": "premium_top10",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/64c323e22d1d85d64302525971c2a24ac0697ff5/outputs/premium/premium_top10_20260820.csv",
+          "decision_date": "20260820",
+          "content_sha256": "14542e587df5f7a72db0d566fc7c6e252b64110ae58115823fec7c9a282b982e",
+          "repository_commit_sha": "64c323e22d1d85d64302525971c2a24ac0697ff5",
+          "generated_at": "2026-08-20T11:59:25Z",
+          "row_count": 10,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "001277.SZ",
+              "name": "速达股份"
+            },
+            {
+              "rank": 2,
+              "ts_code": "600613.SH",
+              "name": "神奇制药"
+            },
+            {
+              "rank": 3,
+              "ts_code": "002940.SZ",
+              "name": "昂利康"
+            },
+            {
+              "rank": 4,
+              "ts_code": "002038.SZ",
+              "name": "双鹭药业"
+            },
+            {
+              "rank": 5,
+              "ts_code": "002437.SZ",
+              "name": "誉衡药业"
+            },
+            {
+              "rank": 6,
+              "ts_code": "000931.SZ",
+              "name": "中 关 村"
+            },
+            {
+              "rank": 7,
+              "ts_code": "002491.SZ",
+              "name": "通鼎互联"
+            },
+            {
+              "rank": 8,
+              "ts_code": "002880.SZ",
+              "name": "卫光生物"
+            },
+            {
+              "rank": 9,
+              "ts_code": "603590.SH",
+              "name": "康辰药业"
+            },
+            {
+              "rank": 10,
+              "ts_code": "600211.SH",
+              "name": "西藏药业"
+            }
+          ]
+        },
+        {
+          "source_id": "decision_table",
+          "url": "https://raw.githubusercontent.com/njedu2023-prog/top10-decision/64c323e22d1d85d64302525971c2a24ac0697ff5/outputs/decision/action_plan_20260821.json",
+          "decision_date": "20260820",
+          "content_sha256": "bf9a3366d409a487104fefa3073edce7396a56429c7400d3bbc8e04018f3d348",
+          "repository_commit_sha": "64c323e22d1d85d64302525971c2a24ac0697ff5",
+          "generated_at": "2026-08-20T13:16:35+00:00",
+          "row_count": 3,
+          "ranked_rows": [
+            {
+              "rank": 1,
+              "ts_code": "002412.SZ",
+              "name": "汉森制药"
+            },
+            {
+              "rank": 2,
+              "ts_code": "603801.SH",
+              "name": "志邦家居"
+            },
+            {
+              "rank": 3,
+              "ts_code": "001277.SZ",
+              "name": "速达股份"
+            }
+          ]
+        }
+      ],
+      "candidates": [
+        {
+          "ts_code": "001277.SZ",
+          "name": "速达股份",
+          "source_ranks": {
+            "a_top10": 1,
+            "premium_top10": 1,
+            "decision_table": 3
+          },
+          "source_values": {
+            "a_top10": {
+              "trade_date": "20260820",
+              "verify_date": "20260821",
+              "rank": "1",
+              "ts_code": "001277.SZ",
+              "name": "速达股份",
+              "晋阶": "2→3",
+              "stage_bonus": "-0.008",
+              "stage_risk_penalty": "0.000825",
+              "stage_adjustment": "-0.008825",
+              "prob": "0.3080698596306005",
+              "Probability": "0.3080698596306005",
+              "p_limit_up_calibrated": "0.3080698596306005",
+              "rank_score": "0.3080698596306005",
+              "probability_is_calibrated": "True",
+              "probability_semantics": "calibrated_probability",
+              "model_contract_status": "valid",
+              "model_contract_reason": "contract=valid; ordered feature contract validated; prediction=ok",
+              "model_schema_version": "step5_core_features_v1",
+              "_prob_src": "hgb",
+              "prob_lr": "0.2335716724673452",
+              "prob_hgb": "0.3080698596306005",
+              "prob_lgbm": "0.2813995836329834",
+              "prob_rule": "0.700648750892162",
+              "StrengthScore": "72.762712",
+              "ThemeBoost": "0.3351513965909831",
+              "board": "专用设备",
+              "final_score": "0.37813",
+              "raw_final_score": "0.3869552024022652",
+              "final_score_v2": "0.37813",
+              "intraday_available": "0",
+              "intraday_status": "missing_stock",
+              "intraday_missing_reason": "stock not covered by intraday_features.csv",
+              "intraday_quality_score": "0.765",
+              "intraday_soft_risk_score": "0.0",
+              "intraday_hard_risk_flag": "0",
+              "intraday_risk_score": "0.0",
+              "late_withdraw_score": "0.0",
+              "reseal_score": "0.5",
+              "open_board_count": "0.0",
+              "auction_strength_score": "1.0",
+              "intraday_confidence_score": "0.0",
+              "risk_level": "中",
+              "risk_label": "分时缺失|低置信",
+              "regime_score": "0.55",
+              "regime_smooth": "0.55",
+              "regime_weight": "0.93",
+              "regime_state": "neutral",
+              "regime_E1": "80",
+              "regime_E2": "0.0",
+              "regime_E3": "0",
+              "run_id": "32366130157",
+              "run_attempt": "1",
+              "commit_sha": "dc8e35f1a0bd9c49cd20229aad2aa920e3e5862d",
+              "generated_at_utc": "2026-08-20T11:56:11Z",
+              "limit_times": "2.0",
+              "advance_stage": "2→3",
+              "stage_quality_weight": "0.92",
+              "stage_risk_weight": "0.015",
+              "stage_prior": "0.35",
+              "stage_source": "limit_list_d",
+              "up_stat": "2/2",
+              "final_score_pre_stage": "0.3869552024022652",
+              "stage_adjustment_applied": "True",
+              "prob_final": "0.3080698596306005",
+              "rank_v2": "1"
+            },
+            "premium_top10": {
+              "rank": "1",
+              "trade_date": "20260820",
+              "base_date": "20260820",
+              "buy_date": "20260821",
+              "target_date": "20260824",
+              "ts_code": "001277.SZ",
+              "name": "速达股份",
+              "晋阶": "2→3",
+              "sector": "专用设备",
+              "close_T": "36.27",
+              "premium_limit_regime": "MAIN_BOARD_10PCT",
+              "rank_group": "TOP10",
+              "is_top10": "1",
+              "is_top20": "1",
+              "榜单分组": "TOP10",
+              "T日建议买入方式": "只观察不追",
+              "T日可接受买入价": "≤36.45",
+              "T+1建议买入方式": "只观察不追",
+              "T+1可接受买入价": "≤36.45",
+              "T+1卖出计划": "观察池：t1_accept<0.52;t1_evidence<0.35；若竞价弱于预期不追",
+              "T+2卖出计划": "观察池：t1_accept<0.52;t1_evidence<0.35；若竞价弱于预期不追",
+              "t_buy_method": "只观察不追",
+              "t_max_buy_price": "≤36.45",
+              "t1_buy_method": "只观察不追",
+              "t1_max_buy_price": "≤36.45",
+              "t1_sell_plan": "观察池：t1_accept<0.52;t1_evidence<0.35；若竞价弱于预期不追",
+              "t2_sell_plan": "观察池：t1_accept<0.52;t1_evidence<0.35；若竞价弱于预期不追",
+              "t_limitup_prob": "0.262671",
+              "T日涨停概率": "0.262671",
+              "t_limitup_strength": "88.1915",
+              "T日涨停强度": "88.1915",
+              "t1_continue_up_rate": "0.493771",
+              "T+1延续上涨率": "0.493771",
+              "limitup_continuation_score": "96.5503",
+              "涨停接力评分": "96.5503",
+              "t_limitup_prob_rule": "0.99",
+              "t_limitup_strength_rule": "88.1915",
+              "t1_continue_up_rate_rule": "0.806455",
+              "limitup_continuation_score_rule": "89.5441",
+              "t_up_prob_model": "0.7009703955142081",
+              "t_high_profit_prob_model": "0.9175534127473539",
+              "t_limitup_prob_model": "0.8036341539941878",
+              "t_touch_limitup_prob_model": "0.8597850866690239",
+              "t1_up_prob_model": "0.14747921099396827",
+              "t1_high_profit_prob_model": "0.8009694545477134",
+              "t1_accept_prob_model": "0.5056693189024436",
+              "t1_fail_prob_model": "0.4275354371828255",
+              "t1_big_drawdown_prob_model": "0.8124227054353751",
+              "t_close_ret_pred": "0.10332145051187461",
+              "t_intraday_ret_pred": "0.07297922370402847",
+              "t1_close_ret_pred": "0.002454265517957955",
+              "t1_high_ret_pred": "0.06648529897279173",
+              "limitup_model_score": "0.6423111097348791",
+              "limitup_model_src": "limitup_probability_engine:model_v2_target_gated",
+              "t_limitup_prob_engine": "0.99",
+              "t1_continue_up_rate_engine": "0.806455",
+              "t_limitup_rank_score": "98.5593",
+              "t_touch_rank_score": "97.6271",
+              "t1_rank_score": "98.3051",
+              "t_limit_model_can_rank": "True",
+              "t_touch_model_can_rank": "True",
+              "t1_model_can_rank": "False",
+              "t_return_model_can_rank": "True",
+              "t1_return_model_can_rank": "False",
+              "t_limit_gate_status": "ACTIVE",
+              "t_touch_gate_status": "ACTIVE",
+              "t1_gate_status": "SHADOW",
+              "t_return_gate_status": "ACTIVE",
+              "t1_return_gate_status": "SHADOW",
+              "t_limit_prob_gate_status": "SHADOW",
+              "t_touch_prob_gate_status": "SHADOW",
+              "t1_prob_gate_status": "SHADOW",
+              "t_limit_model_probability_ready": "False",
+              "t_touch_model_probability_ready": "False",
+              "t1_model_probability_ready": "False",
+              "model_gate_version": "premium_target_gate_v4_walkforward_provenance",
+              "model_can_rank": "True",
+              "model_rank_mode": "t_limit_active__t_touch_active__t1_shadow",
+              "model_quality_flag": "partial",
+              "t_limitup_prob_raw_before_calibration": "0.99",
+              "t_limitup_prob_calibrated": "0.262671",
+              "limitup_calibration_src": "validated_platt_v1",
+              "t1_continue_up_rate_raw_before_calibration": "0.806455",
+              "t1_continue_up_rate_calibrated": "0.493771",
+              "t1_calibration_src": "validated_base_rate_v1",
+              "limitup_alpha_score": "88.661",
+              "t1_alpha_score": "73.9968",
+              "strength_alpha_score": "92.2369",
+              "execution_alpha_score": "81.1712",
+              "premium_adaptive_score": "87.8153",
+              "自适应排序评分": "87.8153",
+              "rank_adaptive_score": "1",
+              "adaptive_weight_limitup": "0.6132915577212738",
+              "adaptive_weight_t1": "0.05",
+              "adaptive_weight_strength": "0.21773571489086788",
+              "adaptive_weight_execution": "0.11897272738785836",
+              "t_up_prob_model_blend": "0.262671",
+              "t_high_profit_prob_model_blend": "0.262671",
+              "t_touch_limitup_prob_blend": "0.262671",
+              "t1_accept_prob_blend": "0.52057",
+              "t1_fail_prob_blend": "0.466482",
+              "t1_big_drawdown_prob_blend": "0.149065",
+              "eret_plus_score": "61.8811",
+              "market_score": "57.6679",
+              "intraday_attack_edge": "66.83",
+              "intraday_execution_edge": "62.13",
+              "intraday_risk_penalty": "0.0",
+              "intraday_hard_risk_flag": "0.0",
+              "execution_safety_score": "82.2313",
+              "execution_score": "82.2313",
+              "risk_penalty_score": "0.122761",
+              "t1_close_ret_pred_score": "50.0",
+              "t1_high_ret_pred_score": "50.0",
+              "t_up_attack_score": "73.4874",
+              "t1_accept_score_raw": "52.7325",
+              "t1_accept_score": "50.0",
+              "t1_evidence_score": "0.0",
+              "premium_t1_component_weight": "0.08",
+              "premium_attack_component_weight": "0.462",
+              "premium_execution_component_weight": "0.1675",
+              "premium_market_component_weight": "0.0905",
+              "premium_final_score": "57.044",
+              "premium_final_score_raw": "0.57044",
+              "premium_rank_score": "64.7368",
+              "premium_rank_score_raw": "0.647368",
+              "premium_eligible": "0",
+              "premium_force_excluded": "0",
+              "premium_bucket": "WATCH",
+              "premium_candidate_state": "RANK_ONLY",
+              "premium_exclude_reason": "t1_accept<0.52;t1_evidence<0.35",
+              "premium_rank_mode": "model_validated_professional_score",
+              "rank_premium_final": "1",
+              "rank_premium_score": "1",
+              "mkt_stock_count": "5540.0",
+              "mkt_up_ratio": "0.7384476534296028",
+              "mkt_avg_ret": "0.01339425552579666",
+              "mkt_median_ret": "0.011760095887884958",
+              "mkt_strong_count": "135.0",
+              "mkt_strong_ratio": "0.024368231046931407",
+              "mkt_touch_strong_count": "280.0",
+              "mkt_touch_strong_ratio": "0.05054151624548736",
+              "mkt_amount_sum": "2092583847.08263",
+              "mkt_emotion_score": "0.5766788324405187",
+              "turnover_rate": "13.5623",
+              "turnover_rate_f": "26.4853",
+              "volume_ratio": "5.01",
+              "circ_mv": "",
+              "float_mv": "",
+              "total_mv": "275652.0",
+              "pe_ttm": "",
+              "pb": "",
+              "returns_1d": "10.0091",
+              "volatility_5d": "0.0447190435482574",
+              "volatility_10d": "0.0379993465899227",
+              "volatility_20d": "0.0301431036418598",
+              "max_drawdown_20d": "-0.0103460577952194",
+              "tail_risk_score": "0.0468348342850745",
+              "hot_boards_score": "3.0",
+              "board_crowding_rank": "5.0",
+              "is_hot_board": "1.0",
+              "board_rank": "5.0",
+              "board_limit_up_count": "3.0",
+              "is_st_like": "0.0",
+              "open_times": "3.0",
+              "fd_amount": "223202388.0",
+              "seal_amount": "223202388.0",
+              "first_limit_time": "",
+              "last_limit_time": "",
+              "limit_touch_count": "",
+              "open_board_count": "",
+              "max_drawdown_after_limit": "",
+              "reseal_count": "",
+              "reseal_minutes_avg": "",
+              "late_volume_ratio": "",
+              "late_price_weakness": "",
+              "late_limit_hold_minutes": "",
+              "late_withdraw_score": "",
+              "reseal_score": "",
+              "intraday_quality_score": "",
+              "intraday_confidence_score": "",
+              "intraday_risk_score": "",
+              "intraday_soft_risk_score": "",
+              "auction_strength_score": "1.0",
+              "auction_amount": "20369232.0",
+              "up_limit": "36.27",
+              "down_limit": "29.67",
+              "is_limit_up": "1.0",
+              "break_count_proxy": "0.0",
+              "limit_up_strength": "1.7770737760584028",
+              "factor_intraday_available": "0",
+              "factor_auction_available": "1.0",
+              "factor_intraday_quality": "0.765",
+              "factor_intraday_confidence": "0.0",
+              "factor_intraday_soft_risk": "0.0",
+              "factor_intraday_risk": "0.0",
+              "factor_intraday_hard_risk": "0",
+              "factor_late_withdraw": "0.0",
+              "factor_reseal": "0.5",
+              "factor_open_board_count": "0.0",
+              "factor_auction_strength": "1.0",
+              "factor_intraday_attack_edge": "0.6683",
+              "factor_intraday_execution_edge": "0.6213",
+              "factor_intraday_risk_penalty": "0.0",
+              "eret_pred_raw": "0.0",
+              "eret_plus_value": "0.07528980281429318",
+              "eret_plus_delta": "0.07528980281429318",
+              "eret_plus_direction": "up",
+              "eret_plus_conf": "high",
+              "eret_plus_conf_score": "0.939198",
+              "eret_plus_src": "ehx:coldstart_v1",
+              "r_p05": "-0.11358130642624889",
+              "r_p25": "-0.003751403874175996",
+              "r_p50": "0.07259020926168139",
+              "r_p75": "0.14893182239753877",
+              "r_p95": "0.2587617249496137",
+              "close_T2_p05": "32.375748740389824",
+              "close_T2_p25": "36.13419147706295",
+              "close_T2_p50": "39.00076114807442",
+              "close_T2_p75": "42.09473930237737",
+              "close_T2_p95": "46.98144226179955",
+              "t1_up_rate": "0.739350891981143",
+              "T+1上涨率": "0.739350891981143",
+              "rank_limitup_continuation": "2",
+              "rank_eret_plus": "2",
+              "rank_r_p50": "2",
+              "p_premium": "0.3080698596306005",
+              "e_premium": "0.0",
+              "score_ev": "0.37813",
+              "risk_flags": "",
+              "confidence": "",
+              "data_quality": "",
+              "dec_rank": "1",
+              "dec_weight": "",
+              "dec_can_buy": "",
+              "dec_p_fill": "0.7430650088152717",
+              "dec_reason": ""
+            },
+            "decision_table": {
+              "rank": 59,
+              "action": "REJECT",
+              "ts_code": "001277.SZ",
+              "name": "速达股份",
+              "industry": "专用设备",
+              "stage_transition": "2→3",
+              "stage_focus": 1,
+              "shadow_rank": 3,
+              "shadow_selected": 0,
+              "first_layer_selected": 0,
+              "first_layer_shadow_selected": 0,
+              "trade_rank": 3,
+              "promotion_rank": 3,
+              "promotion_rank_score": 0.6676831188,
+              "predicted_promotion_probability": 0.566539924,
+              "promotion_rank_quality_ready": 1,
+              "promotion_probability_quality_ready": 0,
+              "trade_score": -0.0188579637,
+              "trade_predicted_conditional_net_return": -0.0155196917,
+              "trade_predicted_mean_return_lcb": -0.0269577956,
+              "trade_predicted_fill_probability": 0.2300808471,
+              "trade_predicted_big_loss_probability": 0.5990541891,
+              "trade_predicted_outcome_q10": -0.122425297,
+              "trade_tail_loss_proxy": -0.073339387,
+              "trade_tail_risk_weight": 0.75,
+              "trade_gate_pass": 0,
+              "trade_shadow_selected": 0,
+              "trade_selected": 0,
+              "trade_selector_policy_ready": 0,
+              "trade_selector_promoted": 0,
+              "trade_selector_version": "trade_selector_v2_nested_oos_top10_promotion_rank",
+              "trade_selector_artifact_sha256": "09e291bea250d767c2b96d6ea82144aa896033e61d57d3212a5ef3a8b670f304",
+              "trade_model_reason": "below_learned_policy",
+              "path_label_code": "ACCELERATION_CONSENSUS",
+              "path_label": "加速一致",
+              "path_explanation": "路径强度0.79→0.85；竞价斜率+10.08pct/板；首封每板提前12分钟；炸板变化+3.0/板",
+              "path_data_coverage": 1.0,
+              "path_strength_latest": 0.85,
+              "path_strength_delta": 0.0626515152,
+              "stage_pool_size": 3,
+              "focus_pool_size": 3,
+              "same_industry_stage_count": 1,
+              "stage_recent_promotion_rate": 0.1923076923,
+              "stage_recent_promotion_samples": 104,
+              "target_weight": 0.0,
+              "mechanism_limit_pct": 10.0,
+              "d_close": 36.27,
+              "estimated_up_limit": 39.9,
+              "recommended_max_price": null,
+              "max_auction_change_pct": null,
+              "diagnostic_gap": null,
+              "observation_max_price": 39.17,
+              "observation_auction_change_pct": 7.9956,
+              "observation_price_basis": "model_diagnostic_cap",
+              "observation_price_is_formal": false,
+              "observation_risk_tier": 2,
+              "observation_risk_label": "高风险观察",
+              "take_profit_pct": null,
+              "stop_loss_pct": null,
+              "take_profit_price": null,
+              "stop_loss_price": null,
+              "latest_exit_time": "09:30",
+              "exit_policy_version": "tplus1_open_0930_v1",
+              "predicted_fill_probability": 0.1476570787,
+              "predicted_exit_probability": 0.9959642485,
+              "predicted_profit_probability": 0.3526434204,
+              "predicted_big_loss_probability": 0.5172033322,
+              "predicted_continuation_limit_up_probability": 0.2105721986,
+              "predicted_net_return": -0.0260448756,
+              "predicted_return_lcb": -0.1174994135,
+              "predicted_return_ucb": 0.0885057332,
+              "conservative_ev": -0.0061665676,
+              "decision_p_fill": 0.7430650088,
+              "decision_e_ret": 0.01224755,
+              "decision_ev": -0.0078283865,
+              "decision_cost": 0.0016546805,
+              "decision_risk_penalty": 0.0152744318,
+              "entry_rule": "系统仅供人工参考：T日9:25前仅用限价单参与集合竞价；不得使用无上限市价单，高于上限或未成交均放弃",
+              "exit_rule": "T+1固定按9:30开盘集合竞价成交价退出；一字跌停无法成交时顺延至首个可成交开盘",
+              "order_type": "LIMIT_ONLY_MANUAL",
+              "market_order_allowed": 0,
+              "risk_gate_pass": 0,
+              "gate_policy_ready": 0,
+              "gate_exit_probability": 1,
+              "gate_fill_probability": 1,
+              "gate_big_loss_probability": 0,
+              "gate_mean_return_lcb": 1,
+              "gate_conservative_ev": 0,
+              "gate_selection_score": 0,
+              "rejection_reason": "独立策略留出期没有找到同时满足频率、收益、成本压力与尾部风险的可执行策略",
+              "observation_rank": 3,
+              "stage_watch_rank": 3,
+              "observation_pool_size": 3,
+              "observation_selected": 1,
+              "watch_label": "仅观察",
+              "validation_mode": "market_at_open_proxy",
+              "observation_execution_mode": "market_at_open_proxy",
+              "prediction_timing_status": "PREMARKET_VALID",
+              "prediction_timing_valid": 1,
+              "prediction_deadline_utc": "2026-08-21T01:25:00+00:00",
+              "validation_status": "PENDING_T",
+              "actual_buy_date": null,
+              "actual_open_price": null,
+              "actual_t_close": null,
+              "market_daily_return": null,
+              "observation_fill": null,
+              "observation_fill_reason": "truth_pending",
+              "observation_limit_accept": null,
+              "observation_price_vs_cap": null,
+              "market_buyable_diagnostic": null,
+              "market_buyable_reason": "truth_pending",
+              "observation_t_return": null,
+              "continuation_limit_up_hit": null,
+              "actual_exit_date": null,
+              "actual_exit_price": null,
+              "actual_gross_return": null,
+              "actual_net_return": null,
+              "exit_reason": null,
+              "truth_source": "pending",
+              "truth_generated_at_utc": "2026-08-20T13:14:47+00:00",
+              "validation_status_label": "等待T日收盘",
+              "prediction_timing_label": "9:25前冻结"
+            }
+          },
+          "features": {
+            "ret_1d": 0.1000909918107371,
+            "ret_3d": 0.2245104659014181,
+            "ret_5d": 0.2442538593481991,
+            "ret_10d": 0.29258731290092665,
+            "ret_20d": 0.4003861003861007,
+            "volatility_5d": 0.04471904354825744,
+            "volatility_20d": 0.030143103641859806,
+            "downside_volatility_20d": 0.004861970925794159,
+            "atr_14d": 0.030269014139981884,
+            "amplitude_20d": 0.033857281468917845,
+            "cvar_loss_10pct": 0.031901727167035876,
+            "max_drawdown_20d": -0.019305019305019266,
+            "avg_amount_20d": 37835250.4995,
+            "avg_volume_20d": 12443.5,
+            "avg_turnover_20d": 2.7325,
+            "bar_count": 100.0,
+            "market_data_providers": [
+              "EASTMONEY"
+            ],
+            "daily_price_adjustments": [
+              "QFQ"
+            ],
+            "rank_percentile_a_top10": 1.0,
+            "rank_percentile_premium_top10": 1.0,
+            "rank_percentile_decision_table": 0.0,
+            "rank_consensus": 0.6666666666666666,
+            "rank_disagreement": 0.9428090415820634,
+            "rank_borda": 0.9130434782608695,
+            "stage_transition": "2→3",
+            "stage_from": 2.0,
+            "stage_to": 3.0,
+            "stage_is_2_to_3": 1.0,
+            "stage_is_3_to_4": 0.0,
+            "src_a_top10__StrengthScore": 72.762712,
+            "src_a_top10__ThemeBoost": 0.3351513965909831,
+            "src_a_top10__auction_strength_score": 1.0,
+            "src_a_top10__final_score": 0.37813,
+            "src_a_top10__intraday_available": 0.0,
+            "src_a_top10__intraday_confidence_score": 0.0,
+            "src_a_top10__intraday_hard_risk_flag": 0.0,
+            "src_a_top10__intraday_quality_score": 0.765,
+            "src_a_top10__intraday_risk_score": 0.0,
+            "src_a_top10__intraday_soft_risk_score": 0.0,
+            "src_a_top10__late_withdraw_score": 0.0,
+            "src_a_top10__limit_times": 2.0,
+            "src_a_top10__open_board_count": 0.0,
+            "src_a_top10__p_limit_up_calibrated": 0.3080698596306005,
+            "src_a_top10__prob_final": 0.3080698596306005,
+            "src_a_top10__rank_score": 0.3080698596306005,
+            "src_a_top10__regime_score": 0.55,
+            "src_a_top10__regime_smooth": 0.55,
+            "src_a_top10__reseal_score": 0.5,
+            "src_a_top10__stage_prior": 0.35,
+            "src_a_top10__stage_quality_weight": 0.92,
+            "src_a_top10__stage_risk_penalty": 0.000825,
+            "src_premium_top10__auction_amount": 20369232.0,
+            "src_premium_top10__board_crowding_rank": 5.0,
+            "src_premium_top10__board_limit_up_count": 3.0,
+            "src_premium_top10__factor_auction_available": 1.0,
+            "src_premium_top10__factor_auction_strength": 1.0,
+            "src_premium_top10__factor_intraday_quality": 0.765,
+            "src_premium_top10__factor_intraday_risk_penalty": 0.0,
+            "src_premium_top10__is_st_like": 0.0,
+            "src_premium_top10__max_drawdown_20d": -0.0103460577952194,
+            "src_premium_top10__mkt_amount_sum": 2092583847.08263,
+            "src_premium_top10__mkt_avg_ret": 0.01339425552579666,
+            "src_premium_top10__mkt_median_ret": 0.011760095887884958,
+            "src_premium_top10__mkt_strong_ratio": 0.024368231046931407,
+            "src_premium_top10__mkt_touch_strong_ratio": 0.05054151624548736,
+            "src_premium_top10__mkt_up_ratio": 0.7384476534296028,
+            "src_premium_top10__premium_final_score": 57.044,
+            "src_premium_top10__premium_rank_score": 64.7368,
+            "src_premium_top10__r_p05": -0.11358130642624889,
+            "src_premium_top10__r_p25": -0.003751403874175996,
+            "src_premium_top10__r_p50": 0.07259020926168139,
+            "src_premium_top10__r_p75": 0.14893182239753877,
+            "src_premium_top10__r_p95": 0.2587617249496137,
+            "src_premium_top10__risk_penalty_score": 0.122761,
+            "src_premium_top10__score_ev": 0.37813,
+            "src_premium_top10__t1_accept_prob_blend": 0.52057,
+            "src_premium_top10__t1_accept_score": 50.0,
+            "src_premium_top10__t1_big_drawdown_prob_blend": 0.149065,
+            "src_premium_top10__t1_fail_prob_blend": 0.466482,
+            "src_premium_top10__t_close_ret_pred": 0.10332145051187461,
+            "src_premium_top10__t_intraday_ret_pred": 0.07297922370402847,
+            "src_premium_top10__t_limitup_prob_calibrated": 0.262671,
+            "src_premium_top10__t_up_attack_score": 73.4874,
+            "src_premium_top10__tail_risk_score": 0.0468348342850745,
+            "src_premium_top10__turnover_rate": 13.5623,
+            "src_premium_top10__turnover_rate_f": 26.4853,
+            "src_premium_top10__volatility_10d": 0.0379993465899227,
+            "src_premium_top10__volatility_20d": 0.0301431036418598,
+            "src_premium_top10__volatility_5d": 0.0447190435482574,
+            "src_premium_top10__volume_ratio": 5.01,
+            "src_decision_table__decision_cost": 0.0016546805,
+            "src_decision_table__decision_e_ret": 0.01224755,
+            "src_decision_table__decision_ev": -0.0078283865,
+            "src_decision_table__decision_p_fill": 0.7430650088,
+            "src_decision_table__decision_risk_penalty": 0.0152744318,
+            "src_decision_table__mechanism_limit_pct": 10.0,
+            "src_decision_table__path_data_coverage": 1.0,
+            "src_decision_table__path_strength_delta": 0.0626515152,
+            "src_decision_table__path_strength_latest": 0.85,
+            "src_decision_table__predicted_big_loss_probability": 0.5172033322,
+            "src_decision_table__predicted_continuation_limit_up_probability": 0.2105721986,
+            "src_decision_table__predicted_exit_probability": 0.9959642485,
+            "src_decision_table__predicted_fill_probability": 0.1476570787,
+            "src_decision_table__predicted_net_return": -0.0260448756,
+            "src_decision_table__predicted_profit_probability": 0.3526434204,
+            "src_decision_table__predicted_return_lcb": -0.1174994135,
+            "src_decision_table__predicted_return_ucb": 0.0885057332,
+            "src_decision_table__same_industry_stage_count": 1.0,
+            "src_decision_table__stage_recent_promotion_rate": 0.1923076923,
+            "src_decision_table__stage_recent_promotion_samples": 104.0,
+            "src_decision_table__predicted_exit_delay_probability": 0.004035751500000018,
+            "source_strength": 0.46888867247212024,
+            "feature_schema_version": "formal_features_v2",
+            "feature_asof_date": "20260820",
+            "feature_coverage": 1.0,
+            "market_data_valid": true,
+            "market_data_invalid_reasons": []
+          },
+          "metrics": {
+            "p_fill_0925": 1.0,
+            "expected_gross_return": 0.010452316180211824,
+            "expected_net_return": 0.008832316180211824,
+            "cvar_loss_10pct": 0.031901727167035876,
+            "p_exit_delay": 0.13050486325740063,
+            "uncertainty": 0.31314528806775715,
+            "estimated_round_trip_rate": 0.00162,
+            "utility_score": -0.04092391409908786,
+            "missing_fraction": 0.0,
+            "policy_trade_eligible": false,
+            "prediction": {
+              "schema_version": "ranking_prediction_v2",
+              "model_id": "transparent_shadow_champion_v2",
+              "model_stage": "CHAMPION_BASELINE",
+              "feature_schema_version": "formal_features_v2",
+              "prediction_status": "SCORED",
+              "p_fill": 1.0,
+              "expected_fill_ratio": 1.0,
+              "conditional_net_return_mean": 0.008832316180211824,
+              "conditional_net_return_q10": -0.13773244097288728,
+              "conditional_net_return_q50": 0.008832316180211824,
+              "conditional_net_return_q90": 0.15539707333331093,
+              "p_exit_delay": 0.13050486325740063,
+              "expected_delay_days": 1.2990598870499361,
+              "p_promotion": 0.2563381220322402,
+              "uncertainty": 0.31314528806775715,
+              "expected_shortfall": 0.19187650500193312,
+              "utility": -0.04092391409908786,
+              "gate_decision": "NO_TRADE",
+              "gate_reasons": [
+                "conditional_return_lcb_not_positive",
+                "risk_adjusted_utility_not_positive"
+              ],
+              "ranking_fallback": false
+            },
+            "model_id": "transparent_shadow_champion_v2",
+            "model_stage": "CHAMPION_BASELINE",
+            "feature_schema_version": "formal_features_v2",
+            "prediction_schema_version": "ranking_prediction_v2",
+            "expected_fill_ratio": 1.0,
+            "conditional_net_return_mean": 0.008832316180211824,
+            "conditional_net_return_q10": -0.13773244097288728,
+            "conditional_net_return_q50": 0.008832316180211824,
+            "conditional_net_return_q90": 0.15539707333331093,
+            "expected_shortfall_10pct": 0.19187650500193312,
+            "expected_delay_days": 1.2990598870499361,
+            "p_promotion": 0.2563381220322402,
+            "gate_decision": "NO_TRADE",
+            "gate_reasons": [
+              "conditional_return_lcb_not_positive",
+              "risk_adjusted_utility_not_positive"
+            ],
+            "ranking_fallback": false,
+            "model_resolution_fallback": false,
+            "model_resolution_reason": null
+          },
+          "order_spec": {
+            "schema_version": "shadow_order_spec_v1",
+            "decision_date": "20260820",
+            "trade_date": "20260821",
+            "event_time": "09:25",
+            "phase": "OPENING_CALL_AUCTION",
+            "side": "BUY",
+            "order_type": "LIMIT",
+            "limit_price_policy": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT",
+            "limit_price": 39.9,
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "submitted_qty": 2500,
+            "quantity_unit": "SHARES",
+            "lot_size": 100,
+            "slot_capital_cny": 100000.0,
+            "maximum_reserved_cash_cny": 99780.9225,
+            "execution_mode": "SHADOW_ONLY"
+          },
+          "rank": 1,
+          "action": "SHADOW",
+          "action_reason": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order",
+          "single_stock_research": {
+            "schema_version": "single_stock_research_audit_v1",
+            "decision_effect": "AUDIT_ONLY_NO_RANKING_OR_GATE_EFFECT",
+            "availability": "AVAILABLE",
+            "unavailable_reason": null,
+            "decision_date": "20260820",
+            "decision_asof": "2026-08-20T21:55:14+08:00",
+            "ts_code": "001277.SZ",
+            "single_stock": {
+              "schema_version": "single_stock_snapshot_v3",
+              "selection_rule": "STRICT_THREE_TABLE_INTERSECTION",
+              "ts_code": "001277.SZ",
+              "name": "速达股份",
+              "decision_date": "20260820",
+              "decision_asof": "2026-08-20T21:55:14+08:00",
+              "source_ranks": {
+                "a_top10": 1,
+                "premium_top10": 1,
+                "decision_table": 3
+              },
+              "facts": {
+                "classification.industry": {
+                  "value": "专用设备",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "39e54557b7b87e0814c046e9663b0a770a29a1d05708caba791d12dd089c736f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "classification.stage_transition": {
+                  "value": "2→3",
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "39e54557b7b87e0814c046e9663b0a770a29a1d05708caba791d12dd089c736f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.board_lot": {
+                  "value": 100,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "457f32baaea18f2293def9bf12e4a973223453c92f5503b3f5248ad7fffb07c1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "execution.max_order_shares": {
+                  "value": 2500,
+                  "missing_reason": null,
+                  "unit": "SHARES",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "457f32baaea18f2293def9bf12e4a973223453c92f5503b3f5248ad7fffb07c1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.d_close": {
+                  "value": 36.27,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "39e54557b7b87e0814c046e9663b0a770a29a1d05708caba791d12dd089c736f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_mechanism_pct": {
+                  "value": 10.0,
+                  "missing_reason": null,
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "39e54557b7b87e0814c046e9663b0a770a29a1d05708caba791d12dd089c736f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.limit_up_price": {
+                  "value": 39.9,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "FROZEN_THREE_SOURCE_ROWS",
+                    "dataset_version": "candidate_facts_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "39e54557b7b87e0814c046e9663b0a770a29a1d05708caba791d12dd089c736f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.price_tick": {
+                  "value": 0.01,
+                  "missing_reason": null,
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "SYSTEM_POLICY",
+                    "dataset_version": "system_config_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "457f32baaea18f2293def9bf12e4a973223453c92f5503b3f5248ad7fffb07c1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "market.pricing_verified": {
+                  "value": null,
+                  "missing_reason": "POINT_IN_TIME_PRICING_CROSS_CHECK_INCOMPLETE",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "FROZEN_SOURCE_AND_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "pricing_cross_check_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "24c155d019a8e1872c38ee155336f71bb6f9379fc40af68ec1d555095ef49cb1",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "research.limit_lifecycle_input": {
+                  "value": {
+                    "bar_count": 240,
+                    "bars_content_sha256": "d472efd2e3b9b858c5034ea3b31d6e76bd8da0fb739810ca24432c6ec2bbb836",
+                    "decision_date": "20260820",
+                    "fetch_failed": false,
+                    "minute_artifact": {
+                      "artifact_schema_version": "single_stock_minute_archive_v1",
+                      "artifact_sha256": "9cb69a36e90960dca00932e15c55e430bff2f5f4f6bf8794a2134b856456ada7",
+                      "bar_count": 240,
+                      "bar_schema_version": "canonical_ohlcv_minute_v1",
+                      "bars_content_sha256": "d472efd2e3b9b858c5034ea3b31d6e76bd8da0fb739810ca24432c6ec2bbb836",
+                      "captured_at": "2026-08-20T21:55:14+08:00",
+                      "content_encoding": "gzip",
+                      "decision_date": "20260820",
+                      "full_session": true,
+                      "providers": [
+                        "EASTMONEY"
+                      ],
+                      "relative_path": "2026/20260820/001277.SZ/9cb69a36e90960dca00932e15c55e430bff2f5f4f6bf8794a2134b856456ada7.json.gz",
+                      "schema_version": "single_stock_minute_archive_ref_v1",
+                      "ts_code": "001277.SZ"
+                    },
+                    "providers": [
+                      "EASTMONEY"
+                    ],
+                    "ts_code": "001277.SZ"
+                  },
+                  "missing_reason": null,
+                  "unit": null,
+                  "provenance": {
+                    "provider": "MARKET_MINUTE_ADAPTER",
+                    "dataset_version": "d_day_minute_close_proxy_v1",
+                    "known_at": "2026-08-20T21:55:14+08:00",
+                    "fetched_at": "2026-08-20T21:55:14+08:00",
+                    "content_sha256": "560ca0a6c16cb8b6c23d46cfecb96af62129e006b9a3b80f474137929195a209",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.board": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_delisting_period": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_st": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.is_suspended": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_limit_pct": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "PERCENT",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.price_tick": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": "CNY_PER_SHARE",
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                },
+                "security.trading_rules_verified": {
+                  "value": null,
+                  "missing_reason": "NO_POINT_IN_TIME_SECURITY_RECORD",
+                  "unit": null,
+                  "provenance": {
+                    "provider": "LOCAL_POINT_IN_TIME_SECURITY_MASTER",
+                    "dataset_version": "bootstrap-20260809",
+                    "known_at": "2026-08-09T00:00:00+08:00",
+                    "fetched_at": "2026-08-09T00:00:00+08:00",
+                    "content_sha256": "c1415b2461739d276355e34fd1cca9affc8c206fdd1983ce856cd367f6163c3f",
+                    "revision_id": null,
+                    "event_at": null,
+                    "source_uri": null
+                  }
+                }
+              },
+              "hard_gate": {
+                "status": "UNKNOWN",
+                "reasons": [
+                  "REQUIRED_GATE_EVIDENCE_MISSING"
+                ],
+                "unknown_fields": [
+                  "security.is_suspended",
+                  "security.is_st",
+                  "security.is_delisting_period",
+                  "security.trading_rules_verified",
+                  "security.board",
+                  "security.price_limit_pct",
+                  "security.price_tick",
+                  "market.pricing_verified"
+                ]
+              }
+            },
+            "candidate_analysis": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "candidate": {
+                  "action": {
+                    "missing_reason": null,
+                    "value": "SHADOW"
+                  },
+                  "action_reason": {
+                    "missing_reason": null,
+                    "value": "shadow_validation_all_intersection_candidates;policy_gate=NO_TRADE;conditional_return_lcb_not_positive;risk_adjusted_utility_not_positive;not_a_broker_order"
+                  },
+                  "rank": {
+                    "missing_reason": null,
+                    "value": 1
+                  }
+                },
+                "features": {
+                  "avg_amount_20d": {
+                    "missing_reason": null,
+                    "value": 37835250.4995
+                  },
+                  "avg_volume_20d": {
+                    "missing_reason": null,
+                    "value": 12443.5
+                  },
+                  "cvar_loss_10pct": {
+                    "missing_reason": null,
+                    "value": 0.031901727167035876
+                  },
+                  "downside_volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.004861970925794159
+                  },
+                  "feature_asof_date": {
+                    "missing_reason": null,
+                    "value": "20260820"
+                  },
+                  "feature_coverage": {
+                    "missing_reason": null,
+                    "value": 1.0
+                  },
+                  "feature_schema_version": {
+                    "missing_reason": null,
+                    "value": "formal_features_v2"
+                  },
+                  "market_data_invalid_reasons": {
+                    "missing_reason": null,
+                    "value": []
+                  },
+                  "market_data_valid": {
+                    "missing_reason": null,
+                    "value": true
+                  },
+                  "max_drawdown_20d": {
+                    "missing_reason": null,
+                    "value": -0.019305019305019266
+                  },
+                  "rank_consensus": {
+                    "missing_reason": null,
+                    "value": 0.6666666666666666
+                  },
+                  "rank_disagreement": {
+                    "missing_reason": null,
+                    "value": 0.9428090415820634
+                  },
+                  "ret_1d": {
+                    "missing_reason": null,
+                    "value": 0.1000909918107371
+                  },
+                  "ret_20d": {
+                    "missing_reason": null,
+                    "value": 0.4003861003861007
+                  },
+                  "ret_5d": {
+                    "missing_reason": null,
+                    "value": 0.2442538593481991
+                  },
+                  "stage_transition": {
+                    "missing_reason": null,
+                    "value": "2→3"
+                  },
+                  "volatility_20d": {
+                    "missing_reason": null,
+                    "value": 0.030143103641859806
+                  }
+                },
+                "metrics": {
+                  "conditional_net_return_mean": {
+                    "missing_reason": null,
+                    "value": 0.008832316180211824
+                  },
+                  "conditional_net_return_q10": {
+                    "missing_reason": null,
+                    "value": -0.13773244097288728
+                  },
+                  "conditional_net_return_q50": {
+                    "missing_reason": null,
+                    "value": 0.008832316180211824
+                  },
+                  "conditional_net_return_q90": {
+                    "missing_reason": null,
+                    "value": 0.15539707333331093
+                  },
+                  "expected_delay_days": {
+                    "missing_reason": null,
+                    "value": 1.2990598870499361
+                  },
+                  "expected_net_return": {
+                    "missing_reason": null,
+                    "value": 0.008832316180211824
+                  },
+                  "expected_shortfall_10pct": {
+                    "missing_reason": null,
+                    "value": 0.19187650500193312
+                  },
+                  "gate_decision": {
+                    "missing_reason": null,
+                    "value": "NO_TRADE"
+                  },
+                  "gate_reasons": {
+                    "missing_reason": null,
+                    "value": [
+                      "conditional_return_lcb_not_positive",
+                      "risk_adjusted_utility_not_positive"
+                    ]
+                  },
+                  "model_id": {
+                    "missing_reason": null,
+                    "value": "transparent_shadow_champion_v2"
+                  },
+                  "model_stage": {
+                    "missing_reason": null,
+                    "value": "CHAMPION_BASELINE"
+                  },
+                  "p_exit_delay": {
+                    "missing_reason": null,
+                    "value": 0.13050486325740063
+                  },
+                  "p_promotion": {
+                    "missing_reason": null,
+                    "value": 0.2563381220322402
+                  },
+                  "prediction_schema_version": {
+                    "missing_reason": null,
+                    "value": "ranking_prediction_v2"
+                  },
+                  "ranking_fallback": {
+                    "missing_reason": null,
+                    "value": false
+                  },
+                  "uncertainty": {
+                    "missing_reason": null,
+                    "value": 0.31314528806775715
+                  },
+                  "utility_score": {
+                    "missing_reason": null,
+                    "value": -0.04092391409908786
+                  }
+                }
+              },
+              "unavailable_reason": null
+            },
+            "order_spec": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "decision_date": {
+                  "missing_reason": null,
+                  "value": "20260820"
+                },
+                "event_time": {
+                  "missing_reason": null,
+                  "value": "09:25"
+                },
+                "execution_mode": {
+                  "missing_reason": null,
+                  "value": "SHADOW_ONLY"
+                },
+                "limit_price": {
+                  "missing_reason": null,
+                  "value": 39.9
+                },
+                "limit_price_policy": {
+                  "missing_reason": null,
+                  "value": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT"
+                },
+                "lot_size": {
+                  "missing_reason": null,
+                  "value": 100
+                },
+                "maximum_reserved_cash_cny": {
+                  "missing_reason": null,
+                  "value": 99780.9225
+                },
+                "order_type": {
+                  "missing_reason": null,
+                  "value": "LIMIT"
+                },
+                "phase": {
+                  "missing_reason": null,
+                  "value": "OPENING_CALL_AUCTION"
+                },
+                "price_limit_source": {
+                  "missing_reason": null,
+                  "value": "DECISION_FROZEN_LIMIT_PRICE"
+                },
+                "quantity_unit": {
+                  "missing_reason": null,
+                  "value": "SHARES"
+                },
+                "schema_version": {
+                  "missing_reason": null,
+                  "value": "shadow_order_spec_v1"
+                },
+                "side": {
+                  "missing_reason": null,
+                  "value": "BUY"
+                },
+                "slot_capital_cny": {
+                  "missing_reason": null,
+                  "value": 100000.0
+                },
+                "submitted_qty": {
+                  "missing_reason": null,
+                  "value": 2500
+                },
+                "trade_date": {
+                  "missing_reason": null,
+                  "value": "20260821"
+                }
+              },
+              "unavailable_reason": null
+            },
+            "limit_lifecycle": {
+              "availability": "AVAILABLE",
+              "payload": {
+                "break_count": 0,
+                "closed_at_limit": false,
+                "coverage_ratio": 1.0,
+                "decision_date": "20260820",
+                "evidence_level": "MINUTE_CLOSE_PROXY",
+                "expected_minutes": 240,
+                "first_seal_time": null,
+                "invalid_reasons": [],
+                "last_seal_time": null,
+                "limit_price": 39.9,
+                "observed_minutes": 240,
+                "one_price_limit_proxy": false,
+                "price_tick": 0.01,
+                "reseal_count": 0,
+                "schema_version": "limit_lifecycle_v1",
+                "sealed_minutes": 0,
+                "tail_sealed_minutes": 0,
+                "touched_limit": false,
+                "valid": true
+              },
+              "unavailable_reason": null
+            },
+            "snapshot_sha256": "31d05e2ade90f1131b5a2e5518a06b0e02e6e368f80fbd7664b153720f5b1291"
+          },
+          "policy_decision": {
+            "trade_eligible": false,
+            "broker_order_created": false
+          }
+        }
+      ],
+      "model_version": "transparent_shadow_champion_v2",
+      "status": "RANKED",
+      "market_data_provenance": {
+        "daily_features": {
+          "001277.SZ": {
+            "providers": [
+              "EASTMONEY"
+            ],
+            "price_adjustments": [
+              "QFQ"
+            ],
+            "bar_count": 100
+          }
+        }
+      },
+      "ranking_engine": {
+        "engine_version": "formal_ranking_engine_v2",
+        "selected_model_id": "transparent_shadow_champion_v2",
+        "selected_model_kind": "transparent_baseline",
+        "feature_schema_version": "formal_features_v2",
+        "label_schema_version": "training_dataset_v1",
+        "prediction_schema_version": "ranking_prediction_v2",
+        "prediction_stage": "D_PRIOR",
+        "status": "BASELINE_ACTIVE",
+        "status_label": "基线运行 · 样本积累中",
+        "training_cutoff": null,
+        "calibrated": false,
+        "fallback_active": false,
+        "fallback_reason": null,
+        "mature_candidates": 11,
+        "required_mature_candidates": 180,
+        "mature_rank_counts": {
+          "1": 6,
+          "2": 3,
+          "3": 1
+        },
+        "required_rank_samples": 60,
+        "lockbox_days": 6,
+        "required_lockbox_days": 126,
+        "promotion_eligible": false,
+        "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
+        "training_row_count": 11,
+        "excluded_feature_row_count": 3
+      },
+      "single_stock_research_schema_version": "single_stock_research_audit_v1",
+      "single_stock_research_collection_status": "COMPLETE",
+      "single_stock_research_completed_at": "2026-08-20T21:55:14+08:00"
     }
   ],
   "trades": [
@@ -16611,6 +18042,63 @@
         "provider": "TENCENT",
         "price_adjustment": "NONE",
         "reason": "t_day_eod_verified"
+      }
+    },
+    {
+      "trade_id": "20260820:R1",
+      "signal_id": "20260820-b84e77c95af8",
+      "decision_date": "20260820",
+      "buy_date": "20260821",
+      "planned_exit_date": "20260824",
+      "rank": 1,
+      "ts_code": "001277.SZ",
+      "name": "速达股份",
+      "model_score": -0.04092391409908786,
+      "policy_trade_eligible": false,
+      "execution_mode": "SHADOW_ONLY",
+      "order_spec": {
+        "schema_version": "shadow_order_spec_v1",
+        "decision_date": "20260820",
+        "trade_date": "20260821",
+        "event_time": "09:25",
+        "phase": "OPENING_CALL_AUCTION",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "limit_price_policy": "FROZEN_D_LIMIT_UP_MARKETABLE_LIMIT",
+        "limit_price": 39.9,
+        "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "submitted_qty": 2500,
+        "quantity_unit": "SHARES",
+        "lot_size": 100,
+        "slot_capital_cny": 100000.0,
+        "maximum_reserved_cash_cny": 99780.9225,
+        "execution_mode": "SHADOW_ONLY"
+      },
+      "status": "PENDING_BUY",
+      "reason": "waiting_for_t_daily_open",
+      "buy": null,
+      "exit": null,
+      "pnl": null,
+      "diagnostics": {},
+      "t_day_validation": {
+        "status": "PENDING",
+        "trade_date": "20260821",
+        "verified_at": null,
+        "t_close": null,
+        "t_return": null,
+        "t_return_source": null,
+        "reference_close": null,
+        "high": null,
+        "limit_up_price": 39.9,
+        "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "touched_limit_up": null,
+        "is_limit_up": null,
+        "is_promoted": null,
+        "stage_transition": "2→3",
+        "d_close": 36.27,
+        "provider": null,
+        "price_adjustment": null,
+        "reason": "waiting_for_t_close"
       }
     }
   ]

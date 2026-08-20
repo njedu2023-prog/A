@@ -1,31 +1,14 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-20T01:56:21+08:00",
+  "generated_at": "2026-08-20T21:55:14+08:00",
   "issues": [
     {
-      "code": "SOURCE_LOAD_FAILED",
-      "severity": "error",
-      "source_id": "decision_table",
-      "message": "decision_table: missing required columns ['d_close', 'estimated_up_limit']",
+      "code": "A_TOP10_INTRADAY_COVERAGE_ZERO",
+      "severity": "warning",
+      "source_id": "a_top10",
+      "message": "当前展示行的 intraday_available 全为0；成员关系仍可读取，但分时证据缺失",
       "details": {
-        "repository_commit_sha": "3101e027c0b5595f46441b4eccc85c35cbd91b60"
-      }
-    },
-    {
-      "code": "SOURCE_SET_INCOMPLETE",
-      "severity": "error",
-      "source_id": "aggregate",
-      "message": "all three source tables are required",
-      "details": {
-        "available": [
-          "a_top10",
-          "premium_top10"
-        ],
-        "required": [
-          "a_top10",
-          "premium_top10",
-          "decision_table"
-        ]
+        "row_count": 10
       }
     },
     {
@@ -35,6 +18,19 @@
       "message": "当前 Premium 展示行的 premium_eligible 全为0；保留其表内成员关系，但不把该状态视为交易背书",
       "details": {
         "row_count": 10
+      }
+    },
+    {
+      "code": "DECISION_NO_FORMAL_BUY",
+      "severity": "warning",
+      "source_id": "decision_table",
+      "message": "当前 Decision 表没有正式 BUY 行；这里只使用成员关系与辅助特征",
+      "details": {
+        "actions": [
+          "REJECT",
+          "SHADOW_ONLY"
+        ],
+        "row_count": 3
       }
     }
   ]
