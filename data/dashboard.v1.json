@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-21T23:55:55+08:00",
+  "generated_at": "2026-08-22T01:57:26+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -19938,7 +19938,7 @@
     },
     "output": {
       "scheduled_local_time": "21:30",
-      "last_attempted_at": "2026-08-21T23:55:55+08:00",
+      "last_attempted_at": "2026-08-22T01:57:26+08:00",
       "status": "INPUT_BLOCKED",
       "last_completed_at": "2026-08-20T21:55:14+08:00"
     }
