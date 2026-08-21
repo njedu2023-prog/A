@@ -1,16 +1,7 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-20T21:55:14+08:00",
+  "generated_at": "2026-08-21T23:55:55+08:00",
   "issues": [
-    {
-      "code": "A_TOP10_INTRADAY_COVERAGE_ZERO",
-      "severity": "warning",
-      "source_id": "a_top10",
-      "message": "当前展示行的 intraday_available 全为0；成员关系仍可读取，但分时证据缺失",
-      "details": {
-        "row_count": 10
-      }
-    },
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
       "severity": "warning",
@@ -30,7 +21,19 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 3
+        "row_count": 9
+      }
+    },
+    {
+      "code": "STRICT_INTERSECTION_CONTRACT_FAILED",
+      "severity": "error",
+      "source_id": "aggregate",
+      "message": "三表成员已对齐，但候选冻结字段未通过合约校验；整批阻断且不删票、不伪造0支",
+      "details": {
+        "error": "000017.SZ: candidate: estimated_up_limit disagrees with frozen D close and mechanism (7.83 vs 7.82)",
+        "decision_dates": [
+          "20260821"
+        ]
       }
     }
   ]

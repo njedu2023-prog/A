@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-21T19:02:03+08:00",
+  "generated_at": "2026-08-21T23:55:55+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -42,35 +42,35 @@
     "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126"
   },
   "current_run": {
-    "status": "RANKED",
-    "message": "三表严格交集实际保留1支并完成重新排序",
-    "completed": true,
-    "completed_at": "2026-08-20T21:55:14+08:00",
-    "decision_date": "2026-08-20",
-    "outcome": "COMPLETED_RANKED",
+    "status": "INPUT_BLOCKED",
+    "message": "三表严格交集字段校验失败；保留完整成员并等待源数据修复",
+    "completed": false,
+    "completed_at": null,
+    "decision_date": null,
+    "outcome": "INPUT_BLOCKED",
     "source_table_counts": {
       "a_top10": 10,
       "premium_top10": 10,
-      "decision_table": 3
+      "decision_table": 9
     },
     "source_dates": {
       "a_top10": {
-        "D": "20260820",
-        "T": "20260821",
+        "D": "20260821",
+        "T": "20260824",
         "T1": null
       },
       "premium_top10": {
-        "D": "20260820",
-        "T": "20260821",
-        "T1": "20260824"
+        "D": "20260821",
+        "T": "20260824",
+        "T1": "20260825"
       },
       "decision_table": {
-        "D": "20260820",
-        "T": "20260821",
-        "T1": "20260824"
+        "D": "20260821",
+        "T": "20260824",
+        "T1": "20260825"
       }
     },
-    "intersection_count": 1,
+    "intersection_count": null,
     "ranking_engine": {
       "engine_version": "formal_ranking_engine_v2",
       "selected_model_id": "transparent_shadow_champion_v2",
@@ -97,21 +97,12 @@
       "required_lockbox_days": 126,
       "promotion_eligible": false,
       "promotion_reason": "mature_candidates_below_180；rank_1_mature_candidates_below_60；rank_2_mature_candidates_below_60；rank_3_mature_candidates_below_60；lockbox_decision_days_below_126",
-      "training_row_count": 11,
+      "training_row_count": 12,
       "excluded_feature_row_count": 3
     },
-    "target_decision_date": "2026-08-20"
+    "target_decision_date": "2026-08-21"
   },
   "source_issues": [
-    {
-      "code": "A_TOP10_INTRADAY_COVERAGE_ZERO",
-      "severity": "warning",
-      "source_id": "a_top10",
-      "message": "当前展示行的 intraday_available 全为0；成员关系仍可读取，但分时证据缺失",
-      "details": {
-        "row_count": 10
-      }
-    },
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
       "severity": "warning",
@@ -131,7 +122,19 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 3
+        "row_count": 9
+      }
+    },
+    {
+      "code": "STRICT_INTERSECTION_CONTRACT_FAILED",
+      "severity": "error",
+      "source_id": "aggregate",
+      "message": "三表成员已对齐，但候选冻结字段未通过合约校验；整批阻断且不删票、不伪造0支",
+      "details": {
+        "error": "000017.SZ: candidate: estimated_up_limit disagrees with frozen D close and mechanism (7.83 vs 7.82)",
+        "decision_dates": [
+          "20260821"
+        ]
       }
     }
   ],
@@ -19935,8 +19938,8 @@
     },
     "output": {
       "scheduled_local_time": "21:30",
-      "last_attempted_at": "2026-08-20T21:55:14+08:00",
-      "status": "COMPLETED",
+      "last_attempted_at": "2026-08-21T23:55:55+08:00",
+      "status": "INPUT_BLOCKED",
       "last_completed_at": "2026-08-20T21:55:14+08:00"
     }
   }
