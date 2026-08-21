@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-20T21:55:14+08:00",
+  "generated_at": "2026-08-21T19:02:03+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -11671,10 +11671,10 @@
             "snapshot_sha256": "31d05e2ade90f1131b5a2e5518a06b0e02e6e368f80fbd7664b153720f5b1291"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": -0.023159636062861977,
+            "is_limit_up": false,
+            "is_promoted": false
           },
           "rank": 1,
           "model_score": -0.04092391409908786,
@@ -11875,17 +11875,45 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260820:001277.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_t_daily_open",
-          "buy": null,
+          "status": "OPEN",
+          "reason": "waiting_for_t1_exit",
+          "buy": {
+            "at": "2026-08-21T09:25:00+08:00",
+            "submitted_qty": 2500,
+            "filled_qty": 2500,
+            "avg_price": 38.07,
+            "amount": 95175.0,
+            "fees": 29.50425,
+            "limit_price": 39.9,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 2500,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
           "exit": null,
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_fill": {
+              "price": 38.07,
+              "date": "20260821",
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_ORDER_SPEC"
+            }
+          },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": -0.023159636062861977,
+            "is_limit_up": false,
+            "is_promoted": false
           }
         },
         "2": {
@@ -12158,7 +12186,7 @@
       "decision_date": "2026-08-20",
       "ranks": {
         "1": {
-          "state": "PENDING_BUY",
+          "state": "OPEN",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-24",
@@ -17319,14 +17347,14 @@
             "snapshot_sha256": "31d05e2ade90f1131b5a2e5518a06b0e02e6e368f80fbd7664b153720f5b1291"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": -0.023159636062861977,
+            "is_limit_up": false,
+            "is_promoted": false
           },
-          "status": "PENDING_BUY",
+          "status": "OPEN",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 38.07,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -19889,20 +19917,20 @@
   "automation_runs": {
     "validation": {
       "scheduled_local_time": "19:00",
-      "market_date": "2026-08-20",
-      "asof_at": "2026-08-20T19:02:35+08:00",
-      "last_attempted_at": "2026-08-20T19:02:35+08:00",
-      "last_completed_at": "2026-08-20T19:02:35+08:00",
+      "market_date": "2026-08-21",
+      "asof_at": "2026-08-21T19:02:03+08:00",
+      "last_attempted_at": "2026-08-21T19:02:03+08:00",
+      "last_completed_at": "2026-08-21T19:02:03+08:00",
       "status": "COMPLETED",
-      "due": 0,
-      "final": 0,
+      "due": 2,
+      "final": 2,
       "pending_data": 0,
       "delayed": 0,
       "failed": 0,
-      "result_status": "SUCCESS_NO_DUE",
+      "result_status": "SUCCESS",
       "batch_error": null,
-      "trade_count": 14,
-      "t_day_verified_count": 14,
+      "trade_count": 15,
+      "t_day_verified_count": 15,
       "closed_trade_count": 14
     },
     "output": {
