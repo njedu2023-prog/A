@@ -18074,8 +18074,8 @@
         "maximum_reserved_cash_cny": 99780.9225,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "OPEN",
-      "reason": "waiting_for_t1_exit",
+      "status": "EXIT_UNVERIFIABLE",
+      "reason": "minute_vwap_requires_amount_volume_and_declared_units",
       "buy": {
         "at": "2026-08-21T09:25:00+08:00",
         "submitted_qty": 2500,
@@ -18095,7 +18095,34 @@
         "price_adjustment": "NONE",
         "price_policy": "T_DAILY_UNADJUSTED_OPEN"
       },
-      "exit": null,
+      "exit": {
+        "target_start": "20260824T11:00:00+08:00",
+        "target_end": "20260824T11:05:00+08:00",
+        "benchmark_twap": null,
+        "benchmark_twaps": [],
+        "fills": [],
+        "filled_qty": 0,
+        "remaining_qty": 2500,
+        "sell_amount": 0,
+        "fees": 0,
+        "net_proceeds": 0,
+        "delay_trading_days": null,
+        "processed_windows": [],
+        "attempts": [
+          {
+            "date": "20260824",
+            "result": "UNVERIFIABLE",
+            "reason": "minute_vwap_requires_amount_volume_and_declared_units",
+            "minute": "11:04",
+            "attempt_count": 1
+          }
+        ],
+        "actual_exit_at": null,
+        "actual_exit_date": null,
+        "time_precision": "minute",
+        "label_quality": "CONSERVATIVE",
+        "data_tier": "MINUTE_BAR"
+      },
       "pnl": null,
       "diagnostics": {
         "daily_open_fill": {
