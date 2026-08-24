@@ -18197,7 +18197,8 @@
         "time_precision": "minute",
         "label_quality": "CONSERVATIVE",
         "data_tier": "MINUTE_BAR",
-        "avg_price": null
+        "avg_price": null,
+        "legacy_lock_rechecks": []
       },
       "pnl": null,
       "diagnostics": {

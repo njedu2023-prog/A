@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-24T19:14:47+08:00",
+  "generated_at": "2026-08-24T19:42:12+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -12001,7 +12001,8 @@
             "time_precision": "minute",
             "label_quality": "CONSERVATIVE",
             "data_tier": "MINUTE_BAR",
-            "avg_price": null
+            "avg_price": null,
+            "legacy_lock_rechecks": []
           },
           "pnl": null,
           "diagnostics": {
@@ -20024,9 +20025,9 @@
     "validation": {
       "scheduled_local_time": "19:00",
       "market_date": "2026-08-24",
-      "asof_at": "2026-08-24T19:14:47+08:00",
-      "last_attempted_at": "2026-08-24T19:14:47+08:00",
-      "last_completed_at": "2026-08-24T19:14:47+08:00",
+      "asof_at": "2026-08-24T19:42:12+08:00",
+      "last_attempted_at": "2026-08-24T19:42:12+08:00",
+      "last_completed_at": "2026-08-24T19:42:12+08:00",
       "status": "COMPLETED",
       "due": 1,
       "final": 0,
