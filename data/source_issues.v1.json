@@ -1,6 +1,6 @@
 {
   "schema_version": "source_issues_v1",
-  "generated_at": "2026-08-25T21:59:53+08:00",
+  "generated_at": "2026-08-26T22:01:17+08:00",
   "issues": [
     {
       "code": "PREMIUM_NO_ELIGIBLE_ROWS",
@@ -21,7 +21,17 @@
           "REJECT",
           "SHADOW_ONLY"
         ],
-        "row_count": 6
+        "row_count": 10
+      }
+    },
+    {
+      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
+      "severity": "warning",
+      "source_id": "market_data",
+      "message": "002418.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
+      "details": {
+        "ts_code": "002418.SZ",
+        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002418&klt=1&fqt=0&lmt=300&beg=20260826090000&end=20260826150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
       }
     },
     {
@@ -31,27 +41,17 @@
       "message": "002084.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
       "details": {
         "ts_code": "002084.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002084&klt=1&fqt=0&lmt=300&beg=20260825090000&end=20260825150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
+        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002084&klt=1&fqt=0&lmt=300&beg=20260826090000&end=20260826150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
       }
     },
     {
       "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
       "severity": "warning",
       "source_id": "market_data",
-      "message": "002445.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
+      "message": "600103.SH 的D日分钟研究证据不可用；名单与名次保持不变",
       "details": {
-        "ts_code": "002445.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.002445&klt=1&fqt=0&lmt=300&beg=20260825090000&end=20260825150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
-      }
-    },
-    {
-      "code": "SINGLE_STOCK_MINUTE_RESEARCH_UNAVAILABLE",
-      "severity": "warning",
-      "source_id": "market_data",
-      "message": "003040.SZ 的D日分钟研究证据不可用；名单与名次保持不变",
-      "details": {
-        "ts_code": "003040.SZ",
-        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.003040&klt=1&fqt=0&lmt=300&beg=20260825090000&end=20260825150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
+        "ts_code": "600103.SH",
+        "error": "GET failed after 1 attempts: https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=1.600103&klt=1&fqt=0&lmt=300&beg=20260826090000&end=20260826150000&fields1=f1%2Cf2%2Cf3%2Cf4%2Cf5%2Cf6&fields2=f51%2Cf52%2Cf53%2Cf54%2Cf55%2Cf56%2Cf57%2Cf58%2Cf59%2Cf60%2Cf61: Remote end closed connection without response"
       }
     },
     {
@@ -64,8 +64,8 @@
         "fallback_provider": "TENCENT",
         "affected_codes": [
           "002084.SZ",
-          "002445.SZ",
-          "003040.SZ"
+          "002418.SZ",
+          "600103.SH"
         ],
         "request_types": [
           "daily"
