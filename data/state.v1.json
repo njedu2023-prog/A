@@ -23259,8 +23259,8 @@
         "maximum_reserved_cash_cny": 99780.9225,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "EXIT_DELAYED",
-      "reason": "exit_window_locked_or_capacity_insufficient",
+      "status": "CLOSED",
+      "reason": "shadow_exit_completed",
       "buy": {
         "at": "2026-08-21T09:25:00+08:00",
         "submitted_qty": 2500,
@@ -23292,6 +23292,10 @@
           {
             "date": "20260825",
             "value": 32.8295963276548
+          },
+          {
+            "date": "20260826",
+            "value": 31.75805518121168
           }
         ],
         "fills": [
@@ -23369,17 +23373,93 @@
             "label_quality": "CONSERVATIVE",
             "market_data_provider": "TENCENT",
             "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:00",
+            "at": "20260826T11:00:00+08:00",
+            "date": "20260826",
+            "minute": "11:00",
+            "qty": 200,
+            "benchmark_price": 31.769458108108108,
+            "price": 31.75,
+            "amount": 6350.0,
+            "fees": 8.2385,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:01",
+            "at": "20260826T11:01:00+08:00",
+            "date": "20260826",
+            "minute": "11:01",
+            "qty": 200,
+            "benchmark_price": 31.751603571428575,
+            "price": 31.75,
+            "amount": 6350.0,
+            "fees": 8.2385,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:02",
+            "at": "20260826T11:02:00+08:00",
+            "date": "20260826",
+            "minute": "11:02",
+            "qty": 200,
+            "benchmark_price": 31.759308620689655,
+            "price": 31.75,
+            "amount": 6350.0,
+            "fees": 8.2385,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:03",
+            "at": "20260826T11:03:00+08:00",
+            "date": "20260826",
+            "minute": "11:03",
+            "qty": 200,
+            "benchmark_price": 31.7546141025641,
+            "price": 31.75,
+            "amount": 6350.0,
+            "fees": 8.2385,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:04",
+            "at": "20260826T11:04:00+08:00",
+            "date": "20260826",
+            "minute": "11:04",
+            "qty": 100,
+            "benchmark_price": 31.755291503267976,
+            "price": 31.75,
+            "amount": 3175.0,
+            "fees": 6.61925,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
           }
         ],
-        "filled_qty": 1600,
-        "remaining_qty": 900,
-        "sell_amount": 52500.0,
-        "fees": 51.775,
-        "net_proceeds": 52448.225,
-        "delay_trading_days": null,
+        "filled_qty": 2500,
+        "remaining_qty": 0,
+        "sell_amount": 81075.0,
+        "fees": 91.34825,
+        "net_proceeds": 80983.65175,
+        "delay_trading_days": 2,
         "processed_windows": [
           "20260824",
-          "20260825"
+          "20260825",
+          "20260826"
         ],
         "attempts": [
           {
@@ -23475,17 +23555,43 @@
             "remaining_qty": 900,
             "delay_trading_days": 1,
             "attempt_count": 1
+          },
+          {
+            "date": "20260826",
+            "result": "FILLED",
+            "reason": "completed",
+            "benchmark_twap": 31.75805518121168,
+            "new_fill_ids": [
+              "20260826T11:00",
+              "20260826T11:01",
+              "20260826T11:02",
+              "20260826T11:03",
+              "20260826T11:04"
+            ],
+            "locked_minutes": [],
+            "lock_inference_version": "PREVIOUS_CLOSE_DIRECTION_V1",
+            "lock_checks": [],
+            "remaining_qty": 0,
+            "delay_trading_days": 2,
+            "attempt_count": 1
           }
         ],
-        "actual_exit_at": null,
-        "actual_exit_date": null,
+        "actual_exit_at": "20260826T11:04:00+08:00",
+        "actual_exit_date": "20260826",
         "time_precision": "minute",
         "label_quality": "CONSERVATIVE",
         "data_tier": "MINUTE_BAR",
-        "avg_price": 32.8125,
+        "avg_price": 32.43,
         "legacy_lock_rechecks": []
       },
-      "pnl": null,
+      "pnl": {
+        "state": "REALIZED",
+        "gross_return": -0.14814814814814814,
+        "net_return_on_invested": -0.14937163542868817,
+        "net_return_on_allocated": -0.14220852499999995,
+        "net_pnl": -14220.852499999994,
+        "asof": "20260826T11:04:00+08:00"
+      },
       "diagnostics": {
         "daily_open_fill": {
           "price": 38.07,
@@ -23548,8 +23654,8 @@
         "maximum_reserved_cash_cny": 99525.84344999999,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "OPEN",
-      "reason": "waiting_for_t1_exit",
+      "status": "CLOSED",
+      "reason": "shadow_exit_completed",
       "buy": {
         "at": "2026-08-25T09:25:00+08:00",
         "submitted_qty": 13500,
@@ -23569,8 +23675,194 @@
         "price_adjustment": "NONE",
         "price_policy": "T_DAILY_UNADJUSTED_OPEN"
       },
-      "exit": null,
-      "pnl": null,
+      "exit": {
+        "target_start": "20260826T11:00:00+08:00",
+        "target_end": "20260826T11:05:00+08:00",
+        "benchmark_twap": 7.240000036337044,
+        "benchmark_twaps": [
+          {
+            "date": "20260826",
+            "value": 7.240000036337044
+          }
+        ],
+        "fills": [
+          {
+            "fill_id": "20260826T11:00",
+            "at": "20260826T11:00:00+08:00",
+            "date": "20260826",
+            "minute": "11:00",
+            "qty": 2700,
+            "benchmark_price": 7.240000066666667,
+            "price": 7.24,
+            "amount": 19548.0,
+            "fees": 15.83388,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:01",
+            "at": "20260826T11:01:00+08:00",
+            "date": "20260826",
+            "minute": "11:01",
+            "qty": 2700,
+            "benchmark_price": 7.24000006199628,
+            "price": 7.24,
+            "amount": 19548.0,
+            "fees": 15.83388,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:02",
+            "at": "20260826T11:02:00+08:00",
+            "date": "20260826",
+            "minute": "11:02",
+            "qty": 2700,
+            "benchmark_price": 7.24,
+            "price": 7.24,
+            "amount": 19548.0,
+            "fees": 15.83388,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:03",
+            "at": "20260826T11:03:00+08:00",
+            "date": "20260826",
+            "minute": "11:03",
+            "qty": 2700,
+            "benchmark_price": 7.24,
+            "price": 7.24,
+            "amount": 19548.0,
+            "fees": 15.83388,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          },
+          {
+            "fill_id": "20260826T11:04",
+            "at": "20260826T11:04:00+08:00",
+            "date": "20260826",
+            "minute": "11:04",
+            "qty": 2700,
+            "benchmark_price": 7.2400000530222695,
+            "price": 7.24,
+            "amount": 19548.0,
+            "fees": 15.83388,
+            "data_tier": "MINUTE_BAR",
+            "label_quality": "CONSERVATIVE",
+            "market_data_provider": "TENCENT",
+            "price_adjustment": "NONE"
+          }
+        ],
+        "filled_qty": 13500,
+        "remaining_qty": 0,
+        "sell_amount": 97740.0,
+        "fees": 79.1694,
+        "net_proceeds": 97660.8306,
+        "delay_trading_days": 0,
+        "processed_windows": [
+          "20260826"
+        ],
+        "attempts": [
+          {
+            "date": "20260826",
+            "result": "FILLED",
+            "reason": "completed",
+            "benchmark_twap": 7.240000036337044,
+            "new_fill_ids": [
+              "20260826T11:00",
+              "20260826T11:01",
+              "20260826T11:02",
+              "20260826T11:03",
+              "20260826T11:04"
+            ],
+            "locked_minutes": [],
+            "lock_inference_version": "PREVIOUS_CLOSE_DIRECTION_V1",
+            "lock_checks": [
+              {
+                "minute": "11:00",
+                "one_price": 7.24,
+                "previous_close": 6.58,
+                "previous_close_source": "VERIFIED_T_DAY_CLOSE",
+                "previous_close_source_date": "20260825",
+                "previous_close_provider": "TENCENT",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:01",
+                "one_price": 7.24,
+                "previous_close": 6.58,
+                "previous_close_source": "VERIFIED_T_DAY_CLOSE",
+                "previous_close_source_date": "20260825",
+                "previous_close_provider": "TENCENT",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:02",
+                "one_price": 7.24,
+                "previous_close": 6.58,
+                "previous_close_source": "VERIFIED_T_DAY_CLOSE",
+                "previous_close_source_date": "20260825",
+                "previous_close_provider": "TENCENT",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:03",
+                "one_price": 7.24,
+                "previous_close": 6.58,
+                "previous_close_source": "VERIFIED_T_DAY_CLOSE",
+                "previous_close_source_date": "20260825",
+                "previous_close_provider": "TENCENT",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              },
+              {
+                "minute": "11:04",
+                "one_price": 7.24,
+                "previous_close": 6.58,
+                "previous_close_source": "VERIFIED_T_DAY_CLOSE",
+                "previous_close_source_date": "20260825",
+                "previous_close_provider": "TENCENT",
+                "price_adjustment": "NONE",
+                "decision": "SELLABLE",
+                "reason": "one_price_up_from_previous_close"
+              }
+            ],
+            "remaining_qty": 0,
+            "delay_trading_days": 0,
+            "attempt_count": 1
+          }
+        ],
+        "actual_exit_at": "20260826T11:04:00+08:00",
+        "actual_exit_date": "20260826",
+        "time_precision": "minute",
+        "label_quality": "CONSERVATIVE",
+        "data_tier": "MINUTE_BAR",
+        "avg_price": 7.24
+      },
+      "pnl": {
+        "state": "REALIZED",
+        "gross_return": 0.015427769985974837,
+        "net_return_on_invested": 0.014290843330853615,
+        "net_return_on_allocated": 0.013759915500000061,
+        "net_pnl": 1375.991550000006,
+        "asof": "20260826T11:04:00+08:00"
+      },
       "diagnostics": {
         "daily_open_fill": {
           "price": 7.13,
@@ -23633,31 +23925,59 @@
         "maximum_reserved_cash_cny": 99662.88592,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_t_daily_open",
-      "buy": null,
+      "status": "OPEN",
+      "reason": "waiting_for_t1_exit",
+      "buy": {
+        "at": "2026-08-26T09:25:00+08:00",
+        "submitted_qty": 20800,
+        "filled_qty": 20800,
+        "avg_price": 4.79,
+        "amount": 99632.0,
+        "fees": 30.88592,
+        "limit_price": 4.79,
+        "auction_matched_qty": null,
+        "queue_ahead_qty": null,
+        "executable_qty_at_order": 20800,
+        "participation_rate": null,
+        "source": "TENCENT",
+        "data_tier": "DAILY_BAR",
+        "label_quality": "SHADOW_OPEN_ASSUMPTION",
+        "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "price_adjustment": "NONE",
+        "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+      },
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_fill": {
+          "price": 4.79,
+          "date": "20260826",
+          "provider": "TENCENT",
+          "price_adjustment": "NONE",
+          "counts_as_fill": true,
+          "policy": "T_DAILY_UNADJUSTED_OPEN",
+          "quantity_policy": "FROZEN_ORDER_SPEC"
+        }
+      },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260826",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-26T19:05:57+08:00",
+        "t_close": 4.79,
+        "t_return": 0.10114942528735638,
+        "t_return_source": "FROZEN_D_CLOSE",
+        "reference_close": 4.35,
+        "high": 4.79,
         "limit_up_price": 4.79,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": true,
+        "is_limit_up": true,
+        "is_promoted": true,
         "stage_transition": "2→3",
         "d_close": 4.35,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "TENCENT",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     },
     {
@@ -23690,31 +24010,59 @@
         "maximum_reserved_cash_cny": 99990.9876,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_t_daily_open",
-      "buy": null,
+      "status": "OPEN",
+      "reason": "waiting_for_t1_exit",
+      "buy": {
+        "at": "2026-08-26T09:25:00+08:00",
+        "submitted_qty": 24500,
+        "filled_qty": 24500,
+        "avg_price": 4.08,
+        "amount": 99960.0,
+        "fees": 30.987599999999997,
+        "limit_price": 4.08,
+        "auction_matched_qty": null,
+        "queue_ahead_qty": null,
+        "executable_qty_at_order": 24500,
+        "participation_rate": null,
+        "source": "TENCENT",
+        "data_tier": "DAILY_BAR",
+        "label_quality": "SHADOW_OPEN_ASSUMPTION",
+        "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "price_adjustment": "NONE",
+        "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+      },
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_fill": {
+          "price": 4.08,
+          "date": "20260826",
+          "provider": "TENCENT",
+          "price_adjustment": "NONE",
+          "counts_as_fill": true,
+          "policy": "T_DAILY_UNADJUSTED_OPEN",
+          "quantity_policy": "FROZEN_ORDER_SPEC"
+        }
+      },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260826",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-26T19:05:57+08:00",
+        "t_close": 3.6,
+        "t_return": -0.029649595687331498,
+        "t_return_source": "FROZEN_D_CLOSE",
+        "reference_close": 3.71,
+        "high": 4.08,
         "limit_up_price": 4.08,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": true,
+        "is_limit_up": false,
+        "is_promoted": false,
         "stage_transition": "2→3",
         "d_close": 3.71,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "TENCENT",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     },
     {
@@ -23747,31 +24095,59 @@
         "maximum_reserved_cash_cny": 98804.61993999999,
         "execution_mode": "SHADOW_ONLY"
       },
-      "status": "PENDING_BUY",
-      "reason": "waiting_for_t_daily_open",
-      "buy": null,
+      "status": "OPEN",
+      "reason": "waiting_for_t1_exit",
+      "buy": {
+        "at": "2026-08-26T09:25:00+08:00",
+        "submitted_qty": 5800,
+        "filled_qty": 5800,
+        "avg_price": 15.48,
+        "amount": 89784.0,
+        "fees": 27.833039999999997,
+        "limit_price": 17.03,
+        "auction_matched_qty": null,
+        "queue_ahead_qty": null,
+        "executable_qty_at_order": 5800,
+        "participation_rate": null,
+        "source": "TENCENT",
+        "data_tier": "DAILY_BAR",
+        "label_quality": "SHADOW_OPEN_ASSUMPTION",
+        "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+        "price_adjustment": "NONE",
+        "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+      },
       "exit": null,
       "pnl": null,
-      "diagnostics": {},
+      "diagnostics": {
+        "daily_open_fill": {
+          "price": 15.48,
+          "date": "20260826",
+          "provider": "TENCENT",
+          "price_adjustment": "NONE",
+          "counts_as_fill": true,
+          "policy": "T_DAILY_UNADJUSTED_OPEN",
+          "quantity_policy": "FROZEN_ORDER_SPEC"
+        }
+      },
       "t_day_validation": {
-        "status": "PENDING",
+        "status": "VERIFIED",
         "trade_date": "20260826",
-        "verified_at": null,
-        "t_close": null,
-        "t_return": null,
-        "t_return_source": null,
-        "reference_close": null,
-        "high": null,
+        "verified_at": "2026-08-26T19:05:57+08:00",
+        "t_close": 17.03,
+        "t_return": 0.10012919896640837,
+        "t_return_source": "FROZEN_D_CLOSE",
+        "reference_close": 15.48,
+        "high": 17.03,
         "limit_up_price": 17.03,
         "limit_up_source": "DECISION_FROZEN_LIMIT_PRICE",
-        "touched_limit_up": null,
-        "is_limit_up": null,
-        "is_promoted": null,
+        "touched_limit_up": true,
+        "is_limit_up": true,
+        "is_promoted": true,
         "stage_transition": "3→4",
         "d_close": 15.48,
-        "provider": null,
-        "price_adjustment": null,
-        "reason": "waiting_for_t_close"
+        "provider": "TENCENT",
+        "price_adjustment": "NONE",
+        "reason": "t_day_eod_verified"
       }
     }
   ]
