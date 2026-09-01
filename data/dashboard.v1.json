@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-08-26T22:01:17+08:00",
+  "generated_at": "2026-09-01T23:10:41+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -16136,8 +16136,8 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260825:002084.SZ",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "EXIT_UNVERIFIABLE",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 20800,
@@ -16157,7 +16157,37 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
+          "exit": {
+            "target_start": "20260827T11:00:00+08:00",
+            "target_end": "20260827T11:05:00+08:00",
+            "benchmark_twap": null,
+            "benchmark_twaps": [],
+            "fills": [],
+            "filled_qty": 0,
+            "remaining_qty": 20800,
+            "sell_amount": 0,
+            "fees": 0,
+            "net_proceeds": 0,
+            "delay_trading_days": null,
+            "processed_windows": [],
+            "attempts": [
+              {
+                "date": "20260827",
+                "result": "UNVERIFIABLE",
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": null,
+            "actual_exit_date": null,
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR"
+          },
           "pnl": null,
           "diagnostics": {
             "daily_open_fill": {
@@ -16168,7 +16198,8 @@
               "counts_as_fill": true,
               "policy": "T_DAILY_UNADJUSTED_OPEN",
               "quantity_policy": "FROZEN_ORDER_SPEC"
-            }
+            },
+            "available_exit_minutes": []
           },
           "t_day_validation": {
             "status": "VERIFIED",
@@ -16179,8 +16210,8 @@
         },
         "2": {
           "candidate_id": "20260825:002445.SZ",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "EXIT_UNVERIFIABLE",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 24500,
@@ -16200,7 +16231,37 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
+          "exit": {
+            "target_start": "20260827T11:00:00+08:00",
+            "target_end": "20260827T11:05:00+08:00",
+            "benchmark_twap": null,
+            "benchmark_twaps": [],
+            "fills": [],
+            "filled_qty": 0,
+            "remaining_qty": 24500,
+            "sell_amount": 0,
+            "fees": 0,
+            "net_proceeds": 0,
+            "delay_trading_days": null,
+            "processed_windows": [],
+            "attempts": [
+              {
+                "date": "20260827",
+                "result": "UNVERIFIABLE",
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": null,
+            "actual_exit_date": null,
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR"
+          },
           "pnl": null,
           "diagnostics": {
             "daily_open_fill": {
@@ -16211,7 +16272,8 @@
               "counts_as_fill": true,
               "policy": "T_DAILY_UNADJUSTED_OPEN",
               "quantity_policy": "FROZEN_ORDER_SPEC"
-            }
+            },
+            "available_exit_minutes": []
           },
           "t_day_validation": {
             "status": "VERIFIED",
@@ -16222,8 +16284,8 @@
         },
         "3": {
           "candidate_id": "20260825:003040.SZ",
-          "status": "OPEN",
-          "reason": "waiting_for_t1_exit",
+          "status": "EXIT_UNVERIFIABLE",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 5800,
@@ -16243,7 +16305,37 @@
             "price_adjustment": "NONE",
             "price_policy": "T_DAILY_UNADJUSTED_OPEN"
           },
-          "exit": null,
+          "exit": {
+            "target_start": "20260827T11:00:00+08:00",
+            "target_end": "20260827T11:05:00+08:00",
+            "benchmark_twap": null,
+            "benchmark_twaps": [],
+            "fills": [],
+            "filled_qty": 0,
+            "remaining_qty": 5800,
+            "sell_amount": 0,
+            "fees": 0,
+            "net_proceeds": 0,
+            "delay_trading_days": null,
+            "processed_windows": [],
+            "attempts": [
+              {
+                "date": "20260827",
+                "result": "UNVERIFIABLE",
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": null,
+            "actual_exit_date": null,
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR"
+          },
           "pnl": null,
           "diagnostics": {
             "daily_open_fill": {
@@ -16254,7 +16346,8 @@
               "counts_as_fill": true,
               "policy": "T_DAILY_UNADJUSTED_OPEN",
               "quantity_policy": "FROZEN_ORDER_SPEC"
-            }
+            },
+            "available_exit_minutes": []
           },
           "t_day_validation": {
             "status": "VERIFIED",
@@ -17082,10 +17175,10 @@
             "snapshot_sha256": "60e889da332979e62dd2b2b64a115e3f960475d6f03d56d8fabd2fe52505e57d"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.1009,
+            "is_limit_up": true,
+            "is_promoted": true
           },
           "rank": 1,
           "model_score": -0.033139936842478804,
@@ -17863,10 +17956,10 @@
             "snapshot_sha256": "418372757cfc20c61aa4569b03e8f8f6b4e08288dfd6a63bb35aef083e04b73b"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10020876826722325,
+            "is_limit_up": true,
+            "is_promoted": true
           },
           "rank": 2,
           "model_score": -0.03390005569595849,
@@ -18644,10 +18737,10 @@
             "snapshot_sha256": "52741889ac2f5cc4beae4ad20129638ef98d4767380b3ad42f6c57a729d02181"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10086455331412103,
+            "is_limit_up": true,
+            "is_promoted": true
           },
           "rank": 3,
           "model_score": -0.03688535923517867,
@@ -18846,47 +18939,216 @@
       "rank_slots": {
         "1": {
           "candidate_id": "20260826:002418.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_t_daily_open",
-          "buy": null,
-          "exit": null,
+          "status": "EXIT_UNVERIFIABLE",
+          "reason": "five_complete_exit_minutes_required",
+          "buy": {
+            "at": "2026-08-27T09:25:00+08:00",
+            "submitted_qty": 20300,
+            "filled_qty": 20300,
+            "avg_price": 4.54,
+            "amount": 92162.0,
+            "fees": 28.57022,
+            "limit_price": 4.91,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 20300,
+            "participation_rate": null,
+            "source": "EASTMONEY",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
+          "exit": {
+            "target_start": "20260828T11:00:00+08:00",
+            "target_end": "20260828T11:05:00+08:00",
+            "benchmark_twap": null,
+            "benchmark_twaps": [],
+            "fills": [],
+            "filled_qty": 0,
+            "remaining_qty": 20300,
+            "sell_amount": 0,
+            "fees": 0,
+            "net_proceeds": 0,
+            "delay_trading_days": null,
+            "processed_windows": [],
+            "attempts": [
+              {
+                "date": "20260828",
+                "result": "UNVERIFIABLE",
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": null,
+            "actual_exit_date": null,
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR"
+          },
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_fill": {
+              "price": 4.54,
+              "date": "20260827",
+              "provider": "EASTMONEY",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_ORDER_SPEC"
+            },
+            "available_exit_minutes": []
+          },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.1009,
+            "is_limit_up": true,
+            "is_promoted": true
           }
         },
         "2": {
           "candidate_id": "20260826:002084.SZ",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_t_daily_open",
-          "buy": null,
-          "exit": null,
+          "status": "EXIT_UNVERIFIABLE",
+          "reason": "exit_market_data_unavailable",
+          "buy": {
+            "at": "2026-08-27T09:25:00+08:00",
+            "submitted_qty": 18900,
+            "filled_qty": 18900,
+            "avg_price": 5.27,
+            "amount": 99602.99999999999,
+            "fees": 30.876929999999994,
+            "limit_price": 5.27,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 18900,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
+          "exit": {
+            "target_start": "20260828T11:00:00+08:00",
+            "target_end": "20260828T11:05:00+08:00",
+            "benchmark_twap": null,
+            "benchmark_twaps": [],
+            "fills": [],
+            "filled_qty": 0,
+            "remaining_qty": 18900,
+            "sell_amount": 0,
+            "fees": 0,
+            "net_proceeds": 0,
+            "delay_trading_days": null,
+            "processed_windows": [],
+            "attempts": [
+              {
+                "date": "20260828",
+                "result": "UNVERIFIABLE",
+                "reason": "exit_market_data_unavailable",
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": null,
+            "actual_exit_date": null,
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR"
+          },
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_fill": {
+              "price": 5.27,
+              "date": "20260827",
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_ORDER_SPEC"
+            },
+            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260901; requested 20260828; eastmoney_trends2=MarketDataError:Eastmoney trends2 requires the exact five target minutes; missing 11:00,11:01,11:02,11:03,11:04 for 20260828)"
+          },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10020876826722325,
+            "is_limit_up": true,
+            "is_promoted": true
           }
         },
         "3": {
           "candidate_id": "20260826:600103.SH",
-          "status": "PENDING_BUY",
-          "reason": "waiting_for_t_daily_open",
-          "buy": null,
-          "exit": null,
+          "status": "EXIT_UNVERIFIABLE",
+          "reason": "exit_market_data_unavailable",
+          "buy": {
+            "at": "2026-08-27T09:25:00+08:00",
+            "submitted_qty": 26100,
+            "filled_qty": 26100,
+            "avg_price": 3.71,
+            "amount": 96831.0,
+            "fees": 30.017609999999998,
+            "limit_price": 3.82,
+            "auction_matched_qty": null,
+            "queue_ahead_qty": null,
+            "executable_qty_at_order": 26100,
+            "participation_rate": null,
+            "source": "TENCENT",
+            "data_tier": "DAILY_BAR",
+            "label_quality": "SHADOW_OPEN_ASSUMPTION",
+            "price_limit_source": "DECISION_FROZEN_LIMIT_PRICE",
+            "price_adjustment": "NONE",
+            "price_policy": "T_DAILY_UNADJUSTED_OPEN"
+          },
+          "exit": {
+            "target_start": "20260828T11:00:00+08:00",
+            "target_end": "20260828T11:05:00+08:00",
+            "benchmark_twap": null,
+            "benchmark_twaps": [],
+            "fills": [],
+            "filled_qty": 0,
+            "remaining_qty": 26100,
+            "sell_amount": 0,
+            "fees": 0,
+            "net_proceeds": 0,
+            "delay_trading_days": null,
+            "processed_windows": [],
+            "attempts": [
+              {
+                "date": "20260828",
+                "result": "UNVERIFIABLE",
+                "reason": "exit_market_data_unavailable",
+                "attempt_count": 1
+              }
+            ],
+            "actual_exit_at": null,
+            "actual_exit_date": null,
+            "time_precision": "minute",
+            "label_quality": "CONSERVATIVE",
+            "data_tier": "MINUTE_BAR"
+          },
           "pnl": null,
-          "diagnostics": {},
+          "diagnostics": {
+            "daily_open_fill": {
+              "price": 3.71,
+              "date": "20260827",
+              "provider": "TENCENT",
+              "price_adjustment": "NONE",
+              "counts_as_fill": true,
+              "policy": "T_DAILY_UNADJUSTED_OPEN",
+              "quantity_policy": "FROZEN_ORDER_SPEC"
+            },
+            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260901; requested 20260828; eastmoney_trends2=HttpError)"
+          },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10086455331412103,
+            "is_limit_up": true,
+            "is_promoted": true
           }
         }
       }
@@ -19195,21 +19457,21 @@
       "decision_date": "2026-08-25",
       "ranks": {
         "1": {
-          "state": "OPEN",
+          "state": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-27",
           "equity_index": 1.0034444131996811
         },
         "2": {
-          "state": "OPEN",
+          "state": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-27",
           "equity_index": 0.7462686023240925
         },
         "3": {
-          "state": "OPEN",
+          "state": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-27",
@@ -19222,21 +19484,21 @@
       "decision_date": "2026-08-26",
       "ranks": {
         "1": {
-          "state": "PENDING_BUY",
+          "state": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-28",
           "equity_index": 1.0034444131996811
         },
         "2": {
-          "state": "PENDING_BUY",
+          "state": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-28",
           "equity_index": 0.7462686023240925
         },
         "3": {
-          "state": "PENDING_BUY",
+          "state": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "daily_return": null,
           "return_date": "2026-08-28",
@@ -25644,7 +25906,7 @@
             "is_limit_up": true,
             "is_promoted": true
           },
-          "status": "OPEN",
+          "status": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "buy_price": 4.79,
           "exit_price": null,
@@ -26244,7 +26506,7 @@
             "is_limit_up": false,
             "is_promoted": false
           },
-          "status": "OPEN",
+          "status": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "buy_price": 4.08,
           "exit_price": null,
@@ -26844,7 +27106,7 @@
             "is_limit_up": true,
             "is_promoted": true
           },
-          "status": "OPEN",
+          "status": "EXIT_UNVERIFIABLE",
           "is_final": false,
           "buy_price": 15.48,
           "exit_price": null,
@@ -27467,14 +27729,14 @@
             "snapshot_sha256": "60e889da332979e62dd2b2b64a115e3f960475d6f03d56d8fabd2fe52505e57d"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.1009,
+            "is_limit_up": true,
+            "is_promoted": true
           },
-          "status": "PENDING_BUY",
+          "status": "EXIT_UNVERIFIABLE",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 4.54,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -28067,14 +28329,14 @@
             "snapshot_sha256": "418372757cfc20c61aa4569b03e8f8f6b4e08288dfd6a63bb35aef083e04b73b"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10020876826722325,
+            "is_limit_up": true,
+            "is_promoted": true
           },
-          "status": "PENDING_BUY",
+          "status": "EXIT_UNVERIFIABLE",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 5.27,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -28667,14 +28929,14 @@
             "snapshot_sha256": "52741889ac2f5cc4beae4ad20129638ef98d4767380b3ad42f6c57a729d02181"
           },
           "t_day_validation": {
-            "status": "PENDING",
-            "t_return": null,
-            "is_limit_up": null,
-            "is_promoted": null
+            "status": "VERIFIED",
+            "t_return": 0.10086455331412103,
+            "is_limit_up": true,
+            "is_promoted": true
           },
-          "status": "PENDING_BUY",
+          "status": "EXIT_UNVERIFIABLE",
           "is_final": false,
-          "buy_price": null,
+          "buy_price": 3.71,
           "exit_price": null,
           "net_return": null,
           "result": "PENDING",
@@ -32149,20 +32411,20 @@
   "automation_runs": {
     "validation": {
       "scheduled_local_time": "19:00",
-      "market_date": "2026-08-26",
-      "asof_at": "2026-08-26T19:05:57+08:00",
-      "last_attempted_at": "2026-08-26T19:05:57+08:00",
-      "last_completed_at": "2026-08-26T19:05:57+08:00",
+      "market_date": "2026-09-01",
+      "asof_at": "2026-09-01T23:10:41+08:00",
+      "last_attempted_at": "2026-09-01T23:10:41+08:00",
+      "last_completed_at": "2026-09-01T23:10:41+08:00",
       "status": "COMPLETED",
-      "due": 8,
-      "final": 8,
-      "pending_data": 0,
+      "due": 12,
+      "final": 6,
+      "pending_data": 6,
       "delayed": 0,
       "failed": 0,
-      "result_status": "SUCCESS",
+      "result_status": "DEGRADED",
       "batch_error": null,
-      "trade_count": 19,
-      "t_day_verified_count": 19,
+      "trade_count": 22,
+      "t_day_verified_count": 22,
       "closed_trade_count": 16
     },
     "output": {
