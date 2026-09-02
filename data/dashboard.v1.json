@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-09-01T23:27:41+08:00",
+  "generated_at": "2026-09-02T22:41:50+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -16137,7 +16137,7 @@
         "1": {
           "candidate_id": "20260825:002084.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 20800,
@@ -16174,8 +16174,12 @@
               {
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 3
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 4
               }
             ],
             "actual_exit_at": null,
@@ -16208,7 +16212,7 @@
         "2": {
           "candidate_id": "20260825:002445.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 24500,
@@ -16245,8 +16249,12 @@
               {
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 3
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 4
               }
             ],
             "actual_exit_at": null,
@@ -16279,7 +16287,7 @@
         "3": {
           "candidate_id": "20260825:003040.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 5800,
@@ -16316,8 +16324,12 @@
               {
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 3
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 4
               }
             ],
             "actual_exit_at": null,
@@ -18931,7 +18943,7 @@
         "1": {
           "candidate_id": "20260826:002418.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-27T09:25:00+08:00",
             "submitted_qty": 20300,
@@ -18968,8 +18980,12 @@
               {
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 3
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 4
               }
             ],
             "actual_exit_at": null,
@@ -19040,7 +19056,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 3
+                "attempt_count": 4
               }
             ],
             "actual_exit_at": null,
@@ -19060,7 +19076,7 @@
               "policy": "T_DAILY_UNADJUSTED_OPEN",
               "quantity_policy": "FROZEN_ORDER_SPEC"
             },
-            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260901; requested 20260828; eastmoney_trends2=HttpError)"
+            "exit_market_error": "market data providers failed (eastmoney=HttpError; tencent=MarketDataError:Tencent minute/query only proves 20260902; requested 20260828; eastmoney_trends2=MarketDataError:Eastmoney trends2 requires the exact five target minutes; missing 11:00,11:01,11:02,11:03,11:04 for 20260828)"
           },
           "t_day_validation": {
             "status": "VERIFIED",
@@ -19110,7 +19126,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 3
+                "attempt_count": 4
               }
             ],
             "actual_exit_at": null,
@@ -19130,7 +19146,7 @@
               "policy": "T_DAILY_UNADJUSTED_OPEN",
               "quantity_policy": "FROZEN_ORDER_SPEC"
             },
-            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260901; requested 20260828; eastmoney_trends2=HttpError)"
+            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260902; requested 20260828; eastmoney_trends2=HttpError)"
           },
           "t_day_validation": {
             "status": "VERIFIED",
@@ -32399,10 +32415,10 @@
   "automation_runs": {
     "validation": {
       "scheduled_local_time": "19:00",
-      "market_date": "2026-09-01",
-      "asof_at": "2026-09-01T23:27:41+08:00",
-      "last_attempted_at": "2026-09-01T23:27:41+08:00",
-      "last_completed_at": "2026-09-01T23:27:41+08:00",
+      "market_date": "2026-09-02",
+      "asof_at": "2026-09-02T22:41:50+08:00",
+      "last_attempted_at": "2026-09-02T22:41:50+08:00",
+      "last_completed_at": "2026-09-02T22:41:50+08:00",
       "status": "COMPLETED",
       "due": 6,
       "final": 0,
