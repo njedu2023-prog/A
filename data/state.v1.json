@@ -27758,7 +27758,7 @@
             "date": "20260827",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 11
+            "attempt_count": 12
           }
         ],
         "actual_exit_at": null,
@@ -27871,7 +27871,7 @@
             "date": "20260827",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 11
+            "attempt_count": 12
           }
         ],
         "actual_exit_at": null,
@@ -27984,7 +27984,7 @@
             "date": "20260827",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 11
+            "attempt_count": 12
           }
         ],
         "actual_exit_at": null,
@@ -28097,7 +28097,7 @@
             "date": "20260828",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 11
+            "attempt_count": 12
           }
         ],
         "actual_exit_at": null,
@@ -28118,7 +28118,7 @@
           "quantity_policy": "FROZEN_ORDER_SPEC"
         },
         "available_exit_minutes": [],
-        "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260904; requested 20260828; eastmoney_trends2=MarketDataError:Eastmoney trends2 requires the exact five target minutes; missing 11:00,11:01,11:02,11:03,11:04 for 20260828)"
+        "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260904; requested 20260828; eastmoney_trends2=HttpError)"
       },
       "t_day_validation": {
         "status": "VERIFIED",
@@ -28210,7 +28210,7 @@
             "date": "20260828",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 11
+            "attempt_count": 12
           }
         ],
         "actual_exit_at": null,
@@ -28323,7 +28323,7 @@
             "date": "20260828",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 11
+            "attempt_count": 12
           }
         ],
         "actual_exit_at": null,
