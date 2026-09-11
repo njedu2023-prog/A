@@ -27758,7 +27758,7 @@
             "date": "20260827",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 23
+            "attempt_count": 24
           }
         ],
         "actual_exit_at": null,
@@ -27871,7 +27871,7 @@
             "date": "20260827",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 23
+            "attempt_count": 24
           }
         ],
         "actual_exit_at": null,
@@ -27984,7 +27984,7 @@
             "date": "20260827",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 23
+            "attempt_count": 24
           }
         ],
         "actual_exit_at": null,
@@ -28097,7 +28097,7 @@
             "date": "20260828",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 23
+            "attempt_count": 24
           }
         ],
         "actual_exit_at": null,
@@ -28210,7 +28210,7 @@
             "date": "20260828",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 23
+            "attempt_count": 24
           }
         ],
         "actual_exit_at": null,
@@ -28323,7 +28323,7 @@
             "date": "20260828",
             "result": "UNVERIFIABLE",
             "reason": "exit_market_data_unavailable",
-            "attempt_count": 23
+            "attempt_count": 24
           }
         ],
         "actual_exit_at": null,
