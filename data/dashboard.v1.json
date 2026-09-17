@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-09-17T23:18:17+08:00",
+  "generated_at": "2026-09-17T23:20:04+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -16179,7 +16179,7 @@
                 "duplicate_minutes": [],
                 "invalid_time_semantics": [],
                 "invalid_price_adjustments": [],
-                "attempt_count": 31
+                "attempt_count": 32
               }
             ],
             "actual_exit_at": null,
@@ -16254,7 +16254,7 @@
                 "duplicate_minutes": [],
                 "invalid_time_semantics": [],
                 "invalid_price_adjustments": [],
-                "attempt_count": 31
+                "attempt_count": 32
               }
             ],
             "actual_exit_at": null,
@@ -16325,7 +16325,7 @@
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 31
+                "attempt_count": 32
               }
             ],
             "actual_exit_at": null,
@@ -18977,7 +18977,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 31
+                "attempt_count": 32
               }
             ],
             "actual_exit_at": null,
@@ -18998,7 +18998,7 @@
               "quantity_policy": "FROZEN_ORDER_SPEC"
             },
             "available_exit_minutes": [],
-            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260917; requested 20260828; eastmoney_trends2=HttpError)"
+            "exit_market_error": "market data providers failed (eastmoney=CIRCUIT_OPEN; tencent=MarketDataError:Tencent minute/query only proves 20260917; requested 20260828; eastmoney_trends2=MarketDataError:Eastmoney trends2 requires the exact five target minutes; missing 11:00,11:01,11:02,11:03,11:04 for 20260828)"
           },
           "t_day_validation": {
             "status": "VERIFIED",
@@ -19048,7 +19048,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 31
+                "attempt_count": 32
               }
             ],
             "actual_exit_at": null,
@@ -19119,7 +19119,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 31
+                "attempt_count": 32
               }
             ],
             "actual_exit_at": null,
@@ -32410,9 +32410,9 @@
     "validation": {
       "scheduled_local_time": "19:00",
       "market_date": "2026-09-17",
-      "asof_at": "2026-09-17T23:18:17+08:00",
-      "last_attempted_at": "2026-09-17T23:18:17+08:00",
-      "last_completed_at": "2026-09-17T23:18:17+08:00",
+      "asof_at": "2026-09-17T23:20:04+08:00",
+      "last_attempted_at": "2026-09-17T23:20:04+08:00",
+      "last_completed_at": "2026-09-17T23:20:04+08:00",
       "status": "COMPLETED",
       "due": 6,
       "final": 0,
