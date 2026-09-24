@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-09-24T23:31:16+08:00",
+  "generated_at": "2026-09-24T23:48:36+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -16175,7 +16175,7 @@
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 44
+                "attempt_count": 45
               }
             ],
             "actual_exit_at": null,
@@ -16246,7 +16246,7 @@
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 44
+                "attempt_count": 45
               }
             ],
             "actual_exit_at": null,
@@ -16317,7 +16317,7 @@
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 44
+                "attempt_count": 45
               }
             ],
             "actual_exit_at": null,
@@ -18969,7 +18969,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 44
+                "attempt_count": 45
               }
             ],
             "actual_exit_at": null,
@@ -19040,7 +19040,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 44
+                "attempt_count": 45
               }
             ],
             "actual_exit_at": null,
@@ -19111,7 +19111,7 @@
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
                 "reason": "exit_market_data_unavailable",
-                "attempt_count": 44
+                "attempt_count": 45
               }
             ],
             "actual_exit_at": null,
@@ -32402,9 +32402,9 @@
     "validation": {
       "scheduled_local_time": "19:00",
       "market_date": "2026-09-24",
-      "asof_at": "2026-09-24T23:31:16+08:00",
-      "last_attempted_at": "2026-09-24T23:31:16+08:00",
-      "last_completed_at": "2026-09-24T23:31:16+08:00",
+      "asof_at": "2026-09-24T23:48:36+08:00",
+      "last_attempted_at": "2026-09-24T23:48:36+08:00",
+      "last_completed_at": "2026-09-24T23:48:36+08:00",
       "status": "COMPLETED",
       "due": 6,
       "final": 0,
