@@ -1,6 +1,6 @@
 {
   "schema_version": "dashboard_v1",
-  "generated_at": "2026-10-20T23:38:31+08:00",
+  "generated_at": "2026-10-21T23:35:54+08:00",
   "timezone": "Asia/Shanghai",
   "return_unit": "decimal",
   "policy": {
@@ -16137,7 +16137,7 @@
         "1": {
           "candidate_id": "20260825:002084.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 20800,
@@ -16174,8 +16174,12 @@
               {
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 57
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 58
               }
             ],
             "actual_exit_at": null,
@@ -16208,7 +16212,7 @@
         "2": {
           "candidate_id": "20260825:002445.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 24500,
@@ -16245,8 +16249,12 @@
               {
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 57
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 58
               }
             ],
             "actual_exit_at": null,
@@ -16279,7 +16287,7 @@
         "3": {
           "candidate_id": "20260825:003040.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-26T09:25:00+08:00",
             "submitted_qty": 5800,
@@ -16316,8 +16324,12 @@
               {
                 "date": "20260827",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 57
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 58
               }
             ],
             "actual_exit_at": null,
@@ -18931,7 +18943,7 @@
         "1": {
           "candidate_id": "20260826:002418.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-27T09:25:00+08:00",
             "submitted_qty": 20300,
@@ -18968,8 +18980,12 @@
               {
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 57
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 58
               }
             ],
             "actual_exit_at": null,
@@ -19002,7 +19018,7 @@
         "2": {
           "candidate_id": "20260826:002084.SZ",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-27T09:25:00+08:00",
             "submitted_qty": 18900,
@@ -19039,8 +19055,12 @@
               {
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 57
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 58
               }
             ],
             "actual_exit_at": null,
@@ -19073,7 +19093,7 @@
         "3": {
           "candidate_id": "20260826:600103.SH",
           "status": "EXIT_UNVERIFIABLE",
-          "reason": "exit_market_data_unavailable",
+          "reason": "five_complete_exit_minutes_required",
           "buy": {
             "at": "2026-08-27T09:25:00+08:00",
             "submitted_qty": 26100,
@@ -19110,8 +19130,12 @@
               {
                 "date": "20260828",
                 "result": "UNVERIFIABLE",
-                "reason": "exit_market_data_unavailable",
-                "attempt_count": 57
+                "reason": "five_complete_exit_minutes_required",
+                "available_minutes": [],
+                "duplicate_minutes": [],
+                "invalid_time_semantics": [],
+                "invalid_price_adjustments": [],
+                "attempt_count": 58
               }
             ],
             "actual_exit_at": null,
@@ -32401,10 +32425,10 @@
   "automation_runs": {
     "validation": {
       "scheduled_local_time": "19:00",
-      "market_date": "2026-10-20",
-      "asof_at": "2026-10-20T23:38:31+08:00",
-      "last_attempted_at": "2026-10-20T23:38:31+08:00",
-      "last_completed_at": "2026-10-20T23:38:31+08:00",
+      "market_date": "2026-10-21",
+      "asof_at": "2026-10-21T23:35:54+08:00",
+      "last_attempted_at": "2026-10-21T23:35:54+08:00",
+      "last_completed_at": "2026-10-21T23:35:54+08:00",
       "status": "COMPLETED",
       "due": 6,
       "final": 0,
